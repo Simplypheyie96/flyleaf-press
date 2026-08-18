@@ -8,6 +8,8 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { createRequire } from 'node:module'
+import * as fontkit from 'fontkit'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const ICONS = join(ROOT, 'public/icons')
@@ -16,6 +18,45 @@ const SPLASH = join(ROOT, 'public/splash')
 const PAPER = '#F4F2ED'
 const INK = '#1B1917'
 
+/* The launch images are lettered by converting the text to outlines here,
+   rather than by asking the renderer for a font. Two reasons, both learned the
+   hard way: ImageMagick's own SVG renderer needs FreeType fonts registered in
+   type.xml and a Homebrew install has none — `magick -list font` returns
+   nothing, so every <text> silently produced a wordless image — and the app's
+   faces come off Google's CDN, so they are not installed on this machine
+   either (Playfair happened to be, IBM Plex Mono was not). Outlines settle
+   both: the SVG carries only <path>, exactly like the rosette above it, and it
+   renders identically on any host with no font engine in the picture.
+
+   The faces are the real ones, read straight out of the fontsource packages so
+   they match what the app itself loads: Playfair Display at 500, which is the
+   weight #splash b uses, and IBM Plex Mono at 400. */
+const req = createRequire(import.meta.url)
+const face = (pkg, file) => fontkit.openSync(join(dirname(req.resolve(pkg + '/package.json')), 'files', file))
+const SERIF = face('@fontsource/playfair-display', 'playfair-display-latin-500-normal.woff2')
+const MONO = face('@fontsource/ibm-plex-mono', 'ibm-plex-mono-latin-400-normal.woff2')
+
+/* One line of text as <path>s, centred on cx and sitting on baseline y.
+   `track` is letter-spacing in user units, added between glyphs and — the part
+   that is easy to get wrong — NOT after the last one. Include it and the run
+   measures a full space wider than it draws, so a centred line sits half a
+   space to the left of true centre. */
+function line(font, str, size, track, cx, y, ink, opacity = 1) {
+  const k = size / font.unitsPerEm
+  const glyphs = font.layout(str).glyphs
+  const width = glyphs.reduce((n, g) => n + g.advanceWidth * k + track, 0) - track
+  let x = cx - width / 2
+  const paths = glyphs.map((g) => {
+    const d = g.path.toSVG()
+    const at = x
+    x += g.advanceWidth * k + track
+    /* glyph outlines are y-up from the baseline; the negative y scale flips
+       them into SVG's y-down space */
+    return d ? `<path d="${d}" transform="translate(${at.toFixed(2)} ${y.toFixed(2)}) scale(${k.toFixed(5)} ${(-k).toFixed(5)})" fill="${ink}" fill-opacity="${opacity}"/>` : ''
+  })
+  return paths.join('\n  ')
+}
+
 /* the same rosette the cards and the nav draw — kept in sync by hand, since
    the app imports it as a TS constant and this script runs outside the bundle */
 const MARK =
@@ -23,10 +64,8 @@ const MARK =
 
 /* the path itself spans about 78% of its 512 box, so `frac` below is the share
    of the canvas the drawn mark covers, not the share the box covers */
-/* `words` adds the name and the one-line description under the mark, for the
-   launch images only — icons stay wordless. Each family ends in a generic name,
-   since this renders on whatever host runs the script and the app's own faces
-   may not be installed there. */
+/* `words` adds the name and the two lines under the mark, for the launch
+   images only — icons stay wordless. */
 function svg(w, h, frac, ground = PAPER, ink = INK, words = false) {
   const span = Math.min(w, h) * frac
   const k = span / (512 * 0.7575)
@@ -34,13 +73,13 @@ function svg(w, h, frac, ground = PAPER, ink = INK, words = false) {
   /* with words below it, the group sits above centre so the block as a whole
      reads centred rather than the mark alone */
   const ty = h / 2 - 256 * k - (words ? span * 0.42 : 0)
+  const base = ty + 512 * k
   const text = words
-    ? `<text x="${w / 2}" y="${ty + 512 * k + span * 0.34}" fill="${ink}" text-anchor="middle"
-      font-family="Playfair Display, Georgia, serif" font-size="${span * 0.29}" font-weight="500">Flyleaf Press</text>
-  <text x="${w / 2}" y="${ty + 512 * k + span * 0.61}" fill="${ink}" fill-opacity="0.62" text-anchor="middle"
-      font-family="IBM Plex Mono, monospace" font-size="${span * 0.115}" letter-spacing="${span * 0.017}">LONG BOOK REVIEWS, PRINTED</text>
-  <text x="${w / 2}" y="${ty + 512 * k + span * 0.775}" fill="${ink}" fill-opacity="0.62" text-anchor="middle"
-      font-family="IBM Plex Mono, monospace" font-size="${span * 0.115}" letter-spacing="${span * 0.017}">AND EVERY MONTH AS A COLLAGE</text>`
+    ? [
+        line(SERIF, 'Flyleaf Press', span * 0.29, 0, w / 2, base + span * 0.34, ink),
+        line(MONO, 'LONG BOOK REVIEWS, PRINTED', span * 0.115, span * 0.017, w / 2, base + span * 0.61, ink, 0.62),
+        line(MONO, 'AND EVERY MONTH AS A COLLAGE', span * 0.115, span * 0.017, w / 2, base + span * 0.775, ink, 0.62),
+      ].join('\n  ')
     : ''
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <rect width="${w}" height="${h}" fill="${ground}"/>
@@ -59,27 +98,6 @@ function png(out, w, h, frac, ground, ink, words) {
 mkdirSync(ICONS, { recursive: true })
 mkdirSync(SPLASH, { recursive: true })
 
-/* ImageMagick's own SVG renderer needs FreeType fonts configured, and on a bare
-   Homebrew install there are none — it fails outright rather than substituting.
-   Probe once: with fonts we set the name and the line into the launch images;
-   without, they stay wordless and the in-page splash carries the words on its
-   own a moment later. Never a hard failure over a lettering nicety. */
-const WORDS = (() => {
-  const tmp = join(ROOT, '.font-probe.svg')
-  const out = join(ROOT, '.font-probe.png')
-  try {
-    writeFileSync(tmp, svg(64, 64, 0.3, PAPER, INK, true))
-    execFileSync('magick', ['-background', 'none', tmp, '-strip', out], { stdio: 'ignore' })
-    return true
-  } catch {
-    return false
-  } finally {
-    rmSync(tmp, { force: true })
-    rmSync(out, { force: true })
-  }
-})()
-if (!WORDS) console.warn('No usable font for ImageMagick — launch images are the mark alone.')
-
 /* — install icons — full-bleed; iOS rounds the corners itself */
 for (const s of [64, 180, 192, 256, 384, 512]) {
   png(join(ICONS, `icon-${s}.png`), s, s, 0.48)
@@ -90,18 +108,13 @@ for (const s of [192, 512]) {
 }
 writeFileSync(join(ICONS, 'icon.svg'), svg(512, 512, 0.48))
 
-/* public/icons/og.png — the social card — is deliberately NOT generated here.
-   It carries the name in Playfair and the line in Plex Mono, and this script
-   cannot draw either: ImageMagick has no usable font on a bare install (see
-   the WORDS probe above), and a launch image can survive that because the
-   in-page splash supplies the words a moment later. A link preview gets one
-   frame and no second chance, so a wordless social card is not an acceptable
-   fallback — it would just be a flower on paper.
-   It was drawn instead on a <canvas> in a real browser, where the web fonts
-   the app already loads are available, at 1200x630 with the same composition
-   as the launch screen. Regenerating it means doing that again; leaving it out
-   of this script is the point, so that `npm run icons` cannot overwrite a card
-   that has words with one that does not. */
+/* public/icons/og-2.png — the social card — is deliberately NOT generated here.
+   It was drawn on a <canvas> in a real browser, at 1200x630, with the same
+   composition as the launch screen, and it is the one image whose filename
+   matters: link-preview scrapers cache by URL and never re-fetch, so changing
+   the artwork means changing the number on the end. Leaving it out of this
+   script is the point — `npm run icons` cannot silently replace a card that
+   other people's servers have already cached. */
 
 /* — iOS launch images — the device pixel sizes Safari matches on, portrait.
    Landscape falls back to the icon-less ground, which is the right thing:
@@ -115,8 +128,8 @@ const links = []
 for (const [w, h, dpr] of DEVICES) {
   /* the name and the line go here too, so the native launch image and the
      in-page splash that replaces it show the same thing */
-  png(join(SPLASH, `launch-${w}x${h}.png`), w, h, 0.2, PAPER, INK, WORDS)
-  png(join(SPLASH, `launch-${w}x${h}-dark.png`), w, h, 0.2, '#151515', '#E9E9E9', WORDS)
+  png(join(SPLASH, `launch-${w}x${h}.png`), w, h, 0.2, PAPER, INK, true)
+  png(join(SPLASH, `launch-${w}x${h}-dark.png`), w, h, 0.2, '#151515', '#E9E9E9', true)
   const q = `(device-width:${w / dpr}px) and (device-height:${h / dpr}px) and (-webkit-device-pixel-ratio:${dpr}) and (orientation:portrait)`
   links.push(`<link rel="apple-touch-startup-image" media="${q} and (prefers-color-scheme:dark)" href="/splash/launch-${w}x${h}-dark.png" />`)
   links.push(`<link rel="apple-touch-startup-image" media="${q}" href="/splash/launch-${w}x${h}.png" />`)
