@@ -30,7 +30,7 @@ export function Months() {
         {months.length === 0 && (
           <div className="empty">
             <div className="ui-h">No months yet</div>
-            <p>The first finished book starts this month's collage.</p>
+            <p>Finish a book and this month's collage starts.</p>
             <Link className="btn" to="/add">Add a book</Link>
           </div>
         )}

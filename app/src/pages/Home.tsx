@@ -68,8 +68,7 @@ export function Home({ settings }: { settings: Settings }) {
             <div className="notice-txt">
               <div className="ui-lbl">{monthName(nowKey)} · in progress</div>
               <p>
-                {thisMonth.length} book{thisMonth.length > 1 ? 's' : ''} finished so far — the
-                collage is ready to view or share any day, not just at month-end.
+                {thisMonth.length} book{thisMonth.length > 1 ? 's' : ''} finished so far.
               </p>
             </div>
             <Link className="btn btn--ghost btn--sm" to={`/collage/${nowKey}`}>
@@ -81,7 +80,7 @@ export function Home({ settings }: { settings: Settings }) {
         {reviews.length === 0 && (
           <div className="empty">
             <div className="ui-h">Nothing here yet</div>
-            <p>Finish a book, search it, and write however much you want. The review ships whole.</p>
+            <p>Finish a book, search it, and write as much as you want.</p>
             <Link className="btn" to="/add">Write the first review</Link>
           </div>
         )}

@@ -22,10 +22,7 @@ export function InstallNotice() {
     <div className="notice">
       <div className="notice-txt">
         <div className="ui-lbl">Install Flyleaf Press</div>
-        <p>
-          Keep it on your home screen and it opens like any other app — full screen, and
-          it works with no connection. Your library is already on this device either way.
-        </p>
+        <p>On your home screen it opens full screen, and works offline.</p>
       </div>
       <span className="notice-acts">
         <button className="btn btn--ghost btn--sm" onClick={dismiss}>Not now</button>

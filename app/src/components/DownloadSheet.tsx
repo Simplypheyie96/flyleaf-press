@@ -114,8 +114,8 @@ export function DownloadSheet({
         </div>
         <p className="share-note">
           {pages === 1
-            ? 'One image — the card, on a paper mat.'
-            : `${pages} images — split at a paragraph boundary, so the review saves whole.`}
+            ? 'One image.'
+            : `Splits at a paragraph — ${pages} images.`}
         </p>
 
         <div className="field" style={{ marginTop: 18 }}>

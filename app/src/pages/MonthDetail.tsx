@@ -70,8 +70,8 @@ export function MonthDetail({ settings }: { settings: Settings }) {
             <div className="notice-txt">
               <div className="ui-lbl">Month in progress</div>
               <p>
-                {month.books.length} book{month.books.length === 1 ? '' : 's'} so far. Each new finished
-                review joins this collage on its own — share it now or at month-end, it's always current.
+                {month.books.length} book{month.books.length === 1 ? '' : 's'} so far. Each new
+                review joins on its own.
               </p>
             </div>
           </div>
@@ -80,7 +80,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
         {month.books.length === 0 ? (
           <div className="empty">
             <div className="ui-h">Nothing finished this month</div>
-            <p>The collage assembles itself from finished dates — the first book starts it.</p>
+            <p>Finish a book and it starts here.</p>
             <Link className="btn" to="/add">Add a book</Link>
           </div>
         ) : (
@@ -108,8 +108,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
             </div>
             {!shareable && (
               <p className="field-hint" style={{ marginTop: 10 }}>
-                Sharing to another app isn’t available in this browser — Download saves the image
-                to your device instead.
+                This browser can’t pass files to other apps. Download saves the image instead.
               </p>
             )}
             {msg && <p className="field-hint" role="status" style={{ marginTop: 10 }}>{msg}</p>}

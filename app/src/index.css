@@ -633,7 +633,16 @@ img{ max-width:100%; }
 .onb-inner{ width:100%; max-width:440px; text-align:center; }
 .onb-mark{ color:var(--ink); margin-bottom:18px; display:flex; justify-content:center; }
 .onb h1{ font-family:var(--serif); font-weight:600; font-size:34px; letter-spacing:-.015em; line-height:1.1; }
-.onb-sub{ font-size:12px; line-height:1.7; color:var(--ink-soft); margin:16px 0 30px; }
+/* The same treatment #splash gives the same two lines, so the launch screen
+   resolves into this one rather than cutting to a different-looking page. It
+   replaced a paragraph that explained pagination to someone who had not yet
+   written anything. */
+.onb-sub{
+  font:400 10px/1.6 var(--mono); letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); margin:14px 0 0;
+}
+.onb-sub + .onb-sub{ margin-top:3px; }
+.onb-sub:last-of-type{ margin-bottom:30px; }
 .onb .field{ text-align:left; }
 .onb .style-pick{ justify-content:center; }
 

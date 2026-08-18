@@ -139,8 +139,9 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             {facesOpen && (
               <>
                 <FacePicker value={settings.face} onPick={(face) => put({ face })} label="Your face" />
+                {/* kept because CC BY 4.0 requires it, not to explain the
+                    picker sitting directly above it */}
                 <p className="field-hint">
-                  Greets you on the home page. Drawn on this device — nothing is fetched.
                   Faces from the <em>Adventurer</em> set by Lisa Wischofsky (CC BY 4.0), via DiceBear.
                 </p>
               </>
@@ -156,13 +157,12 @@ export function SettingsPage({ settings }: { settings: Settings }) {
                 </button>
               ))}
             </div>
-            <p className="field-hint">Dark mode is chrome only — the cards are printed objects and stay paper-light everywhere, including shares.</p>
+            <p className="field-hint">Cards stay paper-light in both themes.</p>
           </div>
           <div className="field">
             <span className="ui-lbl">Default review style</span>
             <StylePicker ids={STYLE_IDS} names={STYLE_NAMES} grounds={STYLE_GROUNDS}
               value={settings.defaultStyle} onChange={(defaultStyle: StyleId) => put({ defaultStyle })} />
-            <p className="field-hint">New reviews start in this style. Every review can switch styles later, and again at share time.</p>
           </div>
           <div className="field" style={{ marginBottom: 0 }}>
             <span className="ui-lbl">Default collage style</span>
@@ -182,12 +182,12 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               <div className="ui-lbl">Install the app</div>
               <p>
                 {install.installed
-                  ? 'Running from your home screen. Reviews, covers and collages are all on this device, so it works with no connection.'
+                  ? 'Running from your home screen, with the whole library on this device.'
                   : install.canPrompt
-                  ? 'Adds Flyleaf Press to your home screen. It opens full screen, works offline, and keeps the same library it has now.'
+                  ? 'Opens full screen, works offline, same library.'
                   : install.manualOnly
-                  ? 'On iPhone and iPad this is Safari’s job: tap Share, then Add to Home Screen. It then opens full screen and works offline.'
-                  : 'Your browser hasn’t offered an install for this app yet. In Chrome and Edge it appears in the address bar or the ⋮ menu once the app has been opened a couple of times.'}
+                  ? 'On iPhone and iPad: tap Share, then Add to Home Screen.'
+                  : 'This browser hasn’t offered an install yet. In Chrome and Edge, look in the address bar or the ⋮ menu.'}
               </p>
             </div>
             {install.installed ? (
@@ -202,10 +202,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           <div className="set-row">
             <div className="set-row-txt">
               <div className="ui-lbl">PDF export</div>
-              <p>
-                Sharing is always images — one PNG per page, even two-page reviews. Turn this on to
-                also get a "Save as PDF" button on each review's share sheet (via the print dialog).
-              </p>
+              <p>Adds a Save as PDF button to each review's share sheet.</p>
             </div>
             <button className="toggle" role="switch" aria-checked={settings.pdfEnabled}
               aria-label="PDF export" onClick={() => put({ pdfEnabled: !settings.pdfEnabled })} />
@@ -213,17 +210,14 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           <div className="set-row">
             <div className="set-row-txt">
               <div className="ui-lbl">Export library</div>
-              <p>
-                Your whole shelf, in the format you pick — JSON to back it up and bring it back,
-                or PDF to keep it as a readable document. Nothing here ever leaves the device on its own.
-              </p>
+              <p>Your whole shelf as one file — JSON to back up, PDF to read.</p>
             </div>
             <button className="btn btn--ghost btn--sm" onClick={() => setChoosing('export')}>Export</button>
           </div>
           <div className="set-row">
             <div className="set-row-txt">
               <div className="ui-lbl">Import library</div>
-              <p>Adds the reviews from a Flyleaf Press export file to what's already here.</p>
+              <p>Adds the reviews from an export file to what's already here.</p>
             </div>
             <button className="btn btn--ghost btn--sm" onClick={() => setChoosing('import')}>Import</button>
             <input ref={importRef} type="file" accept="application/json" hidden
@@ -237,10 +231,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             <div className="set-row">
               <div className="set-row-txt">
                 <div className="ui-lbl">Load the demo library</div>
-                <p>
-                  Three months of invented reading, for trying the card styles against text of a
-                  real length. Dev server only — this row does not exist in a build.
-                </p>
+                <p>Three months of invented reading. Dev server only.</p>
               </div>
               <button className="btn btn--ghost btn--sm" onClick={() => setConfirming('demo')}>Load</button>
             </div>
@@ -267,25 +258,18 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               <div className="ui-lbl">Long book reviews, printed</div>
             </div>
           </div>
+          {/* The one place in the app where explaining is the job — everywhere
+              else the control is its own explanation. Still two paragraphs
+              rather than three: what it makes, and where it keeps it. */}
           <p>
-            Most reading apps cut a review short, reflow it, or won't let you share it at all.
-            This one keeps yours whole: write however much you want, and it comes out as a printed
-            card — cover, rating, dates, page count and all — running onto another page at a
-            paragraph break when it needs to.
-          </p>
-          {/* the collage had the last sentence of the paragraph above, where it
-              read as an afterthought. It is half of what the app makes, so it
-              gets its own paragraph. */}
-          <p>
-            When a month closes it assembles itself: everything you finished, on one collage card
-            in the same paper, to share or keep alongside the reviews.
+            Most reading apps cut a review short or won't let you share it at all. This one shares
+            yours whole, as a printed card, running onto another page at a paragraph when it needs
+            to. Every month becomes a collage of what you finished.
           </p>
           <p>
-            Your library lives on this device, in this browser. No account, no server of ours,
-            and no review, cover or date ever leaves it. The host counts page views — which
-            screens get opened, nothing about what is on them. To keep a copy or move to a new phone, use Export
-            library above — one file holding every review and cover — and Import library reads
-            it back.
+            Your library lives on this device, in this browser. No account, no server of ours, and
+            no review, cover or date ever leaves it — the host counts page views and nothing else.
+            Export library above writes it all to one file; Import library reads it back.
           </p>
           {/* the check sits beside the number it checks, at the very bottom
               of the page. "Local-first PWA" gave up the slot: the header and

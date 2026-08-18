@@ -21,22 +21,22 @@ export function Onboarding({ settings, onDone }: { settings: Settings; onDone: (
       <div className="onb-inner">
         <div className="onb-mark" dangerouslySetInnerHTML={{ __html: mark(44) }} />
         <h1>Flyleaf Press</h1>
-        <p className="onb-sub">
-          Write book reviews of any length and share them whole, as printed cards —
-          a long one runs onto another page at a paragraph, never cut. Every month
-          becomes a collage of what you finished.
-        </p>
+        {/* The line the launch image, the OG card and the About panel all
+            carry. It is the app in two clauses; the paragraph that used to be
+            here explained pagination to someone who had not written anything
+            yet. */}
+        <p className="onb-sub">Long book reviews, printed</p>
+        <p className="onb-sub">And every month as a collage</p>
 
         <div className="field">
           <label className="ui-lbl" htmlFor="onb-name">Your name — optional</label>
-          <input id="onb-name" type="text" value={name} placeholder="Shown nowhere but your own shelf"
+          <input id="onb-name" type="text" value={name} placeholder="e.g. Mabel"
             onChange={(e) => setName(e.target.value)} />
         </div>
 
         <div className="field">
           <span className="ui-lbl">Pick a face — optional</span>
           <FacePicker value={face} onPick={setFace} label="Pick a face" />
-          <p className="field-hint">It greets you on the home page. Drawn on this device — nothing is fetched.</p>
         </div>
 
         <button className="btn" onClick={start}>Open the shelf</button>

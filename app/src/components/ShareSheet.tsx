@@ -116,8 +116,8 @@ export function ShareSheet<T extends string>({
         </div>
         <p className="share-note">
           {pages === 1
-            ? 'Fits one page — shared as a single image.'
-            : `${pages} pages — split at a paragraph boundary, shared whole as ${pages} images.`}
+            ? 'One image.'
+            : `Splits at a paragraph — ${pages} images.`}
         </p>
 
         {/* Two different actions, always both on show. Share hands the images to
@@ -148,8 +148,8 @@ export function ShareSheet<T extends string>({
         </div>
         {!shareable && (
           <p className="share-note">
-            Sharing to another app isn’t available in this browser — Download saves the
-            {pages > 1 ? ` ${pages} images` : ' image'} to your device instead.
+            This browser can’t pass files to other apps. Download saves
+            {pages > 1 ? ` the ${pages} images` : ' the image'} instead.
           </p>
         )}
         {done && <p className="share-note">{done}</p>}

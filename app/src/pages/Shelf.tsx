@@ -203,7 +203,7 @@ export function Shelf({ settings }: { settings: Settings }) {
         {reviews.length === 0 && (
           <div className="empty">
             <div className="ui-h">Nothing on the shelf yet</div>
-            <p>Finish a book, search it, and write however much you want. The review ships whole.</p>
+            <p>Finish a book, search it, and write as much as you want.</p>
             <Link className="btn" to="/add">Write the first review</Link>
           </div>
         )}
@@ -211,7 +211,7 @@ export function Shelf({ settings }: { settings: Settings }) {
         {reviews.length > 0 && rows.length === 0 && (
           <div className="empty">
             <div className="ui-h">Nothing matches “{q.trim()}”</div>
-            <p>No title or author on the shelf contains that.</p>
+            <p>No title or author matches.</p>
           </div>
         )}
 

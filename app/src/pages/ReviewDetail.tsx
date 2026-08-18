@@ -67,7 +67,7 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
           </header>
           <div className="empty">
             <div className="ui-h">This review isn’t on the shelf</div>
-            <p>It was deleted, or the link came from another device — the library lives on each device on its own.</p>
+            <p>It was deleted, or the link came from another device.</p>
             <Link className="btn" to="/shelf">Back to the shelf</Link>
           </div>
         </div>
@@ -136,8 +136,7 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
         </div>
         {!shareable && (
           <p className="field-hint" style={{ marginTop: 10 }}>
-            Sharing to another app isn’t available in this browser — Download saves the image
-            to your device instead.
+            This browser can’t pass files to other apps. Download saves the image instead.
           </p>
         )}
         {msg && <p className="field-hint" role="status" style={{ marginTop: 10 }}>{msg}</p>}

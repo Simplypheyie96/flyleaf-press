@@ -236,11 +236,6 @@ export function Write() {
             <label className="ui-lbl" htmlFor="w-pages">Pages</label>
             <input id="w-pages" className="inp-num" type="number" inputMode="numeric" min={1} max={99999}
               value={pages} placeholder="Auto-filled" onChange={(e) => setPages(e.target.value)} />
-            <p className="field-hint">
-              {candidate?.pages || existing?.pages
-                ? 'From the catalogue — change it if your edition runs a different length.'
-                : 'Feeds the monthly totals. Leave it blank if you’d rather not count.'}
-            </p>
           </div>
           <div className="field">
             <span className="ui-lbl">Cover</span>
@@ -251,10 +246,10 @@ export function Write() {
               <div className="cov-cur-txt">
                 <p className="field-hint">
                   {hunting
-                    ? 'Looking for covers in the catalogues…'
+                    ? 'Looking for covers…'
                     : chosenCover
-                      ? coverIdx === 'upload' ? 'Your own upload.' : 'From the catalogues.'
-                      : 'The card prints an honest "no cover" slot — never a placeholder.'}
+                      ? coverIdx === 'upload' ? 'Your own upload' : 'From the catalogues'
+                      : 'The card prints a blank slot'}
                 </p>
                 <button type="button" className="btn btn--ghost btn--sm" onClick={() => setCoverOpen(true)}>
                   Edit cover
@@ -292,18 +287,18 @@ export function Write() {
           <div className="field">
             <span className="ui-lbl">Rating</span>
             <StarInput value={rating} onChange={setRating} />
-            <p className="field-hint">Quarter steps — drag across the stars, or nudge with the arrow keys.</p>
+            <p className="field-hint">Quarter steps — drag, or use the arrow keys.</p>
           </div>
         </section>
 
         <section className="form-sec">
           <h2 className="ui-lbl form-sec-h">The review</h2>
           <div className="field">
-          <label className="ui-lbl" htmlFor="w-body">Write however much you want — or nothing</label>
+          <label className="ui-lbl" htmlFor="w-body">Your note — optional</label>
           <div className="canvas-wrap">
             <textarea id="w-body" className="hand"
               value={body} onChange={(e) => setBody(e.target.value)}
-              placeholder="Blank lines make paragraphs. If it outgrows one page it splits to a second at a paragraph — shared whole either way." />
+              placeholder="Blank lines make paragraphs." />
             <button type="button" className="canvas-expand" onClick={() => setFocusWrite(true)}>
               Expand
             </button>
@@ -319,7 +314,7 @@ export function Write() {
               </header>
               <textarea className="hand" autoFocus
                 value={body} onChange={(e) => setBody(e.target.value)}
-                placeholder="Blank lines make paragraphs. If it outgrows one page it splits to a second at a paragraph — shared whole either way."
+                placeholder="Blank lines make paragraphs."
                 aria-label="The review" />
             </div>
           )}
@@ -354,17 +349,13 @@ export function Write() {
                 }} />
             </label>
           )}
-          <p className="field-hint">
-            Photos print as polaroid plates in a row under the review. Skip this entirely and the
-            card closes clean after the text — no empty frames, no placeholders.
-          </p>
           </div>
         </section>
 
         <section className="form-sec">
           <h2 className="ui-lbl form-sec-h">The card</h2>
           <div className="field">
-            <span className="ui-lbl">Style — changeable any time, including at share</span>
+            <span className="ui-lbl">Style</span>
             <StylePicker ids={STYLE_IDS} names={STYLE_NAMES} grounds={STYLE_GROUNDS} value={style} onChange={setStyle} />
           </div>
         </section>
@@ -394,7 +385,7 @@ export function Write() {
                 Done
               </button>
             </div>
-            {hunting && <p className="field-hint">Looking for covers in the catalogues…</p>}
+            {hunting && <p className="field-hint">Looking for covers…</p>}
             <div className="cov-pick">
               {uploadedCover && (
                 <button type="button" aria-pressed={coverIdx === 'upload'}
@@ -410,7 +401,7 @@ export function Write() {
               ))}
             </div>
             {!hunting && covers.length === 0 && !uploadedCover && (
-              <p className="field-hint">The catalogues had no art for this one — upload your own, or go without.</p>
+              <p className="field-hint">No covers found. Upload your own, or go without.</p>
             )}
             <div className="modal-actions">
               <label className="btn btn--ghost btn--sm">
