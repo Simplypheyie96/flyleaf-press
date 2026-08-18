@@ -93,7 +93,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
     setChecking(false)
     setUpdateMsg(
       result === 'updating' ? 'A newer version is downloading — the app will reload itself in a moment.'
-      : result === 'current' ? `You’re on the latest version (${__APP_VERSION__}).`
+      : result === 'current' ? `You’re on the latest build — ${__APP_VERSION__} · ${__APP_COMMIT__}.`
       : 'Updates need the installed app or a normal page load — this copy is running without a service worker.',
     )
   }
@@ -291,7 +291,11 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               the paragraph above both already say it, and a control earns the
               space more than a third restatement does. */}
           <div className="about-foot">
-            <span className="ui-lbl">Version {__APP_VERSION__}</span>
+            {/* the commit, not just the version: package.json is bumped by
+                hand, so without it two different deploys both read 0.2.0 and
+                there is no way to tell a stale installed app from a current
+                one */}
+            <span className="ui-lbl">Version {__APP_VERSION__} · {__APP_COMMIT__}</span>
             <button className="btn btn--ghost btn--sm" disabled={checking} onClick={runUpdateCheck}>
               {checking ? 'Checking…' : 'Check for updates'}
             </button>

@@ -2,8 +2,26 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+import { execSync } from 'node:child_process'
 import { rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
+
+/* Which build this is. package.json's version is bumped by hand and so says
+   nothing about most deploys — two different builds both call themselves
+   0.2.0, and then there is no way to look at a running app and tell whether
+   it picked up the last push. The commit is the thing that changes every
+   time. Vercel puts it in the environment; locally we ask git; a tarball with
+   neither gets an honest 'local'. */
+const COMMIT =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+  (() => {
+    try {
+      return execSync('git rev-parse --short=7 HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+        .toString().trim()
+    } catch {
+      return 'local'
+    }
+  })()
 
 import pkg from './package.json'
 
@@ -27,7 +45,10 @@ function dropDemoCovers() {
 export default defineConfig({
   /* one source of truth for the version — package.json — so the About card
      can't drift from what was actually released */
-  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_COMMIT__: JSON.stringify(COMMIT),
+  },
   plugins: [
     react(),
     VitePWA({
@@ -79,7 +100,7 @@ export default defineConfig({
         /* og.png is the link-preview card — it is fetched by other people's
            servers, never by the app, so precaching it would be 47KB of
            offline storage for an image no client will ever ask for. */
-        globIgnores: ['**/splash/**', '**/covers/**', '**/og.png'],
+        globIgnores: ['**/splash/**', '**/covers/**', '**/og-*.png'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         runtimeCaching: [
           {

@@ -38,7 +38,9 @@ function svg(w, h, frac, ground = PAPER, ink = INK, words = false) {
     ? `<text x="${w / 2}" y="${ty + 512 * k + span * 0.34}" fill="${ink}" text-anchor="middle"
       font-family="Playfair Display, Georgia, serif" font-size="${span * 0.29}" font-weight="500">Flyleaf Press</text>
   <text x="${w / 2}" y="${ty + 512 * k + span * 0.61}" fill="${ink}" fill-opacity="0.62" text-anchor="middle"
-      font-family="IBM Plex Mono, monospace" font-size="${span * 0.115}" letter-spacing="${span * 0.017}">LONG BOOK REVIEWS, PRINTED</text>`
+      font-family="IBM Plex Mono, monospace" font-size="${span * 0.115}" letter-spacing="${span * 0.017}">LONG BOOK REVIEWS, PRINTED</text>
+  <text x="${w / 2}" y="${ty + 512 * k + span * 0.775}" fill="${ink}" fill-opacity="0.62" text-anchor="middle"
+      font-family="IBM Plex Mono, monospace" font-size="${span * 0.115}" letter-spacing="${span * 0.017}">AND EVERY MONTH AS A COLLAGE</text>`
     : ''
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <rect width="${w}" height="${h}" fill="${ground}"/>
