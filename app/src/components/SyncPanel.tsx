@@ -240,6 +240,7 @@ export function SyncPanel() {
             asking.device || 'another device'
           }${asking.at ? ` ${ago(asking.at)}` : ''}. Joining them keeps everything from both sides — nothing on this device is replaced or removed.`}
           action="Bring them together"
+          tone="neutral"
           onConfirm={merge}
           onCancel={() => {
             setAsking(null)
