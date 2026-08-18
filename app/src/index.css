@@ -249,12 +249,17 @@ img{ max-width:100%; }
 /* the page header already rules off below itself — a second rule right under
    it would read as an empty section */
 .form-sec:first-of-type .form-sec-h{ border-top:0; padding-top:0; }
-.field{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+/* min-width:0, because a date input carries a large intrinsic width — iOS and
+   Chrome both size it off the rendered date, not off its box — and a grid or
+   flex child defaults to min-width:auto, which refuses to shrink past that.
+   The two-up date row then overruns the gutter instead of splitting the
+   width. It fit by luck at 13px and stopped fitting at 16. */
+.field{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; min-width:0; }
 .form-sec .field:last-child{ margin-bottom:0; }
 .field input[type="text"], .field input[type="search"], .field input[type="date"], .field input[type="number"], .field textarea, .field select{
   border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
   color:var(--ink); font-family:var(--mono); font-size:13px;
-  padding:11px 12px; outline:none; width:100%;
+  padding:11px 12px; outline:none; width:100%; min-width:0;
   transition:border-color 160ms var(--ease);
 }
 .field input:focus, .field textarea:focus{ border-color:var(--ink); }
@@ -514,6 +519,29 @@ img{ max-width:100%; }
   font-family:var(--hand); font-size:15px; color:var(--ink); padding:6px 2px; width:100%; outline:none;
 }
 .plate-edit-row input:focus{ border-bottom-color:var(--ink); }
+
+/* ── touch: 16px, or iOS magnifies the app and leaves it that way ──────────
+   Safari on iOS zooms the whole page in whenever a focused form control's
+   text is smaller than 16px, and — the part that actually hurts — it does
+   not zoom back out on blur. Tap a field and the app is left magnified and
+   scrolled sideways, with no gesture in the interface to undo it.
+
+   The other cure is maximum-scale=1 on the viewport, which fixes it by
+   taking pinch-zoom away from everyone, sighted or not. This one costs a
+   little of the tuned type on phones only: the same fields keep 13px and
+   12.5px under a mouse, where nothing zooms. The two .hand textareas were
+   already 16.5px, which is why writing a review never had the bug. */
+@media (pointer: coarse){
+  .field input[type="text"], .field input[type="search"], .field input[type="date"],
+  .field input[type="number"], .field textarea, .field select,
+  .shelf-tools input[type="search"],
+  .plate-edit-row input{
+    font-size:16px;
+  }
+  /* the search box sizes off its own height, so the taller text needs the
+     box to grow with it rather than crop */
+  .shelf-tools input[type="search"]{ height:44px; }
+}
 
 /* ── card display wrapper ── */
 .card-wrap{ width:100%; }
