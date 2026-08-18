@@ -210,12 +210,79 @@ export async function searchBooks(q: string): Promise<SearchResult> {
   return { candidates: merged.slice(0, 12), answered, asked: 3, limited }
 }
 
-/* Last resort for a page count. Apple's ebook API never reports one and
-   Google's quota can run dry, so a candidate picked from either arrives with
-   `pages` empty even though the edition is perfectly well known. If it has an
-   ISBN we can ask Open Library for that exact edition. Returns undefined on
-   any failure — an unknown page count is a fact, and the field stays blank
-   rather than being filled with a guess. */
+/* Filling in a page count the search didn't come back with.
+
+   The search asks three catalogues one question and merges the answers, and a
+   length is the field most likely to be missing from all three at once: Apple
+   never reports one, Google's quota runs dry, and Open Library's search index
+   carries a median only for books it holds several editions of. So a
+   perfectly ordinary book — the sort with one printing and an Apple listing —
+   used to arrive with the Pages field blank.
+
+   Three tries, cheapest first, each one asking a narrower question than the
+   search did. Any of them may come back with nothing, and nothing is a fact
+   worth keeping: the field stays blank rather than being filled with a guess,
+   and it is editable regardless, because editions genuinely disagree. */
+export async function lookupPages(c: {
+  isbn?: string
+  title: string
+  author: string
+}): Promise<number | undefined> {
+  /* 1 — the exact edition, if we know which one it is */
+  if (c.isbn) {
+    const n = await pagesForIsbn(c.isbn)
+    if (n) return n
+  }
+  const title = c.title.trim()
+  const author = (c.author || '').split(',')[0].trim()
+  if (!title) return undefined
+
+  /* 2 — Google by title and author. Its per-volume pageCount is the most
+     reliable single figure any of the three publish, and this is one request
+     rather than the eight a search spends. Skipped in a cooldown: asking a
+     catalogue that has just refused us is what earned the refusal. */
+  if (Date.now() >= coolUntil.google) {
+    try {
+      const q = `intitle:${title}` + (author ? ` inauthor:${author}` : '')
+      const res = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5` +
+          (GOOGLE_KEY ? `&key=${encodeURIComponent(GOOGLE_KEY)}` : '')
+      )
+      if (res.ok) {
+        const d = await res.json()
+        for (const it of d.items || []) {
+          const n = Number(it.volumeInfo?.pageCount)
+          if (n > 0) return n
+        }
+      } else if (res.status === 429 || res.status === 403) {
+        coolUntil.google = Date.now() + COOLDOWN_MS
+      }
+    } catch {
+      /* offline, or blocked — fall through to the last try */
+    }
+  }
+
+  /* 3 — Open Library's median across every edition it holds. The vaguest of
+     the three and the reason it goes last, but it is the one that answers for
+     an old book with a dozen printings and no ISBN we were given. */
+  try {
+    const res = await fetch(
+      'https://openlibrary.org/search.json?limit=1&fields=number_of_pages_median' +
+        `&title=${encodeURIComponent(title)}` +
+        (author ? `&author=${encodeURIComponent(author)}` : '')
+    )
+    if (!res.ok) return undefined
+    const d = await res.json()
+    const n = Number(d.docs?.[0]?.number_of_pages_median)
+    return n > 0 ? n : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/* The exact-edition lookup the above leans on first. Open Library's /isbn
+   endpoint answers for one printing, which is the only figure that is really
+   true of the book somebody actually read. */
 export async function pagesForIsbn(isbn: string): Promise<number | undefined> {
   try {
     const res = await fetch(`https://openlibrary.org/isbn/${encodeURIComponent(isbn.replace(/[-\s]/g, ''))}.json`)

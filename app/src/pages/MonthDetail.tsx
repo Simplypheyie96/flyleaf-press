@@ -49,7 +49,14 @@ export function MonthDetail({ settings }: { settings: Settings }) {
     setMsg('Preparing the image…')
     try {
       const res = await shareCollageImage(month, style, mode, settings.exportShape)
-      if (res.ok) setMsg(res.method === 'share' ? 'Shared.' : 'Saved — check your downloads.')
+      if (res.ok)
+        setMsg(
+          res.method === 'share'
+            ? 'Shared.'
+            : res.method === 'save'
+              ? 'Sent to the share sheet.'
+              : 'Saved — check your downloads.'
+        )
     } finally {
       setBusy(false)
     }

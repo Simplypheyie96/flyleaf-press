@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { EXPORT_SHAPES, EXPORT_SHAPE_NAMES, SHAPE_W, type ExportShape } from '../types'
-import { fileName, makeHost, pixelSize } from '../share/export'
+import { fileName, makeHost, pixelSize, savesViaSystemSheet } from '../share/export'
 
 /* Download, with the thing itself in front of you. Saving an image is the one
    action here that produces a file you can't take back out of a camera roll,
@@ -27,6 +27,9 @@ export function DownloadSheet({
   onDownload: (s: ExportShape) => Promise<void>
   onClose: () => void
 }) {
+  /* iOS reaches the camera roll only through the system share sheet, so what
+     this button does there is worth saying before it is pressed. */
+  const viaSheet = savesViaSystemSheet()
   const [pages, setPages] = useState(1)
   /* both shapes, not just the selected one — two figures side by side are what
      make this a like-for-like choice rather than a leap of faith */
@@ -134,14 +137,27 @@ export function DownloadSheet({
           </div>
         </div>
 
+        {/* On iOS a saved file goes through the system sheet, which is the only
+            route to the camera roll — and it renames what it takes, so the
+            filename below would be a promise this device does not keep. */}
         <p className="share-note dl-name">
-          Saves as <code>{fileName(baseName, 0, pages)}</code>
-          {pages > 1 ? ` and ${pages - 1} more` : ''}
+          {viaSheet ? (
+            <>Choose <b>Save {pages > 1 ? 'Images' : 'Image'}</b> in the sheet iOS opens.</>
+          ) : (
+            <>
+              Saves as <code>{fileName(baseName, 0, pages)}</code>
+              {pages > 1 ? ` and ${pages - 1} more` : ''}
+            </>
+          )}
         </p>
 
         <div className="share-acts">
           <button className="btn" onClick={go} disabled={busy}>
-            {busy ? 'Saving…' : pages > 1 ? `Download ${pages} images` : 'Download'}
+            {busy
+              ? 'Saving…'
+              : pages > 1
+                ? `Save ${pages} images`
+                : 'Save image'}
           </button>
         </div>
       </div>

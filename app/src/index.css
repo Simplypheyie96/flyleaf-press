@@ -263,6 +263,41 @@ img{ max-width:100%; }
   transition:border-color 160ms var(--ease);
 }
 .field input:focus, .field textarea:focus{ border-color:var(--ink); }
+
+/* ── date fields ───────────────────────────────────────────────────────────
+   An empty date input is a blank box on WebKit — no placeholder, and in
+   Safari no visible way to open the picker either. The hint below is drawn
+   over the control while it is empty, and our own calendar glyph sits on the
+   right with the native picker button laid transparently over it. */
+.date-wrap{ position:relative; display:block; min-width:0; }
+/* tighter than the other fields on both sides: at 360px a two-up date row
+   gives each control 150px, and 16px digits plus WebKit's own gaps between
+   the three sub-fields need nearly all of it. The measured value is 106px of
+   content box against a 102px run — the earlier 12/40 clipped the year. */
+.date-wrap input[type="date"]{ padding-left:11px; padding-right:33px; }
+.date-ph{
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  font-family:var(--mono); font-size:13px; color:var(--ink-soft);
+  pointer-events:none; opacity:0;
+}
+.date-ico{
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  width:15px; height:15px; pointer-events:none;
+  fill:none; stroke:var(--ink-soft); stroke-width:1.3; stroke-linecap:round;
+}
+/* the real button, invisible, over our glyph — so opening the picker is the
+   browser's own gesture and not something we have to fake. Left over the icon
+   only: covering the whole control would take typing away on a keyboard. */
+.date-wrap input[type="date"]::-webkit-calendar-picker-indicator{
+  position:absolute; right:0; top:0; width:34px; height:100%;
+  margin:0; padding:0; opacity:0; cursor:pointer;
+}
+/* Firefox prints yyyy-mm-dd of its own accord and has no ::-webkit pseudo to
+   hide, so the overlay is offered only where it is both needed and hideable. */
+@supports selector(::-webkit-datetime-edit){
+  .date-wrap.is-empty input[type="date"]::-webkit-datetime-edit{ opacity:0; }
+  .date-wrap.is-empty .date-ph{ opacity:1; }
+}
 /* a page count is at most five digits — a full-width box for it reads as a
    text field and invites a sentence */
 .field input.inp-num{ width:132px; }
@@ -541,6 +576,8 @@ img{ max-width:100%; }
   /* the search box sizes off its own height, so the taller text needs the
      box to grow with it rather than crop */
   .shelf-tools input[type="search"]{ height:44px; }
+  /* the hint stands in for the value, so it takes the same size */
+  .date-ph{ font-size:16px; }
 }
 
 /* ── card display wrapper ── */

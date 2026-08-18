@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { installFonts } from './fonts'
 import './index.css'
 import './cards/cards.css'
 import App from './App'
@@ -7,6 +8,10 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { startAutoSync } from './sync/sync'
 import { initServiceWorker } from './pwa'
 import { Analytics } from '@vercel/analytics/react'
+
+/* Before the first paint: the @font-face rules live in a module now, not
+   in a third-party stylesheet, so they have to be installed by hand. */
+installFonts()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

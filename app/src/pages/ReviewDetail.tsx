@@ -39,11 +39,15 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
      visible and says why rather than vanishing */
   const [shareable] = useState(canShareFiles)
 
-  /* the style sheet's own preview is always the wide layout — it is there to
-     compare grounds, and a narrow card would compare them at a disadvantage */
+  /* The style sheet previews in the shape this device actually saves in. It
+     used to force the wide layout on the theory that grounds compare better
+     across a broad card — but the sheet also shares and downloads, and a note
+     under it reading "One image" while the save produced three was worse than
+     any advantage a wider swatch gave. */
   const build = useCallback(
-    (style: StyleId, host: HTMLDivElement) => (rec ? paginateReview(rec, style, host, 'wide') : []),
-    [rec]
+    (style: StyleId, host: HTMLDivElement) =>
+      rec ? paginateReview(rec, style, host, settings.exportShape) : [],
+    [rec, settings.exportShape]
   )
   /* the download preview always uses the review's own saved style — the style
      choice belongs to the card, not to the act of saving it */
@@ -85,7 +89,11 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
         setMsg(
           res.method === 'share'
             ? 'Shared.'
-            : `Saved ${res.pages} image${res.pages > 1 ? 's' : ''} — check your downloads.`
+            : res.method === 'save'
+              /* iOS saved them through the system sheet — where they landed is
+                 the user's own choice in it, so don't claim a location */
+              ? `Sent ${res.pages} image${res.pages > 1 ? 's' : ''} to the share sheet.`
+              : `Saved ${res.pages} image${res.pages > 1 ? 's' : ''} — check your downloads.`
         )
     } finally {
       setBusy(false)

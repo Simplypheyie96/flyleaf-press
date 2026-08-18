@@ -4,8 +4,9 @@ import { db, getSettings, nextReviewNo } from '../db'
 import type { Review, StyleId, FormatName, Plate } from '../types'
 import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, FORMAT_NAMES } from '../types'
 import { StarInput } from '../components/StarInput'
+import { DateField } from '../components/DateField'
 import { StylePicker } from '../components/StylePicker'
-import { coverToDataUrl, pagesForIsbn, searchBooks, type Candidate } from '../catalog'
+import { coverToDataUrl, lookupPages, searchBooks, type Candidate } from '../catalog'
 import { todayIso } from '../format'
 
 const fileToDataUrl = (f: File): Promise<string> =>
@@ -69,13 +70,15 @@ export function Write() {
   }, [editing])
 
   /* Apple's ebook API never reports a length and Google's quota can run dry,
-     so a perfectly good candidate often arrives with no page count. If it came
-     with an ISBN, ask Open Library for that exact edition — once, quietly, and
-     only into a field the user hasn't already typed in. */
+     so a perfectly good candidate often arrives with no page count. Go and ask
+     for one — once, quietly, and only into a field the user hasn't typed in.
+     The old version of this only ran when the candidate carried an ISBN, which
+     is exactly the case Apple never satisfies, so the books most likely to be
+     missing a length were the ones it never asked about. */
   useEffect(() => {
-    if (editing || pages || !candidate?.isbn || candidate.pages) return
+    if (editing || pages || !candidate || candidate.pages) return
     let live = true
-    pagesForIsbn(candidate.isbn).then((n) => {
+    lookupPages(candidate).then((n) => {
       if (live && n) setPages((cur) => (cur ? cur : String(n)))
     })
     return () => { live = false }
@@ -262,14 +265,8 @@ export function Write() {
         <section className="form-sec">
           <h2 className="ui-lbl form-sec-h">The reading</h2>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div className="field">
-              <label className="ui-lbl" htmlFor="w-started">Date started</label>
-              <input id="w-started" type="date" value={started} onChange={(e) => setStarted(e.target.value)} />
-            </div>
-            <div className="field">
-              <label className="ui-lbl" htmlFor="w-finished">Date finished</label>
-              <input id="w-finished" type="date" value={finished} onChange={(e) => setFinished(e.target.value)} />
-            </div>
+            <DateField id="w-started" label="Date started" value={started} onChange={setStarted} />
+            <DateField id="w-finished" label="Date finished" value={finished} onChange={setFinished} />
           </div>
           <div className="field">
             <span className="ui-lbl">Formats — pick all that apply</span>

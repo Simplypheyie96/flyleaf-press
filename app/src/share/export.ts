@@ -10,8 +10,18 @@ import { EXPORT_SCALE, SHAPE_LEAF_H, SHAPE_W } from '../types'
 import { renderReviewCard } from '../cards/review'
 import { renderCollage, type MonthData } from '../cards/collage'
 import { paragraphs } from '../format'
+import { fontEmbedCss } from '../fonts'
+import { isIOS } from '../pwa'
 
-const pageLimit = (shape: ExportShape) => SHAPE_LEAF_H[shape] - 88 /* minus its own padding */
+/* The wide layout never splits. A leaf that can grow is the whole point of a
+   printed card on a desktop screen — the review reads as one object, and the
+   only thing a page break buys there is a second file to send. The phone
+   layout still splits, because a 350px column of prose really does run to a
+   picture nobody can read on a phone. Infinity rather than a very large
+   number: the splitter's tests are `> PAGE_LIMIT`, so this is exactly "never",
+   with no height at which it quietly starts breaking again. */
+const pageLimit = (shape: ExportShape) =>
+  shape === 'wide' ? Infinity : SHAPE_LEAF_H[shape] - 88 /* minus its own padding */
 
 export function makeHost(): HTMLDivElement {
   const host = document.createElement('div')
@@ -172,6 +182,11 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
      review — it loads the first time someone actually shares. */
   const { toPng } = await import('html-to-image')
   await document.fonts.ready
+  /* Hand it the faces rather than letting it hunt for them. Left to itself it
+     walks document.styleSheets and refetches every @font-face it finds, which
+     is where the wrong-face bug lived and is also the slowest part of an
+     export — and it would repeat the whole search once per page. */
+  const fontEmbedCSS = await fontEmbedCss()
   const blobs: Blob[] = []
   for (const page of pages) {
     const dataUrl = await toPng(page, {
@@ -179,6 +194,7 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
       width: page.offsetWidth,
       height: page.offsetHeight,
       backgroundColor: '#F4F2ED',
+      fontEmbedCSS,
     })
     const res = await fetch(dataUrl)
     blobs.push(await res.blob())
@@ -202,8 +218,16 @@ export function pixelSize(pages: HTMLElement[]): { w: number; h: number; n: numb
 
 export interface ExportResult {
   ok: boolean
-  method: 'share' | 'download' | 'none'
+  /** 'save' is a download that went through the system sheet — see below */
+  method: 'share' | 'download' | 'save' | 'none'
   pages: number
+}
+
+/** Whether Download has to go through the system sheet to reach the photo
+    library. iOS only: it is the single platform with no file download a
+    person can find afterwards. */
+export function savesViaSystemSheet(): boolean {
+  return isIOS() && canShareFiles()
 }
 
 export type ExportMode = 'share' | 'download'
@@ -241,7 +265,27 @@ async function exportPages(
       return { ok: false, method: 'none', pages: files.length }
     }
   }
-  for (const f of files) {
+  /* iOS has no download that reaches the camera roll. `<a download>` there is
+     Safari's download manager, which writes to Files — and worse, it honours
+     only the FIRST synthetic click in a burst, so a two-leaf review arrived as
+     one image in the wrong place. The system sheet is the only route to Photos
+     on that platform, and it takes every file at once, so Download uses it and
+     says so on the button. Share and Download are still different acts: Share
+     hands the images to an app you pick, Download's sheet is opened for the
+     one purpose of saving them. */
+  if (savesViaSystemSheet() && navigator.canShare?.({ files })) {
+    try {
+      await navigator.share({ files, title: baseName })
+      return { ok: true, method: 'save', pages: files.length }
+    } catch {
+      return { ok: false, method: 'none', pages: files.length }
+    }
+  }
+  /* Everywhere else: one anchor per file, spaced out. Fired back to back,
+     Chrome and Safari both drop all but the first — the gap is what makes a
+     split review actually arrive as three files. */
+  for (const [i, f] of files.entries()) {
+    if (i) await new Promise((r) => setTimeout(r, 350))
     const a = document.createElement('a')
     a.href = URL.createObjectURL(f)
     a.download = f.name
@@ -299,13 +343,13 @@ export async function shareCollageImage(
   }
 }
 
-/* how many paper pages a review needs in a given style — for the preview note */
-export function pageCount(rec: Review, style: StyleId): number {
+/* how many paper pages a review needs, in a given style and shape */
+export function pageCount(rec: Review, style: StyleId, shape: ExportShape = 'phone'): number {
   const host = makeHost()
   try {
-    /* the wide layout is the canonical one for this note — it is what the
-       detail page shows and what the split warning is really about */
-    return paginateReview(rec, style, host, 'wide').length
+    /* the phone layout by default: it is the only one that splits now, so it
+       is the only one this question has an interesting answer for */
+    return paginateReview(rec, style, host, shape).length
   } finally {
     host.remove()
   }
@@ -350,8 +394,8 @@ export function printLibraryPdf(reviews: Review[]): void {
   requestAnimationFrame(() => window.print())
 }
 
-export function splitPreviewNote(rec: Review, style: StyleId): string {
-  const n = pageCount(rec, style)
+export function splitPreviewNote(rec: Review, style: StyleId, shape: ExportShape = 'phone'): string {
+  const n = pageCount(rec, style, shape)
   return n === 1
     ? 'Fits one page'
     : `${n} pages · splits at a paragraph boundary — shared whole, as ${n} images`

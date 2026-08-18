@@ -17,8 +17,12 @@ export function StarInput({ value, onChange }: { value: number; onChange: (v: nu
     onChange(Math.max(0.25, Math.round(frac * 5 * 4) / 4))
   }
 
+  /* Theme tokens, not the ink literal these were hardcoded to. --star and
+     --star-line only exist inside a .card, and a card is a printed object that
+     stays paper-light in both themes — but this control is chrome, and in dark
+     mode a #1B1917 star on a #151515 ground is a star you cannot see. */
   const stars = Array.from({ length: 5 }, (_, i) =>
-    starSvg(Math.min(1, Math.max(0, value - i)), 30, '#1B1917', '#1B1917')
+    starSvg(Math.min(1, Math.max(0, value - i)), 30, 'var(--ink)', 'var(--ink-soft)')
   ).join('')
 
   return (

@@ -113,22 +113,12 @@ export default defineConfig({
            offline storage for an image no client will ever ask for. */
         globIgnores: ['**/splash/**', '**/covers/**', '**/og-*.png'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'google-fonts-css' },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-files',
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
+        /* No runtime font caching any more: the faces are served from this
+           origin and swept up by globPatterns above, so they are precached
+           like the rest of the app. The Google Fonts entries that used to be
+           here cached OPAQUE responses (statuses: [0, 200]) — which is what
+           made a shared card come out in the wrong face, since html-to-image
+           cannot read a font it is handed opaquely. */
       },
     }),
     dropDemoCovers(),

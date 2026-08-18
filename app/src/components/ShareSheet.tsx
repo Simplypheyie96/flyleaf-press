@@ -79,10 +79,15 @@ export function ShareSheet<T extends string>({
     try {
       const res = await exportImages(style, mode)
       if (res.ok) {
+        const n = `${res.pages} image${res.pages > 1 ? 's' : ''}`
         setDone(
           res.method === 'share'
             ? 'Shared.'
-            : `Saved ${res.pages} image${res.pages > 1 ? 's' : ''} — check your downloads.`
+            : res.method === 'save'
+              /* the system sheet did the saving, and where it put them is
+                 whatever the user chose in it — so don't name a place */
+              ? `Sent ${n} to the share sheet.`
+              : `Saved ${n} — check your downloads.`
         )
       }
     } finally {
