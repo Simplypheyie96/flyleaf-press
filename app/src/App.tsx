@@ -75,7 +75,11 @@ export default function App() {
         <Route path="/months" element={<Navigate to="/collage" replace />} />
         <Route path="/months/:key" element={<MonthRedirect />} />
         <Route path="/settings" element={<SettingsPage settings={settings} />} />
-        <Route path="*" element={<Home settings={settings} />} />
+        {/* Anything else is Home, but by redirect rather than by rendering
+            Home under the wrong URL: a bad path used to stay in the address
+            bar, so a mistyped or dead link looked like it had worked and was
+            the thing that got shared on. replace keeps it out of history. */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Nav />
     </BrowserRouter>

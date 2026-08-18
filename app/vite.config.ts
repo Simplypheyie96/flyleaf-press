@@ -59,8 +59,19 @@ export default defineConfig({
          call .update() on. */
       injectRegister: null,
       /* No includeAssets: globPatterns below already sweeps everything
-         copied out of public/, so listing the icons here as well put each
-         one into the precache manifest twice. */
+         copied out of public/, so listing the icons there as well would be
+         pure duplication — and worse, includeAssets entries land in the
+         manifest where globIgnores cannot reach them, which is how og-2.png
+         got precached the first time.
+
+         It does not make the manifest duplicate-free, though: the plugin
+         also injects everything in manifest.icons below, on top of
+         globPatterns. Six icons are therefore listed twice — 21 entries,
+         15 unique files. That is cosmetic and deliberate to leave alone:
+         workbox-precaching ignores an exact repeat of a url+revision pair,
+         so nothing is fetched or stored twice, and the alternative is
+         either dropping the icons from the web app manifest (they have to
+         be there) or hand-filtering the injection. */
       manifest: {
         id: '/',
         name: 'Flyleaf Press',
