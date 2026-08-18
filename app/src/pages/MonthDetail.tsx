@@ -2,13 +2,15 @@ import { useCallback, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import type { Settings, CollageId } from '../types'
+import type { Settings, CollageId, ExportShape } from '../types'
 import { COLLAGE_IDS, COLLAGE_NAMES, COLLAGE_GROUNDS } from '../types'
-import { CardHtml } from '../components/CardHtml'
+import { CollapsedCard } from '../components/CollapsedCard'
+import { DownloadSheet } from '../components/DownloadSheet'
 import { StylePicker } from '../components/StylePicker'
-import { ShareSheet } from '../components/ShareSheet'
 import { renderCollage, type MonthData } from '../cards/collage'
-import { buildCollagePage, shareCollageImage } from '../share/export'
+import {
+  shareCollageImage, canShareFiles, buildCollagePage, collageBaseName, type ExportMode,
+} from '../share/export'
 import { monthKey, monthName, currentMonthKey } from '../format'
 
 /* One month's collage — viewable and shareable on any day of the month,
@@ -16,7 +18,12 @@ import { monthKey, monthName, currentMonthKey } from '../format'
 export function MonthDetail({ settings }: { settings: Settings }) {
   const { key } = useParams()
   const [style, setStyle] = useState<CollageId>(settings.defaultCollage)
-  const [sharing, setSharing] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [shareable] = useState(canShareFiles)
+  /* Download shows what it's about to write; Share hands it straight to
+     another app, which shows it for us */
+  const [downloading, setDownloading] = useState(false)
 
   const books = useLiveQuery(
     () => db.reviews.orderBy('finished').toArray((all) => all.filter((r) => monthKey(r.finished) === key)),
@@ -25,14 +32,28 @@ export function MonthDetail({ settings }: { settings: Settings }) {
 
   const month: MonthData | null = books && key ? { name: monthName(key), books } : null
 
+  /* `month` is rebuilt on every render, so the preview keys off what actually
+     changes its contents — the books and the chosen style. Depending on the
+     object itself would make the sheet re-lay-out the collage on every tick. */
   const build = useCallback(
-    (s: CollageId, host: HTMLDivElement) => (month ? buildCollagePage(month, s, host) : []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [books, key]
+    (host: HTMLDivElement, shape: ExportShape) =>
+      books && key ? buildCollagePage({ name: monthName(key), books }, style, host, shape) : [],
+    [books, key, style]
   )
 
   if (!month) return null
   const open = key === currentMonthKey()
+
+  const run = async (mode: ExportMode) => {
+    setBusy(true)
+    setMsg('Preparing the image…')
+    try {
+      const res = await shareCollageImage(month, style, mode, settings.exportShape)
+      if (res.ok) setMsg(res.method === 'share' ? 'Shared.' : 'Saved — check your downloads.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <div className="page">
@@ -69,25 +90,45 @@ export function MonthDetail({ settings }: { settings: Settings }) {
               <StylePicker ids={COLLAGE_IDS} names={COLLAGE_NAMES} grounds={COLLAGE_GROUNDS} value={style} onChange={setStyle} />
             </div>
 
-            <CardHtml html={renderCollage(month, style)} />
+            {/* a twenty-book month is taller than any phone — same clamp the
+                review card uses, so the actions stay within reach */}
+            <CollapsedCard html={renderCollage(month, style)} />
 
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 24 }}>
-              <button className="btn" onClick={() => setSharing(true)}>Share</button>
+            {/* the style picker and the card are already on this page, so a
+                sheet would only repeat them — Share and Download act straight
+                from here on the style shown above */}
+            <div className="detail-acts">
+              <button className="btn" onClick={() => run('share')} disabled={busy || !shareable}
+                title={shareable ? undefined : 'This browser can’t pass files to other apps'}>
+                Share
+              </button>
+              <button className="btn" onClick={() => setDownloading(true)} disabled={busy}>
+                Download
+              </button>
             </div>
+            {!shareable && (
+              <p className="field-hint" style={{ marginTop: 10 }}>
+                Sharing to another app isn’t available in this browser — Download saves the image
+                to your device instead.
+              </p>
+            )}
+            {msg && <p className="field-hint" role="status" style={{ marginTop: 10 }}>{msg}</p>}
           </>
         )}
       </div>
 
-      {sharing && (
-        <ShareSheet
+      {downloading && (
+        <DownloadSheet
           heading={month.name}
-          ids={COLLAGE_IDS}
-          names={COLLAGE_NAMES}
-          grounds={COLLAGE_GROUNDS}
-          initial={style}
+          baseName={collageBaseName(month)}
           build={build}
-          exportImages={(s, mode) => shareCollageImage(month, s, mode)}
-          onClose={() => setSharing(false)}
+          shape={settings.exportShape}
+          onShape={(s) => db.settings.update(1, { exportShape: s })}
+          onDownload={async (s) => {
+            const res = await shareCollageImage(month, style, 'download', s)
+            if (res.ok) setMsg('Saved — check your downloads.')
+          }}
+          onClose={() => setDownloading(false)}
         />
       )}
     </div>

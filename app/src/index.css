@@ -96,7 +96,13 @@ img{ max-width:100%; }
 .app-head > span{
   font-size:10.5px; font-weight:500; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-soft);
+  /* the back link never wraps or gets squeezed by a long title beside it */
+  flex:none; white-space:nowrap;
 }
+/* title over caption, where the headline is a real book title and so has to be
+   free to wrap — min-width:0 is what lets it, inside a flex row */
+.head-id{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+.head-id h1{ overflow-wrap:anywhere; }
 
 .ui-lbl{
   font-family:var(--mono); font-size:10.5px; font-weight:500; line-height:1.2;
@@ -116,6 +122,9 @@ img{ max-width:100%; }
   font-family:var(--mono); font-size:11px; font-weight:500;
   letter-spacing:.1em; text-transform:uppercase;
   transition:transform 160ms var(--ease), opacity 160ms var(--ease);
+  /* a <Link className="btn"> is still an anchor and was picking up the UA
+     underline — a button that looks like a hyperlink reads as neither */
+  text-decoration:none;
 }
 .btn:active{ transform:scale(.97); }
 .btn:disabled{ opacity:.4; cursor:default; }
@@ -217,13 +226,16 @@ img{ max-width:100%; }
 .form-sec:first-of-type .form-sec-h{ border-top:0; padding-top:0; }
 .field{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
 .form-sec .field:last-child{ margin-bottom:0; }
-.field input[type="text"], .field input[type="search"], .field input[type="date"], .field textarea, .field select{
+.field input[type="text"], .field input[type="search"], .field input[type="date"], .field input[type="number"], .field textarea, .field select{
   border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
   color:var(--ink); font-family:var(--mono); font-size:13px;
   padding:11px 12px; outline:none; width:100%;
   transition:border-color 160ms var(--ease);
 }
 .field input:focus, .field textarea:focus{ border-color:var(--ink); }
+/* a page count is at most five digits — a full-width box for it reads as a
+   text field and invites a sentence */
+.field input.inp-num{ width:132px; }
 .field textarea{ resize:vertical; min-height:220px; line-height:1.6; }
 .field textarea.hand{
   font-family:var(--hand); font-size:16.5px; line-height:1.74; min-height:300px;
@@ -419,6 +431,11 @@ img{ max-width:100%; }
   background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
   padding:10px 14px 10px 10px; cursor:pointer; text-align:left;
   transition:border-color 160ms var(--ease);
+  /* a <button> does NOT inherit colour — without this the row falls back to the
+     UA's `buttontext`, which stays black in dark mode while everything around
+     it goes pale. .res-a and .res-src set their own colour and so looked fine;
+     only the title gave it away. */
+  color:var(--ink);
 }
 .res-row:hover{ border-color:var(--ink); }
 .res-row img{ width:44px; aspect-ratio:2/3; object-fit:cover; border-radius:2px; background:var(--paper); }
@@ -493,16 +510,56 @@ img{ max-width:100%; }
 .share-sheet-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
 .share-preview-wrap{ overflow:hidden; margin-top:16px; }
 .share-preview-scale{ transform-origin:top left; }
-/* the preview shows exactly what exports: tight pages hugging the card */
-.share-preview-scale .share-page{
-  border:1px solid var(--rule); margin-bottom:20px;
-  height:auto; min-height:0; padding:26px; overflow:visible;
-}
-.share-preview-scale .share-page-no{ position:static; margin-top:18px; }
-.share-preview-scale .share-page-no:empty{ display:none; }
+/* The preview shows exactly what exports, so it adds CHROME ONLY — an edge to
+   see the file's boundary against the sheet, and a gap between pages. Geometry
+   is left entirely to the shape classes the export path applies. This rule used
+   to hardcode the tight height/padding here, which was harmless while tight was
+   the only capture and then silently outranked `--screen` (0,2,0 beats 0,1,0),
+   so switching shape changed the class and nothing else. */
+.share-preview-scale .share-page{ border:1px solid var(--rule); margin-bottom:20px; }
 .share-note{ font-size:11px; line-height:1.5; color:var(--ink-soft); margin-top:10px; }
+/* Share and Download stand side by side — two different destinations, never
+   one folding into the other, and never stacked either: a wrapping flex row put
+   them on separate lines at 360px, which reads as one action above another.
+   Two fixed columns hold the pair at every width; a third action (Save as PDF)
+   is the odd one out and takes the full row under them. */
+.share-acts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
+.share-acts .btn{ min-width:0; justify-content:center; padding:0 12px; }
+.share-acts .btn:last-child:nth-child(odd){ grid-column:1 / -1; }
+
+/* The two actions a card page exists for, straight on the page. Same two-column
+   grid as the sheet's, so the pair never stacks; the minor row underneath holds
+   the things you do less often and wraps freely. */
+.detail-acts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:24px; }
+.detail-acts .btn{ min-width:0; padding:0 12px; }
+.detail-acts--minor{
+  display:flex; flex-wrap:wrap; gap:10px;
+  margin-top:14px; padding-top:18px; border-top:1px solid var(--rule);
+}
+.detail-acts--minor .btn{ flex:1 1 auto; }
 
 /* ── modal sheet (cover picker) — same scrim as the share sheet ── */
+/* size choice in the download sheet — two cards, not a select. The pixel
+   figure is the point of the control, so it gets its own line rather than
+   being tucked into a label. */
+.size-pick{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+.size-pick button{
+  display:flex; flex-direction:column; gap:5px; align-items:flex-start;
+  padding:12px 14px; background:var(--card-w); color:var(--ink);
+  border:1px solid var(--rule); border-radius:3px; cursor:pointer; text-align:left;
+  transition:border-color 160ms var(--ease);
+}
+.size-pick button:hover{ border-color:var(--ink-soft); }
+.size-pick button[aria-pressed="true"]{ border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+.size-pick-n{ font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+/* the measurement is the reason this control exists — it is the only line under
+   the name now that the "for a camera roll" prose is gone, since either shape
+   sits in a camera roll and either one prints */
+.size-pick-px{ font-family:var(--mono); font-size:12px; color:var(--ink); }
+/* the filename is data, not prose — set it in mono so it reads as the literal
+   string that will appear in the downloads folder */
+.dl-name code{ font-family:var(--mono); font-size:10.5px; color:var(--ink); word-break:break-all; }
+
 .modal-sheet{
   width:100%; max-width:520px;
   background:var(--paper); border-radius:4px; border:1px solid var(--rule);
@@ -532,6 +589,20 @@ img{ max-width:100%; }
 }
 .confirm-actions{ display:flex; gap:10px; flex-wrap:wrap; }
 
+/* format chooser — one full-width slip per option, label over explanation */
+.choice-list{ display:flex; flex-direction:column; gap:10px; margin:16px 0 20px; }
+.choice{
+  display:flex; flex-direction:column; gap:5px; text-align:left; width:100%;
+  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
+  padding:14px 16px; cursor:pointer; color:var(--ink);
+  transition:border-color 160ms var(--ease);
+}
+.choice:hover:not(:disabled), .choice:focus-visible{ border-color:var(--ink); }
+.choice:disabled{ cursor:default; opacity:.55; }
+.choice-l{ font-family:var(--mono); font-size:11px; font-weight:500;
+  letter-spacing:.12em; text-transform:uppercase; }
+.choice-d{ font-size:12px; line-height:1.55; color:var(--ink-soft); }
+
 /* onboarding */
 .onb{ min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:32px var(--gutter); }
 .onb-inner{ width:100%; max-width:440px; text-align:center; }
@@ -544,8 +615,46 @@ img{ max-width:100%; }
 /* settings rows */
 .set-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; border-bottom:1px solid var(--rule); }
 .set-row:last-child{ border-bottom:0; }
+/* the action never breaks across two lines — at 360px a two-word label like
+   "Sync now" wrapped while every other button in the app stayed on one */
+.set-row > .btn{ white-space:nowrap; flex:none; }
 .set-row-txt p{ font-size:11px; line-height:1.55; color:var(--ink-soft); margin-top:4px; max-width:380px; }
 .set-row-txt .ui-lbl{ color:var(--ink); }
+
+/* a field that folds. The header is the label row itself, so the closed state
+   costs one line and still shows what is currently picked. */
+.disclose{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  width:100%; padding:0; background:none; border:0; cursor:pointer;
+  text-align:left; color:inherit; font:inherit; min-height:26px;
+}
+.disclose .ui-lbl{ color:var(--ink-soft); }
+.disclose-right{ display:flex; align-items:center; gap:10px; flex:none; }
+.disclose-val{
+  font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink-soft);
+}
+.disclose-chev{ font-size:9px; line-height:1; color:var(--ink-soft); }
+/* the picker needs its own air once open — the label row is flush to it
+   otherwise, and the grid reads as part of the header */
+.disclose[aria-expanded="true"]{ margin-bottom:4px; }
+
+/* about card — what this app is, for the people who look in settings */
+.about{ margin-top:16px; }
+.about-top{ display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.about-top svg{ color:var(--ink); flex:none; }
+.about-name{ font-family:var(--serif); font-size:20px; line-height:1.1; margin-bottom:5px; }
+.about-top .ui-lbl{ color:var(--ink-soft); }
+/* the one block of real prose in the chrome. Mono runs wide, so it caps at a
+   readable measure — this is app furniture, not the review body, which is
+   uncapped on purpose. */
+.about p{ font-size:12px; line-height:1.7; color:var(--ink-soft); max-width:430px; }
+.about p + p{ margin-top:12px; }
+.about-foot{
+  display:flex; flex-wrap:wrap; gap:8px 18px;
+  margin-top:18px; padding-top:16px; border-top:1px solid var(--rule);
+}
+.about-foot .ui-lbl{ color:var(--ink-soft); }
 /* neutral toggle */
 .toggle{
   position:relative; width:44px; height:26px; border-radius:999px; border:0; cursor:pointer;
@@ -662,7 +771,7 @@ img{ max-width:100%; }
 }
 
 /* ── collapsed card preview: long reviews stay hand-sized until opened ── */
-.card-clamp{ position:relative; max-height:420px; overflow:hidden; }
+.card-clamp{ position:relative; max-height:var(--clamp,420px); overflow:hidden; }
 .card-clamp::after{
   content:""; position:absolute; left:0; right:0; bottom:0; height:110px;
   background:linear-gradient(to bottom, transparent, var(--paper));

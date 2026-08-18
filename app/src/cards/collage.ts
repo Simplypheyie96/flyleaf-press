@@ -33,6 +33,56 @@ function moHead(m: MonthData): string {
   </div>`
 }
 
+function stat(label: string, value: string): string {
+  return `<div class="mo-stat"><div class="lbl">${label}</div><div class="mo-stat-v">${value}</div></div>`
+}
+
+/* The month in numbers. Every figure is derived from what the rows actually
+   hold — a stat whose source is missing is left out rather than printed as a
+   zero, so a month where nobody recorded page counts simply shows fewer cells
+   instead of claiming nought pages were read. */
+function moStats(m: MonthData): string {
+  const books = m.books
+  if (!books.length) return ''
+
+  const cells: string[] = [stat('Books', String(books.length))]
+
+  const withPages = books.filter((b) => b.pages)
+  if (withPages.length) {
+    const total = withPages.reduce((s, b) => s + (b.pages || 0), 0)
+    /* just the total. An earlier version appended "of 4" when only some books
+       carried a count; on the card it read as a fraction rather than a caveat,
+       so the figure is now plainly the pages we know about. */
+    cells.push(stat('Pages', total.toLocaleString()))
+    cells.push(stat('Longest', `${Math.max(...withPages.map((b) => b.pages || 0)).toLocaleString()} pp`))
+  }
+
+  const avg = books.reduce((s, b) => s + b.rating, 0) / books.length
+  cells.push(stat('Average', fmtRating(Math.round(avg / 0.25) * 0.25)))
+
+  const best = books.reduce((a, b) => (b.rating > a.rating ? b : a))
+  cells.push(stat('Best', escapeHtml(best.title)))
+
+  /* the format the month was mostly read in — a book counts once per format
+     it carries, since a multi-format read genuinely happened in both */
+  const tally = new Map<string, number>()
+  for (const b of books) for (const f of b.formats) tally.set(f, (tally.get(f) || 0) + 1)
+  const top = [...tally.entries()].sort((a, b) => b[1] - a[1])[0]
+  if (top) cells.push(stat('Mostly', top[0]))
+
+  return `<div class="mo-stats">${cells.join('')}</div>`
+}
+
+/* Columns scale with the month so a long month doesn't become a scroll: lists
+   break into two, grids widen. No hardcoded month size anywhere — the counts
+   below are thresholds, and any number of books is legal. */
+function listCols(n: number): number {
+  return n > 6 ? 2 : 1
+}
+function gridCols(n: number): number {
+  return n > 12 ? 4 : 3
+}
+
 function fmts(b: Review): string {
   return b.formats.join(' · ')
 }
@@ -45,7 +95,8 @@ function contact(m: MonthData): string {
   return `<article class="card c1" style="--rot:-.6deg">
     ${patchC(150)}
     ${moHead(m)}
-    <div class="c1-grid">
+    ${moStats(m)}
+    <div class="c1-grid" style="--cols:${gridCols(m.books.length)}">
       ${m.books.map((b, i) => `
         <div class="c1-cell">
           <div class="c1-no">FR ${String(i + 1).padStart(2, '0')}A</div>
@@ -61,11 +112,13 @@ function contact(m: MonthData): string {
 
 /* C2 · Shelf (butter) — front-facing covers on drawn rails, three to a rail */
 function shelf(m: MonthData): string {
+  const per = gridCols(m.books.length)
   const rows: Review[][] = []
-  for (let i = 0; i < m.books.length; i += 3) rows.push(m.books.slice(i, i + 3))
-  return `<article class="card c2" style="--rot:.5deg">
+  for (let i = 0; i < m.books.length; i += per) rows.push(m.books.slice(i, i + per))
+  return `<article class="card c2" style="--rot:.5deg; --cols:${per}">
     ${patchC(140)}
     ${moHead(m)}
+    ${moStats(m)}
     ${rows.map((row) => `
       <div class="c2-rail">
         ${row.map((b, i) => `
@@ -86,10 +139,12 @@ function shelf(m: MonthData): string {
 
 /* C3 · Tickets (pink) — admission stubs */
 function tickets(m: MonthData): string {
+  const cols = listCols(m.books.length)
   return `<article class="card c3" style="--rot:-.8deg">
     ${patchC(150)}
     ${moHead(m)}
-    <div class="c3-stack">
+    ${moStats(m)}
+    <div class="c3-stack ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
       ${m.books.map((b, i) => `
         <div class="c3-t" style="--tr:${leans[i % leans.length] * 0.7}deg">
           ${cov(b)}
@@ -111,7 +166,8 @@ function pinboard(m: MonthData): string {
   return `<article class="card c4" style="--rot:.7deg">
     ${patchC(130)}
     ${moHead(m)}
-    <div class="c4-board">
+    ${moStats(m)}
+    <div class="c4-board" style="--cols:${gridCols(m.books.length)}">
       ${m.books.map((b, i) => `
         <div class="c4-pin" style="--pr:${leans[i % leans.length] * 1.6}deg">
           <svg class="c4-tack" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -129,17 +185,20 @@ function pinboard(m: MonthData): string {
 
 /* C5 · Ledger (mustard) — the reading register */
 function ledger(m: MonthData): string {
+  const cols = listCols(m.books.length)
   const avg = m.books.reduce((s, b) => s + b.rating, 0) / (m.books.length || 1)
+  const pages = m.books.reduce((s, b) => s + (b.pages || 0), 0)
   return `<article class="card c5" style="--rot:-.5deg">
     ${patchC(140)}
     ${moHead(m)}
-    <div class="c5-tbl">
+    ${moStats(m)}
+    <div class="c5-tbl ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
       ${m.books.map((b) => `
         <div class="c5-r">
           ${cov(b)}
           <div style="min-width:0">
             <div class="c5-name">${escapeHtml(b.title)}</div>
-            <div class="c5-fmt">${escapeHtml(b.author)} · ${fmts(b)}</div>
+            <div class="c5-fmt">${escapeHtml(b.author)} · ${fmts(b)}${b.pages ? ` · ${b.pages} pp` : ''}</div>
           </div>
           <div class="c5-rate">
             <span class="r-num">${fmtRating(b.rating)}</span>
@@ -148,8 +207,10 @@ function ledger(m: MonthData): string {
         </div>`).join('')}
     </div>
     <div class="c5-total">
-      <span class="lbl">Month average</span>
-      <span class="r-num" style="font-size:20px">${fmtRating(Math.round(avg / 0.25) * 0.25)}</span>
+      <span class="lbl">${pages ? 'Pages this month' : 'Month average'}</span>
+      <span class="r-num" style="font-size:20px">${
+        pages ? pages.toLocaleString() : fmtRating(Math.round(avg / 0.25) * 0.25)
+      }</span>
     </div>
   </article>`
 }

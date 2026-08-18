@@ -4,3 +4,7 @@ dev-dist
 *.tsbuildinfo
 .DS_Store
 .vercel
+# local env — .env.example is the one that gets committed
+.env
+.env.local
+.env.*.local

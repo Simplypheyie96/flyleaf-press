@@ -1,14 +1,23 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Review, Settings } from './types'
+import type { Grave, Review, Settings } from './types'
 
 export const db = new Dexie('flyleaf-press') as Dexie & {
   reviews: EntityTable<Review, 'id'>
   settings: EntityTable<Settings, 'id'>
+  graves: EntityTable<Grave, 'key'>
 }
 
 db.version(1).stores({
   reviews: '++id, no, title, author, finished, createdAt',
   settings: 'id',
+})
+/* v2 adds what sync needs: a stamp on every row so the two sides can tell
+   whose copy is newer, and the headstones that let a deletion travel. Both are
+   additive — v1 rows keep their ids and simply have no editedAt yet. */
+db.version(2).stores({
+  reviews: '++id, no, title, author, finished, createdAt, editedAt',
+  settings: 'id',
+  graves: 'key, at',
 })
 
 const SETTINGS_DEFAULTS: Settings = {
@@ -21,6 +30,9 @@ const SETTINGS_DEFAULTS: Settings = {
   pdfEnabled: false,
   theme: 'system',
   shelfView: 'list',
+  /* the paper layout by default — it's the card as the app composed it, and
+     the compact one is a deliberate choice for posting from a phone */
+  exportShape: 'wide',
 }
 
 export async function getSettings(): Promise<Settings> {

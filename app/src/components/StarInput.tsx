@@ -31,7 +31,7 @@ export function StarInput({ value, onChange }: { value: number; onChange: (v: nu
         aria-valuemin={0.25}
         aria-valuemax={5}
         aria-valuenow={value}
-        aria-valuetext={`${fmtRating(value)} of 5`}
+        aria-valuetext={value ? `${fmtRating(value)} of 5` : 'Not yet rated'}
         tabIndex={0}
         onPointerDown={(e) => {
           dragging.current = true
@@ -51,8 +51,12 @@ export function StarInput({ value, onChange }: { value: number; onChange: (v: nu
         }}
         dangerouslySetInnerHTML={{ __html: stars }}
       />
+      {/* 0 means untouched, not zero stars — a review saves with the rating you
+          gave it, never with one the form picked on your behalf */}
       <span className="rate-input-num">
-        {fmtRating(value)}<span className="rate-input-of"> / 5</span>
+        {value
+          ? <>{fmtRating(value)}<span className="rate-input-of"> / 5</span></>
+          : <span className="rate-input-of">Not yet rated</span>}
       </span>
     </div>
   )

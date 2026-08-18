@@ -349,6 +349,30 @@
 .mo-sub{ display:flex; align-items:center; gap:8px; }
 .mo-sub svg{ display:block; opacity:.8; }
 
+/* The month in numbers — a ruled strip under the head, shared by all five
+   styles and inheriting each ground's ink. Cells wrap rather than shrink, so
+   a month with every stat present still reads at 360px. */
+.mo-stats{
+  display:flex; flex-wrap:wrap; gap:18px 30px;
+  padding:14px 0 16px; margin-bottom:20px;
+  border-top:1px solid currentColor; border-bottom:1px solid currentColor;
+  border-color:rgba(27,25,23,.28);
+}
+.mo-stat{ min-width:0; }
+.mo-stat .lbl{
+  font-family:var(--mono); font-size:9px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--meta, var(--ink-soft));
+}
+.mo-stat-v{
+  font-family:var(--serif); font-weight:600; font-size:19px; line-height:1.2;
+  letter-spacing:-.01em; margin-top:5px; font-variant-numeric:tabular-nums;
+  max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  color:var(--tx, var(--ink));
+}
+.c1 .mo-stats{ border-color:rgba(244,242,237,.3); }
+.card-compact .mo-stats{ gap:14px 22px; }
+.card-compact .mo-stat-v{ font-size:16px; max-width:150px; }
+
 .stars-s{ display:inline-flex; gap:2px; vertical-align:-2px; }
 .stars-s svg{ display:block; }
 .r-num{ font-family:var(--serif); font-weight:600; font-variant-numeric:tabular-nums; }
@@ -364,18 +388,22 @@
 
 /* C1 · Contact Sheet (coal) */
 .c1{ background:var(--coal); --tx:var(--cream); --meta:rgba(244,242,237,.6); }
-.c1-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px 16px; }
+.c1-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; }
 .c1-cell{ min-width:0; }
 .c1-no{ font-family:var(--mono); font-size:9px; letter-spacing:.16em; color:var(--meta); margin-bottom:6px; text-transform:uppercase; }
 .c1-meta{ display:flex; align-items:baseline; gap:7px; margin-top:8px; flex-wrap:wrap; }
 .c1 .r-num{ font-size:15px; color:var(--cream); }
 .c1 .patch{ right:-22px; bottom:-24px; opacity:.09; transform:rotate(18deg); }
+/* on a phone the grid is always two up, however long the month is */
 .card-compact .c1-grid{ grid-template-columns:repeat(2,1fr); }
 
 /* C2 · Shelf (butter) */
 .c2{ background:var(--butter); }
-.c2-rail{ display:grid; grid-template-columns:repeat(3,1fr); gap:0 20px;
+.c2-rail{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:0 20px;
   align-items:end; padding:0 4px; }
+/* the rail keeps its JS-decided column count on a phone — the rows were
+   sliced to that width, so overriding it here would wrap a book onto a rail
+   of its own and part it from its rating */
 .card-compact .c2-rail{ gap:0 10px; }
 .c2-book{ position:relative; padding-bottom:14px; min-width:0; }
 .c2-book .cov{ transform:rotate(var(--lean,0deg)); transform-origin:bottom center; }
@@ -390,7 +418,9 @@
 
 /* C3 · Tickets (pink) */
 .c3{ background:var(--pink); }
-.c3-stack{ display:flex; flex-direction:column; gap:14px; }
+/* one column by default; a long month splits into two so the card stays a
+   card rather than a receipt */
+.c3-stack{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); gap:14px; }
 .c3-t{
   display:grid; grid-template-columns:44px 1fr auto; gap:0 14px; align-items:center;
   background:var(--card-w); box-shadow:var(--sh-plate); border-radius:2px;
@@ -409,6 +439,13 @@
 .c3-end .r-num{ font-size:17px; color:var(--accent); }
 .c3-end .stars-s{ margin-top:3px; }
 .c3 .patch{ right:-24px; bottom:30px; opacity:.09; transform:rotate(14deg); }
+/* a split ticket has half the width — the stub shortens with it */
+.c3-stack.is-split .c3-t{ grid-template-columns:36px 1fr auto; padding:9px 12px 9px 9px; }
+.c3-stack.is-split .c3-t::after{ right:64px; }
+.c3-stack.is-split .c3-t .cov{ width:36px; }
+.c3-stack.is-split .c3-name{ font-size:13.5px; }
+.c3-stack.is-split .c3-end{ padding-left:12px; }
+.card-compact .c3-stack{ grid-template-columns:1fr; }
 .card-compact .c3-t{ grid-template-columns:38px 1fr auto; }
 .card-compact .c3-t::after{ right:74px; }
 .card-compact .c3-t .cov{ width:38px; }
@@ -419,7 +456,7 @@
   background-image:
     repeating-linear-gradient(0deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px),
     repeating-linear-gradient(90deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px); }
-.c4-board{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px 18px; }
+.c4-board{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:26px 18px; }
 .c4-pin{ position:relative; min-width:0; transform:rotate(var(--pr,0deg)); }
 .c4-photo{ background:var(--card-w); padding:8px 8px 0; box-shadow:var(--sh-plate); border-radius:2px; }
 .c4-cap{ font-family:var(--hand); font-size:13px; line-height:1.3; color:var(--ink-soft);
@@ -432,6 +469,10 @@
 /* C5 · Ledger (mustard) */
 .c5{ background:var(--mustard); --meta:rgba(27,25,23,.72); }
 .c5-tbl{ border-top:1.5px solid rgba(27,25,23,.55); }
+/* the register runs in two columns once the month is long — each column keeps
+   its own ruled rows, so it still reads as a ledger and not as two cards */
+.c5-tbl.is-split{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:30px; }
+.card-compact .c5-tbl.is-split{ grid-template-columns:1fr; }
 .c5-r{
   display:grid; grid-template-columns:34px 1fr auto; gap:0 14px; align-items:center;
   padding:10px 0; border-bottom:1px solid rgba(27,25,23,.22);
@@ -462,9 +503,15 @@
 }
 .share-page--free{ height:auto; min-height:1018px; overflow:visible; }
 /* tight capture: the exported PNG hugs the card on a slim even mat instead of
-   rasterizing the whole leaf — the padding stays > the tallest overhang (the
-   paperclip and washi tape reach ~20px past the card edge) */
-.share-page--tight{ height:auto; min-height:0; padding:26px; overflow:visible; }
+   rasterizing the whole leaf. The mat has to clear the TALLEST overhang, and
+   the rosette patches — not the paperclip — set that: measured against every
+   style, the worst reach past the card edge is 45px (Field Notes, top), then
+   44 (Masthead, left), 43 (Ledger), 40 (Scrapbook, bottom), 39 (Archive). The
+   earlier 26px was sized against the clip and washi alone and cropped a hard
+   edge through the faint rosette on nine of the ten styles. */
+/* keep in step with MAT in types.ts — the leaf widths are computed from it */
+:root{ --mat:50px; }
+.share-page--tight{ height:auto; min-height:0; padding:var(--mat); overflow:visible; }
 .share-page--tight .share-page-no{ position:static; margin-top:18px; }
 .share-page--tight .share-page-no:empty{ display:none; }
 /* rotate(0) not none — the card must keep its stacking context for the

@@ -11,6 +11,8 @@ export interface Candidate {
   seriesNo?: string
   isbn?: string
   year?: string
+  /** pages in the catalogue's edition — Open Library and Google know, Apple doesn't */
+  pages?: number
   /** candidate cover URLs, best first — the user's pick is an index into this */
   covers: string[]
   source: 'openlibrary' | 'apple' | 'google'
@@ -28,10 +30,16 @@ export function isIsbn(q: string): boolean {
   return /^\d{9}[\dX]$/.test(s) || /^97[89]\d{10}$/.test(s)
 }
 
+/* Open Library only returns the fields you ask for, and the page count is not
+   in the default set — an ISBN lookup without this list came back with every
+   candidate's `pages` undefined, which is what made the Pages field stop
+   auto-filling for the most precise way to search. Both branches ask for it. */
+const OL_FIELDS = 'title,author_name,first_publish_year,isbn,cover_i,number_of_pages_median'
+
 async function searchOpenLibrary(q: string): Promise<Candidate[]> {
   const url = isIsbn(q)
-    ? `https://openlibrary.org/search.json?isbn=${encodeURIComponent(q.replace(/[-\s]/g, ''))}&limit=8`
-    : `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=title,author_name,first_publish_year,isbn,cover_i`
+    ? `https://openlibrary.org/search.json?isbn=${encodeURIComponent(q.replace(/[-\s]/g, ''))}&limit=8&fields=${OL_FIELDS}`
+    : `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=${OL_FIELDS}`
   const res = await fetch(url)
   if (!res.ok) throw new Error('openlibrary ' + res.status)
   const data = await res.json()
@@ -45,6 +53,9 @@ async function searchOpenLibrary(q: string): Promise<Candidate[]> {
       author: (d.author_name || []).join(', ') || 'Unknown',
       isbn,
       year: d.first_publish_year ? String(d.first_publish_year) : undefined,
+      /* the median across every edition Open Library holds — the closest thing
+         to "how long is this book" when we don't know which printing was read */
+      pages: d.number_of_pages_median || undefined,
       covers,
       source: 'openlibrary',
     }
@@ -82,6 +93,7 @@ async function searchGoogle(q: string): Promise<Candidate[]> {
       series: v.seriesInfo?.bookDisplayNumber ? v.seriesInfo?.shortSeriesBookTitle : undefined,
       isbn: isbn13,
       year: v.publishedDate ? v.publishedDate.slice(0, 4) : undefined,
+      pages: v.pageCount || undefined,
       covers,
       source: 'google',
     }
@@ -110,6 +122,8 @@ export async function searchBooks(q: string): Promise<SearchResult> {
         for (const cov of c.covers) if (!existing.covers.includes(cov)) existing.covers.push(cov)
         if (!existing.isbn && c.isbn) existing.isbn = c.isbn
         if (!existing.series && c.series) existing.series = c.series
+        /* a page count from a less-trusted catalogue still beats none */
+        if (!existing.pages && c.pages) existing.pages = c.pages
       } else {
         index.set(key, c)
         merged.push(c)
@@ -117,6 +131,24 @@ export async function searchBooks(q: string): Promise<SearchResult> {
     }
   }
   return { candidates: merged.slice(0, 12), answered, asked: 3 }
+}
+
+/* Last resort for a page count. Apple's ebook API never reports one and
+   Google's quota can run dry, so a candidate picked from either arrives with
+   `pages` empty even though the edition is perfectly well known. If it has an
+   ISBN we can ask Open Library for that exact edition. Returns undefined on
+   any failure — an unknown page count is a fact, and the field stays blank
+   rather than being filled with a guess. */
+export async function pagesForIsbn(isbn: string): Promise<number | undefined> {
+  try {
+    const res = await fetch(`https://openlibrary.org/isbn/${encodeURIComponent(isbn.replace(/[-\s]/g, ''))}.json`)
+    if (!res.ok) return undefined
+    const d = await res.json()
+    const n = Number(d.number_of_pages)
+    return n > 0 ? n : undefined
+  } catch {
+    return undefined
+  }
 }
 
 /* Fetch a cover into a dataURL at pick time so the saved review renders

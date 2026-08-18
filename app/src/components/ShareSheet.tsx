@@ -120,14 +120,25 @@ export function ShareSheet<T extends string>({
             : `${pages} pages — split at a paragraph boundary, shared whole as ${pages} images.`}
         </p>
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
-          {shareable && (
-            <button className="btn" onClick={() => run('share')} disabled={busy}>
-              Share
-            </button>
-          )}
-          <button className={shareable ? 'btn btn--ghost' : 'btn'} onClick={() => run('download')} disabled={busy}>
-            Download {pages > 1 ? `${pages} images` : 'image'}
+        {/* Two different actions, always both on show. Share hands the images to
+            another app; Download writes them to the photo library or downloads
+            folder. Where the browser can't pass files to other apps, Share stays
+            visible but disabled and says why — silently swapping it for Download
+            made one button look like it had turned into the other. */}
+        <div className="share-acts">
+          <button
+            className="btn"
+            onClick={() => run('share')}
+            disabled={busy || !shareable}
+            title={shareable ? undefined : 'This browser can’t pass files to other apps'}
+          >
+            Share
+          </button>
+          <button className="btn btn--ghost" onClick={() => run('download')} disabled={busy}>
+            {/* just "Download" — the line above already says how many images
+                there are, and the longer label was what forced the pair onto
+                two rows at 360px */}
+            Download
           </button>
           {printPdf && (
             <button className="btn btn--ghost" onClick={() => printPdf(style)} disabled={busy}>
@@ -135,6 +146,12 @@ export function ShareSheet<T extends string>({
             </button>
           )}
         </div>
+        {!shareable && (
+          <p className="share-note">
+            Sharing to another app isn’t available in this browser — Download saves the
+            {pages > 1 ? ` ${pages} images` : ' image'} to your device instead.
+          </p>
+        )}
         {done && <p className="share-note">{done}</p>}
       </div>
 

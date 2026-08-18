@@ -5,7 +5,7 @@ import type { Review, StyleId, FormatName, Plate } from '../types'
 import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, FORMAT_NAMES } from '../types'
 import { StarInput } from '../components/StarInput'
 import { StylePicker } from '../components/StylePicker'
-import { coverToDataUrl, searchBooks, type Candidate } from '../catalog'
+import { coverToDataUrl, pagesForIsbn, searchBooks, type Candidate } from '../catalog'
 import { todayIso } from '../format'
 
 const fileToDataUrl = (f: File): Promise<string> =>
@@ -35,10 +35,15 @@ export function Write() {
   const [author, setAuthor] = useState(candidate?.author ?? '')
   const [series, setSeries] = useState(candidate?.series ?? '')
   const [seriesNo, setSeriesNo] = useState(candidate?.seriesNo ?? '')
+  /* held as a string so the field can be emptied — a half-typed "12" must not
+     become 12 and then fight the next keystroke */
+  const [pages, setPages] = useState(candidate?.pages ? String(candidate.pages) : '')
   const [started, setStarted] = useState('')
   const [finished, setFinished] = useState(todayIso())
   const [formats, setFormats] = useState<FormatName[]>([])
-  const [rating, setRating] = useState(3.5)
+  /* 0 is "not yet rated". A form that starts at 3.5 invents an opinion and
+     then prints it on the card as though it were yours. */
+  const [rating, setRating] = useState(0)
   const [body, setBody] = useState('')
   const [style, setStyle] = useState<StyleId>('archive')
   const [plates, setPlates] = useState<Plate[]>([])
@@ -61,6 +66,21 @@ export function Write() {
 
   useEffect(() => {
     getSettings().then((s) => !editing && setStyle(s.defaultStyle))
+  }, [editing])
+
+  /* Apple's ebook API never reports a length and Google's quota can run dry,
+     so a perfectly good candidate often arrives with no page count. If it came
+     with an ISBN, ask Open Library for that exact edition — once, quietly, and
+     only into a field the user hasn't already typed in. */
+  useEffect(() => {
+    if (editing || pages || !candidate?.isbn || candidate.pages) return
+    let live = true
+    pagesForIsbn(candidate.isbn).then((n) => {
+      if (live && n) setPages((cur) => (cur ? cur : String(n)))
+    })
+    return () => { live = false }
+    /* candidate is route state and never changes for a given mount */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing])
 
   /* the focused writing page takes the whole viewport — freeze the page
@@ -91,6 +111,7 @@ export function Write() {
       setExisting(r)
       setTitle(r.title); setAuthor(r.author)
       setSeries(r.series ?? ''); setSeriesNo(r.seriesNo ?? '')
+      setPages(r.pages ? String(r.pages) : '')
       setStarted(r.started ?? ''); setFinished(r.finished)
       setFormats(r.formats); setRating(r.rating)
       setBody(r.body); setStyle(r.style); setPlates(r.plates)
@@ -124,7 +145,7 @@ export function Write() {
   }
 
   const save = async () => {
-    if (!title.trim() || !author.trim() || !body.trim() || formats.length === 0) return
+    if (!canSave) return
     setSaving(true)
     try {
       let cover: string | undefined
@@ -144,10 +165,14 @@ export function Write() {
         cover,
         covers: covers.length ? covers : undefined,
         isbn: existing?.isbn ?? candidate?.isbn,
+        pages: Number(pages) > 0 ? Number(pages) : undefined,
         body: body.trim(),
         plates: plates.map((p) => ({ ...p, caption: p.caption.trim() })),
         style,
         createdAt: existing?.createdAt ?? Date.now(),
+        /* stamped on every save, edits included — this is how a sync knows
+           whose copy of a review is the current one */
+        editedAt: Date.now(),
       }
       const savedId = editing ? (await db.reviews.put({ ...rec, id: Number(id) }), Number(id)) : await db.reviews.add(rec as Review)
       nav(`/review/${savedId}`, { replace: true })
@@ -157,7 +182,23 @@ export function Write() {
   }
 
   if (!loaded) return null
-  const canSave = !!(title.trim() && author.trim() && body.trim() && formats.length)
+  /* named, so the hint can say which piece is actually missing rather than
+     reciting the whole list back at someone who only forgot one */
+  /* The body is NOT on this list. A rating and the two dates are a complete
+     record of having read something — plenty of books get finished without
+     anything worth writing down, and refusing to save one loses the reading
+     as well as the note. What can't be missing is the opinion and the dates:
+     those are what the card, the shelf order, and the monthly collage are
+     built from. */
+  const missing = [
+    !title.trim() && 'a title',
+    !author.trim() && 'an author',
+    !formats.length && 'at least one format',
+    !rating && 'a rating',
+    !started && 'the date you started',
+    !finished && 'the date you finished',
+  ].filter(Boolean) as string[]
+  const canSave = missing.length === 0
   const chosenCover =
     coverIdx === 'upload' ? uploadedCover : typeof coverIdx === 'number' ? covers[coverIdx] : ''
 
@@ -166,7 +207,7 @@ export function Write() {
       <div className="page-inner">
         <header className="app-head">
           <h1>{editing ? 'Edit review' : 'Write the review'}</h1>
-          <span>{editing ? `Nº ${existing?.no}` : 'Step 2 of 2'}</span>
+          <span>{editing ? `Review Nº ${existing?.no}` : 'Step 2 of 2'}</span>
         </header>
 
         <section className="form-sec">
@@ -190,6 +231,16 @@ export function Write() {
               <input id="w-seriesno" type="text" value={seriesNo} placeholder="e.g. Book 1"
                 onChange={(e) => setSeriesNo(e.target.value)} />
             </div>
+          </div>
+          <div className="field">
+            <label className="ui-lbl" htmlFor="w-pages">Pages</label>
+            <input id="w-pages" className="inp-num" type="number" inputMode="numeric" min={1} max={99999}
+              value={pages} placeholder="Auto-filled" onChange={(e) => setPages(e.target.value)} />
+            <p className="field-hint">
+              {candidate?.pages || existing?.pages
+                ? 'From the catalogue — change it if your edition runs a different length.'
+                : 'Feeds the monthly totals. Leave it blank if you’d rather not count.'}
+            </p>
           </div>
           <div className="field">
             <span className="ui-lbl">Cover</span>
@@ -248,7 +299,7 @@ export function Write() {
         <section className="form-sec">
           <h2 className="ui-lbl form-sec-h">The review</h2>
           <div className="field">
-          <label className="ui-lbl" htmlFor="w-body">Write however much you want</label>
+          <label className="ui-lbl" htmlFor="w-body">Write however much you want — or nothing</label>
           <div className="canvas-wrap">
             <textarea id="w-body" className="hand"
               value={body} onChange={(e) => setBody(e.target.value)}
@@ -326,7 +377,9 @@ export function Write() {
         </div>
         {!canSave && (
           <p className="field-hint" style={{ marginTop: 12 }}>
-            Needs a title, an author, at least one format, and the review itself.
+            Still needs {missing.length > 1
+              ? `${missing.slice(0, -1).join(', ')} and ${missing[missing.length - 1]}`
+              : missing[0]}.
           </p>
         )}
       </div>

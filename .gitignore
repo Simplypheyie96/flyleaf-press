@@ -4,5 +4,8 @@ dist/
 dev-dist/
 *.tsbuildinfo
 .vercel
+.env
+.env.local
+.env.*.local
 .playwright-mcp/
 .impeccable/

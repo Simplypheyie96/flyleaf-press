@@ -35,6 +35,12 @@ function meta(label: string, value: string): string {
   return `<div><div class="lbl">${label}</div><div class="val">${value}</div></div>`
 }
 
+/* The extent of the book, in the card's own register. Omitted entirely when
+   nothing knew the length — the card never prints a guess or a dash. */
+function pagesMeta(rec: Review): string {
+  return rec.pages ? meta('Pages', String(rec.pages)) : ''
+}
+
 /* Real cover or nothing — no generated placeholder, ever. */
 function cover(rec: Review, cls?: string): string {
   if (!rec.cover) {
@@ -68,6 +74,10 @@ function plateRow(rec: Review): string {
 
 function body(rec: Review, marginTop: number): string {
   const ps = paragraphs(rec.body).map((p) => `<p>${escapeHtml(p)}</p>`).join('')
+  /* a review can be a rating and two dates with nothing written — that is a
+     complete record of having read something. Emit nothing at all rather than
+     an empty div, whose top margin would leave the card hanging open. */
+  if (!ps) return ''
   return `<div class="body" style="margin-top:${marginTop}px">${ps}</div>`
 }
 
@@ -88,6 +98,7 @@ function archive(rec: Review): string {
       ${cover(rec, 's1-cover')}
       ${meta('Started', prettyDate(rec.started))}
       ${meta('Finished', prettyDate(rec.finished))}
+      ${pagesMeta(rec)}
       <div><div class="lbl">Format</div><div style="margin-top:9px">${fmtLine(rec, true)}</div></div>
       ${rec.series ? meta('Series', `${escapeHtml(rec.series)}${rec.seriesNo ? '<br>' + escapeHtml(rec.seriesNo) : ''}`) : ''}
     </div>
@@ -129,6 +140,7 @@ function masthead(rec: Review): string {
         <div class="s2-meta-row">
           ${meta('Started', prettyDate(rec.started))}
           ${meta('Finished', prettyDate(rec.finished))}
+          ${pagesMeta(rec)}
         </div>
         <div><div class="lbl">Format</div><div style="margin-top:8px">${fmtLine(rec)}</div></div>
       </div>
@@ -155,6 +167,7 @@ function catalogue(rec: Review): string {
       <div class="s3-rate-row">${ratingBlock(rec.rating, 22)}</div>
       <div class="s3-row"><span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span></div>
       <div class="s3-row"><span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span></div>
+      ${rec.pages ? `<div class="s3-row"><span class="lbl">Pages</span><span class="val">${rec.pages}</span></div>` : ''}
       ${rec.series ? `<div class="s3-row"><span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
       <div class="s3-row"><span class="lbl" style="padding-top:1px">Format</span>${fmtLine(rec)}</div>
     </div>
@@ -189,6 +202,7 @@ function scrapbook(rec: Review): string {
         <div class="s4-meta-row">
           ${meta('Started', prettyDate(rec.started))}
           ${meta('Finished', prettyDate(rec.finished))}
+          ${pagesMeta(rec)}
           ${rec.series ? meta('Series', seriesLine(rec)) : ''}
         </div>
         <div><div class="lbl">Format</div><div style="margin-top:8px">${fmtLine(rec)}</div></div>
@@ -217,6 +231,7 @@ function fieldnotes(rec: Review): string {
     <div class="s5-grid">
       <span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span>
       <span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span>
+      ${rec.pages ? `<span class="lbl">Pages</span><span class="val">${rec.pages}</span>` : ''}
       <span class="lbl" style="padding-top:1px">Format</span>${fmtLine(rec)}
     </div>
     <div class="s5-rate">${ratingBlock(rec.rating, 22)}</div>

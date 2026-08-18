@@ -73,16 +73,83 @@ export interface Review {
    */
   covers?: string[]
   isbn?: string
+  /**
+   * Pages in the edition that was actually read. Auto-filled from the
+   * catalogue where one knows, and always editable — catalogues answer for
+   * *an* edition, not the one in someone's hands, and a large-print or
+   * omnibus copy is a different number. Absent when nothing knew and the
+   * reader didn't say; the card then simply omits the line rather than
+   * printing a guess.
+   */
+  pages?: number
   /** the review text — paragraphs separated by blank lines */
   body: string
   plates: Plate[]
   /** the style this review is displayed in; sharing can pick any style */
   style: StyleId
   createdAt: number
+  /**
+   * When this row was last written. Sync needs it: two devices holding the
+   * same book have to agree which side's version of the rating, the body or
+   * the cover is the current one, and a merge that only ever *added* rows
+   * would leave an edit made on the phone invisible on the laptop forever.
+   * Absent on rows written before sync existed — treated as `createdAt`.
+   */
+  editedAt?: number
+}
+
+/**
+ * A review that was deleted, remembered by fingerprint so the deletion can
+ * travel. Without these a merge is one-directional: delete a review on the
+ * phone, and the laptop — which still holds it — puts it straight back on the
+ * next sync. It stores no title-as-content, only the same key the merge
+ * matches on, and the moment it happened.
+ */
+export interface Grave {
+  key: string
+  at: number
 }
 
 export type ThemeChoice = 'system' | 'light' | 'dark'
 export type ShelfView = 'list' | 'covers'
+
+/* Which LAYOUT of the card gets saved — not what resolution, and not what
+   background it sits on. The card CSS carries no media queries; its mobile
+   sizing is the .card-compact class, chosen by whatever box the card is in.
+   So the export can lay the same card out either way:
+     wide  — the paper layout, cover beside the metadata
+     phone — the compact layout, the card at exactly the width a handset gives it
+   Both save as the card on its own mat; only the card's proportions differ.
+   Deliberately not "portrait"/"landscape" — both are taller than they are
+   wide, so that pair would describe neither one. */
+export type ExportShape = 'wide' | 'phone'
+export const EXPORT_SHAPES: readonly ExportShape[] = ['wide', 'phone'] as const
+export const EXPORT_SHAPE_NAMES: Record<ExportShape, string> = {
+  wide: 'Wide layout',
+  phone: 'Phone layout',
+}
+/* One quality for both. Resolution was never the interesting choice here —
+   a 3× file is not "for desktop", it is just a bigger file of the same thing. */
+export const EXPORT_SCALE = 2
+/* The MAT is the same on both shapes and cannot shrink: the rosette patch hangs
+   ~45px past the card's top-right corner in absolute pixels, whatever the card's
+   width, so a slimmer mat would clip it on the narrow shape. Measured, not
+   guessed — see the overhang check in the QA sweep. */
+export const MAT = 50
+/* The width each layout composes the CARD at — the leaf is this plus the mat on
+   both sides. A phone at 390 gives its card 350 after the app's 20px gutters, so
+   that is the width the phone shape must reproduce: setting the LEAF to 390
+   instead squeezed the card to 288, narrower than any handset ever shows it. */
+export const SHAPE_CARD_W: Record<ExportShape, number> = { wide: 620, phone: 350 }
+export const SHAPE_W: Record<ExportShape, number> = {
+  wide: SHAPE_CARD_W.wide + MAT * 2,
+  phone: SHAPE_CARD_W.phone + MAT * 2,
+}
+/* Where a long review splits. The wide leaf is 1:√2 paper; the phone leaf is a
+   real handset viewport, so a phone-layout page is a screenful rather than a
+   third of one — scaling the paper ratio down instead would have quartered the
+   area and turned an ordinary review into four images. */
+export const SHAPE_LEAF_H: Record<ExportShape, number> = { wide: 1018, phone: 844 }
 
 export interface Settings {
   id: number
@@ -97,4 +164,6 @@ export interface Settings {
   /** chrome theme only — the cards are printed objects and never go dark */
   theme: ThemeChoice
   shelfView: ShelfView
+  /** remembered from the download sheet, and reused by Share */
+  exportShape: ExportShape
 }
