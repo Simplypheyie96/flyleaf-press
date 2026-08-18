@@ -204,44 +204,77 @@ function resolveSvgVars(root: HTMLElement): void {
   }
 }
 
-/* Every picture decoded before anything is rasterized. html-to-image paints the
-   DOM by loading it as one big SVG data URL, and an image the browser has not
-   finished decoding is simply not in that paint — which is why a cover or a
-   plate would show in the preview and then be missing from the file, and why
-   going back and doing it again "fixed" it: the second attempt found the image
-   already decoded. Failures are swallowed on purpose; a cover that will not
-   decode is not a reason to refuse to export the review. */
+/* Every picture decoded before anything is rasterized. The rasterizer paints
+   the DOM by loading it as one big SVG, and a picture the browser has not
+   decoded is simply not in that paint — which is why a cover or a plate would
+   show in the preview, be missing from the file, and come back if you went and
+   did it again: the second attempt found it already decoded.
+
+   The obvious way to wait for that is `img.decode()`, and it is a trap. That
+   promise settles when the image has been decoded FOR PRESENTATION, so it
+   waits on the element being painted — and the export host is deliberately
+   never painted. Measured on this app's own cover: `load` fired in 1ms and
+   `decode()` on the same element took 530 SECONDS, against 12ms for an
+   identical image sitting visibly in the page. That is the report of a share
+   that "hangs" and of one that comes back blank, and it is the same fact
+   twice: nothing had decoded when the leaf was serialized.
+
+   `createImageBitmap` decodes on its own account and has no opinion about
+   whether anyone can see the element, so it answers in tens of milliseconds
+   for the same picture. The bitmap is closed immediately — the point is the
+   side effect, that the image is now in the decoded cache the rasterizer will
+   draw from.
+
+   The whole wait is capped at 10s. Failures are swallowed on purpose: a cover
+   that will not decode is not a reason to refuse to export the review, and the
+   leaf is read back afterwards anyway. */
 async function settleImages(pages: HTMLElement[]): Promise<void> {
   const imgs = pages.flatMap((p) => [...p.querySelectorAll('img')])
   await Promise.all(
     imgs.map(async (img) => {
       try {
-        if (!img.complete) {
-          /* The export host is offscreen, and an offscreen image is the first
-             thing a busy renderer defers — measured at 142 SECONDS for one
-             400x600 cover, on the run where the leaf underneath it was 36000px
-             tall. Asking for it explicitly is most of the cure; the 10s race
-             is the rest, because a wait that can be starved indefinitely is
-             not a wait, it is a hang. Losing the race costs the cover in that
-             one file, which is the same thing that happens if the image is
-             simply broken, and is plainly better than an export that never
-             returns. */
-          img.fetchPriority = 'high'
-          img.loading = 'eager'
-          await Promise.race([
-            new Promise<void>((r) => {
-              img.addEventListener('load', () => r(), { once: true })
-              img.addEventListener('error', () => r(), { once: true })
-            }),
-            new Promise<void>((r) => setTimeout(r, 10_000)),
-          ])
-        }
-        await img.decode()
+        img.fetchPriority = 'high'
+        img.loading = 'eager'
+        await Promise.race([
+          (async () => {
+            if (!img.complete)
+              await new Promise<void>((r) => {
+                img.addEventListener('load', () => r(), { once: true })
+                img.addEventListener('error', () => r(), { once: true })
+              })
+            if (img.naturalWidth) (await createImageBitmap(img)).close()
+          })(),
+          new Promise<void>((r) => setTimeout(r, 10_000)),
+        ])
       } catch {
         /* undecodable — let it render as whatever it renders as */
       }
     })
   )
+}
+
+/* Is every pixel in this region the same colour? Used on both ends of the
+   trip — on the way in to note which pictures carry ink, and on the way out to
+   catch one that arrived as an empty rectangle. The tolerance is for JPEG:
+   flat paper does not survive a quantizer perfectly flat. It returns on the
+   first pixel that differs, so a healthy photograph costs a handful of reads
+   and only a genuinely blank region is scanned to the end. */
+function isFlat(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): boolean {
+  if (w < 4 || h < 4) return true
+  let d: Uint8ClampedArray
+  try {
+    d = g.getImageData(x, y, Math.round(w), Math.round(h)).data
+  } catch {
+    /* tainted, so unreadable. "Cannot verify" must mean "carry on", never a
+       thrown export — a check that can refuse to hand over the file is worse
+       than the fault it was added to catch. */
+    return false
+  }
+  const r = d[0], gr = d[1], b = d[2]
+  for (let i = 4; i < d.length; i += 4) {
+    if (Math.abs(d[i] - r) > 8 || Math.abs(d[i + 1] - gr) > 8 || Math.abs(d[i + 2] - b) > 8) return false
+  }
+  return true
 }
 
 /* And then re-drawn, at the size the file will actually use them.
@@ -291,6 +324,11 @@ async function bakeImages(pages: HTMLElement[]): Promise<void> {
       g.fillStyle = PAPER
       g.fillRect(0, 0, cw, ch)
       g.drawImage(img, 0, 0, cw, ch)
+      /* Remember whether this picture has anything in it. It is the only
+         honest way to check the rasterized leaf afterwards: a cover that came
+         out blank and a cover that is genuinely a flat grey rectangle look
+         identical in the output and can only be told apart by what went in. */
+      img.dataset.ink = isFlat(g, 0, 0, cw, ch) ? '0' : '1'
       const baked = c.toDataURL('image/jpeg', 0.92)
       if (baked.length > 32 && baked.length < img.src.length) img.src = baked
     } catch {
@@ -348,6 +386,142 @@ function exportScale(page: HTMLElement): number {
   )
 }
 
+/* The serialized leaf, as an SVG string.
+
+   html-to-image hands it back as a data: URL, and that is the last place in
+   this pipeline where a length ceiling can still bite. The string carries the
+   whole card AND the three embedded faces as base64 — several hundred
+   kilobytes before a single cover is counted — and `encodeURIComponent`
+   inflates every byte that is not URL-safe on top of that. Baking the images
+   took the covers out of the total; it did not take out the fonts, and on
+   WebKit an over-long `img.src` still does not error. It renders blank.
+
+   A blob: URL would lift the ceiling outright, and it is the obvious answer
+   until you try it: an SVG `<img>` loaded from blob: TAINTS the canvas it is
+   drawn into, in Chrome and in WebKit both, so the leaf can be neither read
+   back nor encoded. Measured, not assumed — the first attempt threw
+   SecurityError out of `getImageData`. The data: URL stays, and the ceiling
+   is handled from the other end instead: the covers are baked down to their
+   printed size before they get here, and the leaf is checked after it is
+   drawn (see `onePng`). */
+async function leafSvg(
+  page: HTMLElement,
+  toSvg: (n: HTMLElement, o: Record<string, unknown>) => Promise<string>,
+  fontEmbedCSS: string
+): Promise<string> {
+  const url = await toSvg(page, {
+    width: page.offsetWidth,
+    height: page.offsetHeight,
+    backgroundColor: PAPER,
+    fontEmbedCSS,
+  })
+  return decodeURIComponent(url.slice(url.indexOf(',') + 1))
+}
+
+/* An <img> holding that markup, decoded and ready to draw. `decode()` rather
+   than a load listener: it is the one promise that resolves only when there is
+   a frame ready to paint, which is the guarantee drawImage actually needs. */
+async function svgImage(svg: string): Promise<HTMLImageElement> {
+  const img = new Image()
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  await img.decode()
+  return img
+}
+
+/* Where each picture sits on the leaf, and whether it had anything in it —
+   the map the check below reads. Only pictures `bakeImages` could measure are
+   listed: a cross-origin one it could not draw is one it cannot vouch for
+   either, and guessing there would mean retrying an export forever over an
+   image that was never going to arrive. */
+/* Where each picture that carries ink sits on the leaf, in the leaf's own
+   coordinates. Share pages force `rotate(0deg)` on the card, so these boxes are
+   axis-aligned and can be drawn back into without any transform. */
+type InkBox = { el: HTMLImageElement; x: number; y: number; w: number; h: number }
+function inkedBoxes(page: HTMLElement): InkBox[] {
+  const pr = page.getBoundingClientRect()
+  return [...page.querySelectorAll('img')]
+    .filter((i) => i.dataset.ink === '1')
+    .map((i) => {
+      const r = i.getBoundingClientRect()
+      return { el: i, x: r.left - pr.left, y: r.top - pr.top, w: r.width, h: r.height }
+    })
+}
+
+/* Draw one picture into its own box with `object-fit: cover` semantics — the
+   whole box filled, the overflowing axis cropped evenly at both ends, which is
+   what the card's CSS asks for on both `.cover` and `.plate-photo`. */
+function drawCover(g: CanvasRenderingContext2D, b: InkBox, k: number, dy = 0): void {
+  const nw = b.el.naturalWidth
+  const nh = b.el.naturalHeight
+  if (!nw || !nh) return
+  const scale = Math.max((b.w * k) / nw, (b.h * k) / nh)
+  const sw = (b.w * k) / scale
+  const sh = (b.h * k) / scale
+  /* anything past the edge of the canvas is simply clipped by drawImage, which
+     is what makes the same call correct for a whole leaf and for one band of
+     a leaf that a box straddles */
+  g.drawImage(
+    b.el,
+    (nw - sw) / 2, (nh - sh) / 2, sw, sh,
+    Math.round(b.x * k), Math.round(b.y * k) + dy, Math.round(b.w * k), Math.round(b.h * k)
+  )
+}
+
+/* Sampled well inside each box, so a plate's white border and the rounding at
+   its corners can't be mistaken for the photograph. The sample is clipped to
+   the canvas rather than abandoned when it runs off it: on the banded path a
+   box straddling a seam is only ever partly on either canvas, and a check that
+   gave up there would be blind at exactly the joins. */
+function isMissing(g: CanvasRenderingContext2D, b: InkBox, k: number, dy = 0): boolean {
+  const inset = 0.18
+  const x0 = Math.max(0, Math.round((b.x + b.w * inset) * k))
+  const y0 = Math.max(0, Math.round((b.y + b.h * inset) * k) + dy)
+  const x1 = Math.min(g.canvas.width, Math.round((b.x + b.w * (1 - inset)) * k))
+  const y1 = Math.min(g.canvas.height, Math.round((b.y + b.h * (1 - inset)) * k) + dy)
+  if (x1 - x0 < 4 || y1 - y0 < 4) return false
+  return isFlat(g, x0, y0, x1 - x0, y1 - y0)
+}
+
+/* Every fix above removes a *cause* of a blank picture. This removes the
+   consequence, whatever the cause turns out to be on a device none of us is
+   holding: the leaf is read back, and any photograph that went in and did not
+   come out is painted straight onto the canvas from the <img> we already hold.
+
+   Drawing it back rather than rasterizing the whole leaf again is the point.
+   Serializing is deterministic — a second identical attempt at an operation
+   that just failed is a wish, not a fix, and it costs a second of the reader's
+   time to arrive at the same picture. The <img> is decoded (bakeImages proved
+   it by drawing it once already), the box is axis-aligned, and `object-fit:
+   cover` is four numbers. So the repair cannot fail the way the thing it is
+   repairing failed. It is exactly the "go back and do it again" that used to
+   work, done by the app, before anything is handed to the share sheet. */
+async function onePng(
+  page: HTMLElement,
+  toSvg: (n: HTMLElement, o: Record<string, unknown>) => Promise<string>,
+  fontEmbedCSS: string
+): Promise<Blob> {
+  const k = exportScale(page)
+  const boxes = inkedBoxes(page)
+  const c = document.createElement('canvas')
+  c.width = Math.round(page.offsetWidth * k)
+  c.height = Math.round(page.offsetHeight * k)
+  /* deliberately NOT willReadFrequently: that hint moves the canvas off the
+     GPU, and drawing a leaf-sized SVG onto a software canvas cost 1.4s of a
+     1.7s export — measured. The reads this path makes are a few hundred
+     pixels inside each picture's box, once. */
+  const g = c.getContext('2d')!
+
+  const img = await svgImage(await leafSvg(page, toSvg, fontEmbedCSS))
+  g.fillStyle = PAPER
+  g.fillRect(0, 0, c.width, c.height)
+  g.drawImage(img, 0, 0, c.width, c.height)
+  for (const b of boxes) if (isMissing(g, b, k)) drawCover(g, b, k)
+
+  return new Promise<Blob>((res, rej) =>
+    c.toBlob((b) => (b ? res(b) : rej(new Error('canvas would not encode'))), 'image/png')
+  )
+}
+
 /* One leaf, at full scale, however tall it is.
 
    html-to-image paints by serializing the DOM into a single <svg> and loading
@@ -369,8 +543,8 @@ async function tallPng(
   const w = page.offsetWidth
   const h = page.offsetHeight
   const k = EXPORT_SCALE
-  const url = await toSvg(page, { width: w, height: h, backgroundColor: PAPER, fontEmbedCSS })
-  const inner = decodeURIComponent(url.slice(url.indexOf(',') + 1))
+  const boxes = inkedBoxes(page)
+  const inner = await leafSvg(page, toSvg, fontEmbedCSS)
 
   const dw = Math.round(w * k)
   const dh = Math.round(h * k)
@@ -386,14 +560,14 @@ async function tallPng(
       const svg =
         `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${dhi / k}" ` +
         `viewBox="0 ${top / k} ${w} ${dhi / k}">${inner}</svg>`
-      const img = new Image()
-      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
-      await img.decode()
+      const img = await svgImage(svg)
       canvas.width = dw
       canvas.height = dhi
       ctx.fillStyle = PAPER
       ctx.fillRect(0, 0, dw, dhi)
       ctx.drawImage(img, 0, 0, dw, dhi)
+      /* the same repair as the single-canvas path, band by band */
+      for (const b of boxes) if (isMissing(ctx, b, k, -top)) drawCover(ctx, b, k, -top)
       const px = ctx.getImageData(0, 0, dw, dhi)
       yield { data: px.data, width: dw, height: dhi }
     }
@@ -410,7 +584,7 @@ async function tallPng(
 async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
   /* The rasterizer is a third of the bundle and nobody needs it to read a
      review — it loads the first time someone actually shares. */
-  const { toPng, toSvg } = await import('html-to-image')
+  const { toSvg } = await import('html-to-image')
   await document.fonts.ready
   /* Hand it the faces rather than letting it hunt for them. Left to itself it
      walks document.styleSheets and refetches every @font-face it finds, which
@@ -430,15 +604,7 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
       blobs.push(await tallPng(page, toSvg, fontEmbedCSS))
       continue
     }
-    const dataUrl = await toPng(page, {
-      pixelRatio: exportScale(page),
-      width: page.offsetWidth,
-      height: page.offsetHeight,
-      backgroundColor: PAPER,
-      fontEmbedCSS,
-    })
-    const res = await fetch(dataUrl)
-    blobs.push(await res.blob())
+    blobs.push(await onePng(page, toSvg, fontEmbedCSS))
   }
   return blobs
 }
