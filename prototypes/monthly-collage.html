@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flyleaf Press · monthly collage · five directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&family=Kalam:wght@400;700&display=swap">
+<style>
+:root{
+  --paper:#F4F2ED; --card:#FFFFFF; --ink:#1B1917; --ink-soft:#6B655C;
+  --rule:#E0DBD1; --accent:#C2410C; --accent-fg:#FAF8F4;
+  --mustard:#DCA94C; --butter:#F6EBD9; --coal:#221E1B;
+  --pink:#F3D9DD; --blue:#DAE4EE; --cream:#F4F2ED;
+  --serif:"Playfair Display",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --hand:"Kalam",cursive;
+  --sh-card:0 1px 2px rgba(27,25,23,.05), 0 10px 28px -10px rgba(27,25,23,.11);
+  --sh-plate:0 1px 1px rgba(27,25,23,.06), 0 6px 16px -6px rgba(27,25,23,.14);
+  --ease:cubic-bezier(.2,0,0,1);
+  --pad:28px; --gutter:32px;
+}
+@media (max-width:640px){ :root{ --pad:22px; --gutter:20px; } }
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body,figure,figcaption,h1,h2,h3,p{ margin:0; }
+body{ background:var(--paper); color:var(--ink); font-family:var(--mono);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+
+.app{ min-height:100vh; padding:88px var(--gutter) 100px;
+  display:flex; flex-direction:column; align-items:center; }
+.app-head{
+  width:100%; max-width:680px;
+  display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+  padding-bottom:14px; margin-bottom:40px; border-bottom:1px solid var(--rule);
+}
+.app-head h1{ font-family:var(--serif); font-weight:500; font-size:19px; line-height:1;
+  letter-spacing:-.01em; display:flex; align-items:center; gap:9px; }
+/* the rosette is the Flyleaf Press mark — always the common accent, never
+   Flyleaf's navy and never a per-card colour */
+.app-head h1 svg{ display:block; color:var(--accent); }
+.app-head span{ font-size:10.5px; font-weight:500; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-soft); }
+#stage{ width:100%; max-width:680px; }
+
+/* end-of-month notice — the app raises this when a month closes, inviting the
+   reader to view the month card and share or save it. Chrome, not a card:
+   it wears the common accent theme, never one of the five grounds. */
+.mo-notice{
+  width:100%; max-width:680px; margin:-14px 0 36px;
+  display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;
+  padding:15px 18px; border:1px solid var(--accent); border-radius:2px;
+  background:rgba(194,65,12,.06);
+}
+.mo-notice .lbl{ color:var(--accent); flex:0 0 auto; }
+.mo-notice p{ font-family:var(--serif); font-size:14.5px; line-height:1.45;
+  flex:1 1 240px; min-width:0; }
+.mo-notice button{
+  flex:0 0 auto; font-family:var(--mono); font-size:10.5px; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent-fg); background:var(--accent);
+  border:0; border-radius:2px; padding:10px 15px; cursor:pointer;
+}
+.mo-notice button:hover{ background:#A83809; }
+
+.lbl{ font-family:var(--mono); font-size:10.5px; font-weight:500; line-height:1.2;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--meta,var(--ink-soft)); }
+.serif-t{ font-family:var(--serif); font-weight:600; letter-spacing:-.012em; }
+
+.card{
+  position:relative; border-radius:2px; padding:var(--pad);
+  box-shadow:var(--sh-card); transform:rotate(var(--rot,0deg));
+  animation:rise 220ms var(--ease) both;
+  color:var(--tx,var(--ink));
+  overflow:hidden;
+}
+@keyframes rise{
+  from{ opacity:0; transform:rotate(var(--rot,0deg)) translateY(8px); }
+  to  { opacity:1; transform:rotate(var(--rot,0deg)) translateY(0); }
+}
+@media (prefers-reduced-motion:reduce){ .card{ animation:none; } }
+
+/* collage header, shared */
+.mo-head{ display:flex; align-items:baseline; justify-content:space-between;
+  gap:12px; flex-wrap:wrap; margin-bottom:22px; }
+.mo-title{ font-family:var(--serif); font-weight:600; font-size:26px; letter-spacing:-.012em; }
+.mo-sub{ display:flex; align-items:center; gap:8px; }
+.mo-sub svg{ display:block; opacity:.8; }
+
+/* stars, small — same geometry as the review card, outline always drawn */
+.stars-s{ display:inline-flex; gap:2px; vertical-align:-2px; }
+.stars-s svg{ display:block; }
+.r-num{ font-family:var(--serif); font-weight:600; font-variant-numeric:tabular-nums; }
+
+.cov{ display:block; width:100%; height:auto; aspect-ratio:2/3; object-fit:cover;
+  border-radius:1.5px; box-shadow:var(--sh-plate); background:var(--paper); }
+.cov-miss{
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  aspect-ratio:2/3; border:1px dashed rgba(27,25,23,.3); border-radius:1.5px; padding:8px;
+  font-size:8px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--meta,var(--ink-soft));
+}
+.patch{ position:absolute; pointer-events:none; color:var(--tx,var(--ink)); }
+
+/* ── C1 · Contact Sheet — the archivist's proof grid (coal) ── */
+.c1{ background:var(--coal); --tx:var(--cream); --meta:rgba(244,242,237,.6); }
+.c1-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px 16px; }
+.c1-cell{ min-width:0; }
+.c1-no{ font-size:9px; letter-spacing:.16em; color:var(--meta); margin-bottom:6px; }
+.c1-meta{ display:flex; align-items:baseline; gap:7px; margin-top:8px; flex-wrap:wrap; }
+.c1 .r-num{ font-size:15px; color:var(--cream); }
+.c1 .patch{ right:-22px; bottom:-24px; opacity:.09; transform:rotate(18deg); }
+@media (max-width:640px){ .c1-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* ── C2 · Shelf — front-facing covers standing on drawn rails; every cover
+      fully visible, none spine-out, none occluded (per feedback) ── */
+.c2{ background:var(--butter); }
+.c2-rail{ display:grid; grid-template-columns:repeat(3,1fr); gap:0 20px;
+  align-items:end; padding:0 4px; }
+.c2-book{ position:relative; padding-bottom:14px; min-width:0; }
+.c2-book .cov{ transform:rotate(var(--lean,0deg)); transform-origin:bottom center; }
+.c2-edge{ height:5px; background:var(--ink); opacity:.75; border-radius:1px;
+  margin:0 -12px; position:relative; }
+.c2-edge::after{ content:""; position:absolute; left:6px; right:-4px; top:5px; height:4px;
+  background:rgba(27,25,23,.16); transform:skewX(-42deg); }
+.c2-meta{ text-align:center; padding-top:12px; }
+.c2 .r-num{ font-size:14px; }
+.c2-stars{ margin-top:3px; }
+.c2 .patch{ left:-26px; top:-20px; opacity:.08; transform:rotate(-12deg); }
+@media (max-width:640px){ .c2-rail{ grid-template-columns:repeat(3,1fr); gap:0 10px; } }
+
+/* ── C3 · Ticket stubs — perforated admissions (pink) ── */
+.c3{ background:var(--pink); }
+.c3-stack{ display:flex; flex-direction:column; gap:14px; }
+.c3-t{
+  display:grid; grid-template-columns:44px 1fr auto; gap:0 14px; align-items:center;
+  background:var(--card); box-shadow:var(--sh-plate); border-radius:2px;
+  padding:10px 14px 10px 10px;
+  transform:rotate(var(--tr,0deg));
+  position:relative;
+}
+.c3-t::after{ /* perforation before the stub end */
+  content:""; position:absolute; right:86px; top:4px; bottom:4px; width:0;
+  border-right:2px dashed var(--rule);
+}
+.c3-t .cov{ width:44px; }
+.c3-name{ font-family:var(--serif); font-weight:600; font-size:15px; letter-spacing:-.01em; line-height:1.2; }
+.c3-adm{ font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
+.c3-end{ text-align:right; padding-left:18px; }
+.c3-end .r-num{ font-size:17px; color:var(--accent); }
+.c3-end .stars-s{ margin-top:3px; }
+.c3 .patch{ right:-24px; bottom:30px; opacity:.09; transform:rotate(14deg); }
+@media (max-width:640px){
+  .c3-t{ grid-template-columns:38px 1fr auto; }
+  .c3-t::after{ right:74px; }
+  .c3-t .cov{ width:38px; }
+  .c3-name{ font-size:13.5px; }
+}
+
+/* ── C4 · Pinboard — covers pinned at angles, minimal overlap (blue) ── */
+.c4{ background:var(--blue);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px); }
+.c4-board{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px 18px; }
+.c4-pin{ position:relative; min-width:0; transform:rotate(var(--pr,0deg)); }
+.c4-photo{ background:var(--card); padding:8px 8px 0; box-shadow:var(--sh-plate); border-radius:2px; }
+.c4-cap{ font-family:var(--hand); font-size:13px; line-height:1.3; color:var(--ink-soft);
+  padding:6px 2px 8px; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
+.c4-cap .r-num{ font-family:var(--hand); font-weight:700; font-size:13.5px; color:var(--accent); }
+.c4-tack{ position:absolute; top:-7px; left:50%; margin-left:-7px; z-index:2; }
+.c4 .patch{ left:50%; bottom:-30px; margin-left:-60px; opacity:.08; }
+@media (max-width:640px){ .c4-board{ grid-template-columns:repeat(2,1fr); gap:22px 14px; } }
+
+/* ── C5 · Ledger — the reading register, ruled rows (mustard) ── */
+.c5{ background:var(--mustard); --meta:rgba(27,25,23,.72); }
+.c5-tbl{ border-top:1.5px solid rgba(27,25,23,.55); }
+.c5-r{
+  display:grid; grid-template-columns:34px 1fr auto; gap:0 14px; align-items:center;
+  padding:10px 0; border-bottom:1px solid rgba(27,25,23,.22);
+}
+.c5-r .cov{ width:34px; }
+.c5-name{ font-family:var(--serif); font-weight:600; font-size:15px; line-height:1.25; letter-spacing:-.01em; min-width:0; }
+.c5-fmt{ font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--meta); margin-top:3px; }
+.c5-rate{ text-align:right; }
+.c5-rate .r-num{ font-size:16px; }
+.c5-rate .stars-s{ margin-top:2px; }
+.c5-total{ display:flex; justify-content:space-between; align-items:baseline; padding-top:14px; }
+.c5 .patch{ right:-28px; top:-26px; opacity:.10; transform:rotate(20deg); }
+@media (max-width:640px){ .c5-name{ font-size:13.5px; } }
+
+/* ── picker — verbatim from PICKER.md ── */
+.proto-picker{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  z-index:2147483647;
+  display:flex; align-items:center; gap:2px; padding:4px;
+  border-radius:999px;
+  background:rgba(10,10,10,.82);
+  -webkit-backdrop-filter:blur(12px) saturate(1.4);
+  backdrop-filter:blur(12px) saturate(1.4);
+  box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 8px 24px rgba(0,0,0,.24),0 2px 6px rgba(0,0,0,.12);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:13px; line-height:1;
+  -webkit-font-smoothing:antialiased;
+  user-select:none; -webkit-user-select:none;
+}
+.proto-picker-highlight{
+  position:absolute; top:4px; left:0; height:28px;
+  border-radius:999px; background:rgba(255,255,255,.12); will-change:transform;
+}
+.proto-picker[data-ready] .proto-picker-highlight{
+  transition:transform 250ms cubic-bezier(.23,1,.32,1),width 250ms cubic-bezier(.23,1,.32,1);
+}
+@media (prefers-reduced-motion:reduce){
+  .proto-picker[data-ready] .proto-picker-highlight{ transition:none; }
+}
+.proto-picker-item{
+  position:relative; display:flex; align-items:center;
+  height:28px; padding:0 12px; border:0; border-radius:999px;
+  background:transparent; color:rgba(255,255,255,.55);
+  font:inherit; cursor:pointer; transition:color 150ms ease-out;
+}
+.proto-picker-item:hover{ color:rgba(255,255,255,.85); }
+.proto-picker-item:active{ transform:scale(.97); }
+.proto-picker-item:focus-visible{ outline:2px solid rgba(255,255,255,.4); outline-offset:2px; }
+.proto-picker-item[data-active]{ color:#fff; }
+.proto-picker-divider{ width:1px; height:16px; margin:0 4px; background:rgba(255,255,255,.12); }
+.proto-picker-replay{ padding:0 10px; font-size:14px; }
+.proto-picker[data-position="top"]{ bottom:auto; top:24px; }
+@media (max-width:640px){
+  .proto-picker{ max-width:calc(100vw - 16px); overflow-x:auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-head">
+    <h1><span id="head-mark"></span>Flyleaf Press</h1>
+    <span id="head-count">July 2026</span>
+  </header>
+  <aside class="mo-notice" role="status">
+    <span class="lbl">End of month</span>
+    <p>July has ended — your month card is ready. Pick a style below, then share or save it.</p>
+    <button type="button" onclick="document.getElementById('stage').scrollIntoView({behavior:'smooth'})">View month card</button>
+  </aside>
+  <div id="stage"></div>
+</div>
+
+<nav class="proto-picker" data-position="top" aria-label="Prototype variants">
+  <span class="proto-picker-highlight" aria-hidden="true"></span>
+  <button class="proto-picker-item" data-active aria-current="true">Contact Sheet</button>
+  <button class="proto-picker-item">Shelf</button>
+  <button class="proto-picker-item">Tickets</button>
+  <button class="proto-picker-item">Pinboard</button>
+  <button class="proto-picker-item">Ledger</button>
+  <span class="proto-picker-divider" aria-hidden="true"></span>
+  <button class="proto-picker-item proto-picker-replay" aria-label="Replay animation (R)">↻</button>
+</nav>
+
+<script>
+/* July 2026 — a heavy month on purpose: the collage must hold a real reader's
+   volume, up to ~20 books, not a tidy six. Ratings still cover halves and
+   quarters. `?n=6` (or any count) trims the seed to test lighter months. */
+const ALL_BOOKS = [
+  { t:'The Fifth Season',                    a:'N. K. Jemisin',        isbn:'9780316229296', r:4.75, f:'Audio · Physical' },
+  { t:'The Obelisk Gate',                    a:'N. K. Jemisin',        isbn:'9780316229265', r:4.5,  f:'Audio' },
+  { t:'Piranesi',                            a:'Susanna Clarke',       isbn:'9781635575637', r:5,    f:'Physical' },
+  { t:'Project Hail Mary',                   a:'Andy Weir',            isbn:'9780593135204', r:4.25, f:'Ebook' },
+  { t:'Circe',                               a:'Madeline Miller',      isbn:'9780316556347', r:3.5,  f:'Ebook · Audio' },
+  { t:'Tomorrow, and Tomorrow, and Tomorrow',a:'Gabrielle Zevin',      isbn:'9780593321201', r:2.75, f:'Physical' },
+  { t:'Babel',                               a:'R. F. Kuang',          isbn:'9780063021426', r:4,    f:'Physical' },
+  { t:'The Stone Sky',                       a:'N. K. Jemisin',        isbn:'9780316229241', r:5,    f:'Audio' },
+  { t:'Klara and the Sun',                   a:'Kazuo Ishiguro',       isbn:'9780593318171', r:3.75, f:'Ebook' },
+  { t:'The Song of Achilles',                a:'Madeline Miller',      isbn:'9780062060624', r:4.5,  f:'Physical' },
+  { t:'Mexican Gothic',                      a:'Silvia Moreno-Garcia', isbn:'9780525620785', r:3.25, f:'Ebook' },
+  { t:'The House in the Cerulean Sea',       a:'TJ Klune',             isbn:'9781250217288', r:4.25, f:'Audio' },
+  { t:'A Memory Called Empire',              a:'Arkady Martine',       isbn:'9781250186430', r:4,    f:'Ebook' },
+  { t:'Gideon the Ninth',                    a:'Tamsyn Muir',          isbn:'9781250313195', r:4.75, f:'Physical' },
+  { t:'Pachinko',                            a:'Min Jin Lee',          isbn:'9781455563937', r:4.5,  f:'Physical · Ebook' },
+  { t:'The Ocean at the End of the Lane',    a:'Neil Gaiman',          isbn:'9780062255655', r:3.5,  f:'Audio' },
+  { t:'Station Eleven',                      a:'Emily St. John Mandel',isbn:'9780804172448', r:4.25, f:'Ebook' },
+  { t:'The Priory of the Orange Tree',       a:'Samantha Shannon',     isbn:'9781635570298', r:3.75, f:'Physical' },
+  { t:'Sea of Tranquility',                  a:'Emily St. John Mandel',isbn:'9780593321447', r:4,    f:'Ebook · Audio' },
+  { t:'This Is How You Lose the Time War',   a:'Amal El-Mohtar & Max Gladstone', isbn:'9781534431003', r:5, f:'Physical' },
+];
+const COUNT = Math.max(1, Math.min(ALL_BOOKS.length,
+  parseInt(new URLSearchParams(location.search).get('n'), 10) || ALL_BOOKS.length));
+const MONTH = { name:'July 2026', books: ALL_BOOKS.slice(0, COUNT) };
+document.getElementById('head-count').textContent =
+  `${MONTH.name} · ${MONTH.books.length} book${MONTH.books.length === 1 ? '' : 's'}`;
+
+const MARK = 'M256 57.6 A74.67 59.73 -90 1 1 256 206.93 A74.67 59.73 -90 1 1 256 57.6 Z M444.69 194.69 A74.67 59.73 -18 1 1 302.66 240.85 A74.67 59.73 -18 1 1 444.69 194.69 Z M372.61 416.51 A74.67 59.73 54 1 1 284.84 295.68 A74.67 59.73 54 1 1 372.61 416.51 Z M139.39 416.51 A74.67 59.73 126 1 1 227.16 295.68 A74.67 59.73 126 1 1 139.39 416.51 Z M67.31 194.69 A74.67 59.73 198 1 1 209.34 240.85 A74.67 59.73 198 1 1 67.31 194.69 Z M217.6 256 A38.4 38.4 0 1 1 294.4 256 A38.4 38.4 0 1 1 217.6 256 Z';
+function mark(size){
+  return `<svg width="${size}" height="${size}" viewBox="0 0 512 512" aria-hidden="true"><path d="${MARK}" fill="currentColor"/></svg>`;
+}
+function patch(size){ return `<span class="patch" aria-hidden="true">${mark(size)}</span>`; }
+document.getElementById('head-mark').innerHTML = mark(15);
+
+/* stars — same geometry as the card file: clipped fill + always-on outline */
+const STAR = 'M12 2.4l2.95 5.98 6.6.96-4.77 4.65 1.12 6.57L12 17.47l-5.9 3.1 1.12-6.57L2.45 9.34l6.6-.96z';
+let uid = 0;
+function starSvg(fill, size, fillCol, lineCol){
+  const id = 'c' + (++uid);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">
+    ${fill > 0 ? `<clipPath id="${id}"><rect width="${(fill*24).toFixed(3)}" height="24"/></clipPath>
+    <path d="${STAR}" fill="${fillCol}" clip-path="url(#${id})"/>` : ''}
+    <path d="${STAR}" fill="none" stroke="${lineCol}" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>`;
+}
+function starsS(r, size, fillCol, lineCol){
+  let out = '';
+  for (let i = 0; i < 5; i++) out += starSvg(Math.max(0, Math.min(1, r - i)), size, fillCol, lineCol);
+  return `<span class="stars-s" role="img" aria-label="${r} out of 5">${out}</span>`;
+}
+function num(r){ return String(+r.toFixed(2)); }
+/* local catalogue snapshot first (Apple Books art, fetched once), then live
+   openlibrary, then the honest no-cover state — the live host 502s under load
+   and a demo must not go blank because a catalogue had a bad afternoon */
+function cov(b, cls){
+  return `<img class="cov ${cls || ''}" alt="Cover of ${b.t}" loading="lazy"
+    src="covers-cache/${b.isbn}.jpg"
+    onerror="if(!this.dataset.retried){this.dataset.retried=1;this.src='https://covers.openlibrary.org/b/isbn/${b.isbn}-M.jpg?default=false';}else{this.outerHTML='&lt;div class=\\'cov-miss ${cls || ''}\\'&gt;No cover&lt;/div&gt;'}">`;
+}
+function moHead(){
+  return `<div class="mo-head">
+    <div class="mo-title">${MONTH.name}</div>
+    <div class="mo-sub">${mark(13)}<span class="lbl">${MONTH.books.length} books · Flyleaf Press</span></div>
+  </div>`;
+}
+
+const leans = [-1.6, .8, -0.6, 1.4, -1, .6];
+
+/* C1 · Contact Sheet (coal) — the proof grid */
+function contactSheet(){
+  const ink = 'var(--mustard)', line = 'rgba(244,242,237,.55)';
+  return `<article class="card c1" style="--rot:-.6deg">
+    ${patch(150)}
+    ${moHead()}
+    <div class="c1-grid">
+      ${MONTH.books.map((b, i) => `
+        <div class="c1-cell">
+          <div class="c1-no">FR ${String(i + 1).padStart(2, '0')}A</div>
+          ${cov(b)}
+          <div class="c1-meta">
+            <span class="r-num">${num(b.r)}</span>
+            ${starsS(b.r, 11, ink, line)}
+          </div>
+        </div>`).join('')}
+    </div>
+  </article>`;
+}
+
+/* C2 · Shelf (butter) — front-facing, every cover fully visible on its rail */
+function shelf(){
+  /* any month size: shelve three to a rail, as many rails as the month needs */
+  const rows = [];
+  for (let i = 0; i < MONTH.books.length; i += 3) rows.push(MONTH.books.slice(i, i + 3));
+  return `<article class="card c2" style="--rot:.5deg">
+    ${patch(140)}
+    ${moHead()}
+    ${rows.map(row => `
+      <div class="c2-rail">
+        ${row.map((b, i) => `
+          <div class="c2-book" style="--lean:${leans[i % leans.length]}deg">
+            ${cov(b)}
+          </div>`).join('')}
+      </div>
+      <div class="c2-edge"></div>
+      <div class="c2-rail" style="align-items:start; margin-bottom:26px">
+        ${row.map(b => `
+          <div class="c2-meta">
+            <span class="r-num">${num(b.r)}</span>
+            <div class="c2-stars">${starsS(b.r, 10, 'var(--ink)', 'rgba(27,25,23,.5)')}</div>
+          </div>`).join('')}
+      </div>`).join('')}
+  </article>`;
+}
+
+/* C3 · Tickets (pink) — admission stubs */
+function tickets(){
+  return `<article class="card c3" style="--rot:-.8deg">
+    ${patch(150)}
+    ${moHead()}
+    <div class="c3-stack">
+      ${MONTH.books.map((b, i) => `
+        <div class="c3-t" style="--tr:${leans[i % leans.length] * .7}deg">
+          ${cov(b)}
+          <div style="min-width:0; padding-right:14px">
+            <div class="c3-name">${b.t}</div>
+            <div class="c3-adm">Admit one · ${b.f}</div>
+          </div>
+          <div class="c3-end">
+            <span class="r-num">${num(b.r)}</span>
+            <div>${starsS(b.r, 10, 'var(--accent)', 'rgba(27,25,23,.4)')}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </article>`;
+}
+
+/* C4 · Pinboard (blue) — pinned prints, no cover ever hidden */
+function pinboard(){
+  return `<article class="card c4" style="--rot:.7deg">
+    ${patch(130)}
+    ${moHead()}
+    <div class="c4-board">
+      ${MONTH.books.map((b, i) => `
+        <div class="c4-pin" style="--pr:${leans[i % leans.length] * 1.6}deg">
+          <svg class="c4-tack" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.4" fill="var(--accent)"/>
+            <circle cx="5.4" cy="5.4" r="1.7" fill="rgba(255,255,255,.55)"/>
+          </svg>
+          <div class="c4-photo">
+            ${cov(b)}
+            <div class="c4-cap"><span class="r-num">${num(b.r)}</span>${starsS(b.r, 10, 'var(--ink)', 'rgba(27,25,23,.45)')}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </article>`;
+}
+
+/* C5 · Ledger (mustard) — the reading register */
+function ledger(){
+  const avg = MONTH.books.reduce((s, b) => s + b.r, 0) / MONTH.books.length;
+  return `<article class="card c5" style="--rot:-.5deg">
+    ${patch(140)}
+    ${moHead()}
+    <div class="c5-tbl">
+      ${MONTH.books.map(b => `
+        <div class="c5-r">
+          ${cov(b)}
+          <div style="min-width:0">
+            <div class="c5-name">${b.t}</div>
+            <div class="c5-fmt">${b.a} · ${b.f}</div>
+          </div>
+          <div class="c5-rate">
+            <span class="r-num">${num(b.r)}</span>
+            <div>${starsS(b.r, 10, 'var(--ink)', 'rgba(27,25,23,.55)')}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="c5-total">
+      <span class="lbl">Month average</span>
+      <span class="r-num" style="font-size:20px">${num(Math.round(avg / .25) * .25)}</span>
+    </div>
+  </article>`;
+}
+
+const variants = [contactSheet, shelf, tickets, pinboard, ledger];
+
+/* picker wiring — from PICKER.md */
+const stage = document.getElementById('stage');
+const picker = document.querySelector('.proto-picker');
+const highlight = picker.querySelector('.proto-picker-highlight');
+const items = [...picker.querySelectorAll('.proto-picker-item:not(.proto-picker-replay)')];
+const replay = picker.querySelector('.proto-picker-replay');
+let current = 0;
+
+function moveHighlight(){
+  const el = items[current];
+  highlight.style.width = el.offsetWidth + 'px';
+  highlight.style.transform = `translateX(${el.offsetLeft}px)`;
+}
+function mount(i){
+  stage.innerHTML = '';
+  requestAnimationFrame(() => { stage.innerHTML = variants[i](); });
+}
+function setActive(i){
+  if (i < 0 || i >= variants.length) return;
+  current = i;
+  items.forEach((el, j) => {
+    el.toggleAttribute('data-active', j === i);
+    if (j === i) el.setAttribute('aria-current', 'true');
+    else el.removeAttribute('aria-current');
+  });
+  moveHighlight();
+  const url = new URL(location);
+  url.searchParams.set('v', i + 1);
+  history.replaceState(null, '', url);
+  mount(i);
+}
+items.forEach((el, i) => el.addEventListener('click', () => setActive(i)));
+replay?.addEventListener('click', () => mount(current));
+window.addEventListener('resize', moveHighlight);
+document.addEventListener('keydown', (e) => {
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const n = parseInt(e.key, 10);
+  if (n >= 1 && n <= variants.length) setActive(n - 1);
+  else if (e.key === 'ArrowRight') setActive((current + 1) % variants.length);
+  else if (e.key === 'ArrowLeft') setActive((current - 1 + variants.length) % variants.length);
+  else if (e.key === 'r' || e.key === 'R') mount(current);
+});
+setActive((parseInt(new URLSearchParams(location.search).get('v'), 10) || 1) - 1);
+requestAnimationFrame(() => requestAnimationFrame(() => picker.setAttribute('data-ready', '')));
+</script>
+</body>
+</html>

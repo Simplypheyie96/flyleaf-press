@@ -1,0 +1,1307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flyleaf Press · review card · five directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&family=Kalam:wght@400;700&display=swap">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   Tokens — from DESIGN.md. Do not invent values here.
+   Five card grounds: mustard · butter · coal · pink · blue.
+   Slate is retired.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --paper:#F4F2ED;
+  --card:#FFFFFF;
+  --ink:#1B1917;
+  --ink-soft:#6B655C;
+  --rule:#E0DBD1;
+  --accent:#C2410C;
+  --accent-fg:#FAF8F4;
+  --mustard:#DCA94C;
+  --butter:#F6EBD9;
+  --coal:#221E1B;
+  --pink:#F3D9DD;
+  --blue:#DAE4EE;
+  --cream:#F4F2ED;
+
+  --serif:"Playfair Display",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --hand:"Kalam",cursive;
+
+  --sh-card:0 1px 2px rgba(27,25,23,.05), 0 10px 28px -10px rgba(27,25,23,.11);
+  --sh-plate:0 1px 1px rgba(27,25,23,.06), 0 6px 16px -6px rgba(27,25,23,.14);
+  --sh-nav:0 2px 6px rgba(27,25,23,.07), 0 14px 32px -12px rgba(27,25,23,.16);
+
+  --ease:cubic-bezier(.2,0,0,1);
+  --pad:28px;
+  --gutter:32px;
+}
+@media (max-width:640px){ :root{ --pad:22px; --gutter:20px; } }
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body,figure,figcaption,h1,h2,h3,p{ margin:0; }
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--mono);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Surrounding context
+   ───────────────────────────────────────────────────────────── */
+.app{
+  min-height:100vh;
+  padding:88px var(--gutter) 148px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  overflow-x:clip;   /* decorative bleeds (tape, clips, stickers) never scroll the page */
+}
+.app-head{
+  width:100%;
+  max-width:680px;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:16px;
+  padding-bottom:14px;
+  margin-bottom:40px;
+  border-bottom:1px solid var(--rule);
+}
+.app-head h1{
+  font-family:var(--serif);
+  font-weight:500;
+  font-size:19px;
+  line-height:1;
+  letter-spacing:-.01em;
+  display:flex; align-items:center; gap:9px;
+}
+/* the rosette is the Flyleaf Press mark — always the common accent, never
+   Flyleaf's navy and never a per-card colour */
+.app-head h1 svg{ display:block; color:var(--accent); }
+.app-head span{
+  font-size:10.5px;
+  font-weight:500;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+#stage{ width:100%; max-width:680px; }
+
+/* App pill nav — bottom-centred, so the picker moves to top */
+.nav{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  z-index:40;
+  display:flex; align-items:center; gap:4px;
+  padding:5px; border-radius:999px;
+  background:var(--card); box-shadow:var(--sh-nav);
+}
+.nav button{
+  border:0; cursor:pointer;
+  height:32px; padding:0 16px; border-radius:999px;
+  background:transparent; color:var(--ink-soft);
+  font-family:var(--mono); font-size:11px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  transition:color 180ms var(--ease), background 180ms var(--ease);
+}
+.nav button:hover{ color:var(--ink); }
+.nav button[aria-current]{ background:var(--ink); color:var(--accent-fg); }
+
+/* ─────────────────────────────────────────────────────────────
+   Shared review-card parts
+   ───────────────────────────────────────────────────────────── */
+.card{
+  position:relative;
+  border-radius:2px;
+  padding:var(--pad);
+  box-shadow:var(--sh-card);
+  transform:rotate(var(--rot,0deg));
+  animation:rise 220ms var(--ease) both;
+  color:var(--tx);
+}
+@keyframes rise{
+  from{ opacity:0; transform:rotate(var(--rot,0deg)) translateY(8px); }
+  to  { opacity:1; transform:rotate(var(--rot,0deg)) translateY(0); }
+}
+@media (prefers-reduced-motion:reduce){ .card{ animation:none; } }
+
+/* Base first, ground modifiers after — equal specificity, source order wins.
+   --tx is the card's text colour (ink everywhere except coal).
+   --star / --star-line: the fill and the always-drawn cell outline. The outline
+   is what makes a quarter or half fill legible — the empty part of the cell
+   stays a visible drawn shape instead of vanishing into the ground. */
+.card{
+  --tx:var(--ink);
+  --meta:var(--ink-soft);
+  --num:var(--accent);
+  --hair:var(--rule);
+  --star:var(--mustard);
+  --star-line:rgba(27,25,23,.58);
+  --plate-g:var(--card);
+  background:var(--butter);
+}
+.card--mustard{
+  background:var(--mustard);
+  --meta:rgba(27,25,23,.72); --num:var(--ink);
+  --hair:rgba(27,25,23,.18);
+  --star:var(--ink); --star-line:rgba(27,25,23,.62);
+}
+.card--coal{
+  background:var(--coal);
+  --tx:var(--cream);
+  --meta:rgba(244,242,237,.66); --num:var(--cream);
+  --hair:rgba(244,242,237,.22);
+  --star:var(--mustard); --star-line:rgba(244,242,237,.55);
+}
+.card--pink{
+  background:var(--pink);
+  --hair:rgba(27,25,23,.14);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+.card--blue{
+  background:var(--blue);
+  --hair:rgba(27,25,23,.14);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+
+.lbl{
+  font-family:var(--mono); font-size:10.5px; font-weight:500; line-height:1.2;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--meta);
+}
+.val{ font-family:var(--mono); font-size:12.5px; line-height:1.45; letter-spacing:.01em; color:var(--tx); }
+.title{
+  font-family:var(--serif); font-weight:600;
+  font-size:34px; line-height:1.12; letter-spacing:-.012em;
+}
+.by{ font-family:var(--serif); font-style:italic; font-size:17px; line-height:1.35; color:var(--meta); }
+.body{
+  font-family:var(--hand); font-weight:400;
+  font-size:17px; line-height:1.72;
+  /* no measure cap — the writing runs the full padded width of the card */
+  color:var(--tx);
+}
+.body p{ margin:0 0 15px; }
+.body > :last-child{ margin-bottom:0; }
+@media (max-width:640px){
+  .title{ font-size:27px; line-height:1.15; }
+  .body{ font-size:16.5px; line-height:1.74; }
+}
+
+/* Format — an inline mono line, never boxes. Chips wrapped raggedly inside
+   metadata bars; a text line wraps like text and always looks typeset.
+   Selected = full ink + underline; unselected = faded, no underline. */
+.fmt{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:4px; row-gap:6px; }
+.fmt-t{
+  border:0; padding:0 1px 3px; background:transparent; cursor:pointer;
+  font-family:var(--mono); font-size:11.5px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  color:var(--meta); opacity:.62;
+  border-bottom:2px solid transparent;
+  transition:color 180ms var(--ease), opacity 180ms var(--ease), border-color 180ms var(--ease);
+}
+.fmt-t[aria-pressed="true"]{ color:var(--tx); opacity:1; border-bottom-color:currentColor; }
+.fmt-t:active{ transform:scale(.97); }
+.fmt-sep{ color:var(--meta); opacity:.45; font-size:11.5px; }
+
+/* Archive rail keeps a stacked checklist — same control, ledger clothing */
+.fmt--stack{ flex-direction:column; align-items:flex-start; gap:7px; }
+.fmt--stack .fmt-sep{ display:none; }
+.fmt--stack .fmt-t{ display:flex; align-items:center; gap:7px; border-bottom:0; }
+.fmt--stack .fmt-t::before{
+  content:""; width:11px; height:11px; flex:0 0 auto;
+  border:1.5px solid currentColor; border-radius:2px;
+}
+.fmt--stack .fmt-t[aria-pressed="true"]::before{
+  background:currentColor;
+  box-shadow:inset 0 0 0 2px var(--fmt-well, var(--mustard));
+}
+
+/* Rating — numeral AND geometrically-filled stars, 0.25 steps */
+.rate{ display:flex; align-items:baseline; gap:12px; }
+.rate-num{
+  font-family:var(--serif); font-weight:600;
+  font-size:44px; line-height:1; letter-spacing:-.02em;
+  color:var(--num);
+  font-variant-numeric:tabular-nums;
+}
+.rate-of{ font-family:var(--mono); font-size:12.5px; color:var(--meta); }
+.stars{
+  display:flex; gap:4px; cursor:ew-resize; touch-action:none;
+  padding:4px 0; border-radius:3px;
+}
+.stars:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+.stars svg{ display:block; }
+
+/* Cover — real cover or nothing. No generated placeholder. */
+.cover{
+  display:block; width:100%; height:auto;
+  aspect-ratio:2/3; object-fit:cover;
+  border-radius:2px; box-shadow:var(--sh-plate);
+  background:var(--paper);
+}
+.cover-missing{
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  aspect-ratio:2/3; border:1px dashed var(--hair); border-radius:2px;
+  padding:12px;
+  font-family:var(--mono); font-size:9.5px; font-weight:500;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--meta);
+}
+
+/* Polaroid plate — now sandwiched between paragraphs, not parked at the end */
+.plate{
+  position:relative;
+  width:196px;
+  padding:14px 14px 0;
+  background:var(--plate-g);
+  border-radius:3px;
+  box-shadow:var(--sh-plate);
+  transform:rotate(var(--prot,0deg));
+}
+.plate-photo{ display:block; width:100%; height:auto; aspect-ratio:1; border-radius:1px; }
+.plate-cap{
+  font-family:var(--hand); font-size:13.5px; line-height:1.25;
+  color:var(--ink-soft);
+  min-height:44px; display:flex; align-items:center;
+  padding:5px 1px 6px;
+}
+/* Between-paragraph placement: a centred object with air above and below,
+   nudged off-axis left / right alternately so the column reads pasted-in,
+   never floated — text above and below always runs the full measure. */
+.plate--in{ margin:10px auto 26px; }
+.plate--in.off-l{ margin-left:8%; }
+.plate--in.off-r{ margin-right:8%; margin-left:auto; }
+@media (max-width:640px){
+  .plate--in{ width:170px; }
+  .plate--in.off-l{ margin-left:4%; }
+  .plate--in.off-r{ margin-right:4%; }
+  .plate-cap{ font-size:12.5px; min-height:40px; }
+}
+
+/* Washi tape — translucent, torn ends */
+.tape{
+  position:absolute; top:-10px; left:50%;
+  width:64px; height:20px; margin-left:-32px;
+  background:var(--tape-c, rgba(220,169,76,.42));
+  clip-path:polygon(3% 8%, 0 46%, 4% 90%, 97% 100%, 100% 55%, 96% 4%);
+  transform:rotate(-3deg);
+  box-shadow:0 1px 2px rgba(27,25,23,.08);
+}
+.tape--r{ left:auto; right:-16px; top:8px; margin:0; transform:rotate(56deg); }
+
+/* ── Paperclip — layered so the card edge really passes between the wires.
+      The outer loop (front) is drawn whole over the paper; the inner loop
+      (back) is clipped to the strip above the paper edge, exactly where a
+      real clip's hidden leg peeks out. Gradient wire + cast shadow. ── */
+.pclip{ position:absolute; z-index:3; pointer-events:none; }
+
+/* Logo patch — the Flyleaf rosette, translucent, embedded in the card design.
+   The wrap clips the rosette to the card rectangle so a corner-bleeding patch
+   reads as printed on the card, never as an object floating past its edge. */
+.patch-wrap{ position:absolute; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; }
+.patch{ position:absolute; pointer-events:none; color:var(--tx); }
+.colo{
+  display:flex; align-items:center; gap:8px;
+  margin-top:26px; padding-top:16px;
+  border-top:1px solid var(--hair);
+  font-family:var(--mono); font-size:9.5px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--meta);
+}
+.colo svg{ display:block; opacity:.75; }
+
+.hr{ height:1px; background:var(--hair); border:0; margin:0; }
+
+/* ── Stickers — die-cut, placeable. Tap the sheet to add; drag to move;
+      double-tap to peel off. Positions persist per style. ── */
+.stick{
+  position:absolute; z-index:6; cursor:grab; touch-action:none;
+  filter:drop-shadow(0 2px 3px rgba(27,25,23,.22));
+}
+.stick:active{ cursor:grabbing; }
+.sheet{
+  width:100%; max-width:680px; margin-top:34px;
+  padding:16px 18px 14px;
+  border:1px dashed var(--rule); border-radius:3px;
+  background:rgba(255,255,255,.55);
+}
+.sheet-lbl{
+  font-size:9.5px; font-weight:500; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-soft); margin-bottom:12px;
+}
+.sheet-row{ display:flex; gap:14px; flex-wrap:wrap; }
+.sheet-row button{
+  border:0; background:transparent; padding:2px; cursor:pointer;
+  filter:drop-shadow(0 1px 2px rgba(27,25,23,.18));
+  transition:transform 180ms var(--ease);
+}
+.sheet-row button:hover{ transform:translateY(-2px) rotate(-3deg); }
+.sheet-row button:active{ transform:scale(.94); }
+
+/* ── S1 · Archive (mustard) ─────────────────────────────────── */
+.s1{ display:grid; grid-template-columns:112px 1fr; gap:0 28px; }
+.s1 .fmt--stack{ --fmt-well:var(--mustard); }
+.s1-rail{ display:flex; flex-direction:column; gap:20px; border-right:1px solid var(--hair); padding-right:20px; }
+.s1-rail > div > .val{ margin-top:5px; }
+.s1-main{ min-width:0; }
+.s1-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.s1-rate{ flex:0 0 auto; text-align:right; }
+.s1-rate .rate{ justify-content:flex-end; }
+.s1-rate .stars{ justify-content:flex-end; margin-top:10px; }
+.s1-cover{ width:100%; transform:rotate(2deg); }
+.s1 .body{ margin-top:30px; }
+.s1 .patch{ right:-26px; bottom:64px; opacity:.10; transform:rotate(14deg); }
+@media (max-width:640px){
+  .s1{ grid-template-columns:1fr; gap:0; }
+  .s1-rail{
+    display:grid; grid-template-columns:1fr 1fr; gap:16px 20px;
+    border-right:0; padding-right:0;
+    order:2; border-top:1px solid var(--hair);
+    padding-top:22px; margin:26px 0 0;
+  }
+  .s1-main{ order:1; }
+  .s1-head{ flex-direction:column; gap:22px; }
+  .s1-rate{ text-align:left; }
+  .s1-rate .rate,.s1-rate .stars{ justify-content:flex-start; }
+  .s1-cover{ width:92px; grid-column:1; grid-row:span 2; align-self:start; }
+}
+
+/* ── S2 · Masthead (butter) — cover leaves the text column entirely:
+      it hangs paperclipped in the header band, so the body below runs the
+      full measure with no wrap step anywhere. ── */
+.s2-head{ position:relative; padding-right:150px; min-height:196px; }
+.s2-kicker{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-bottom:18px; }
+.s2 .title{ font-size:40px; }
+.s2-by{ margin-top:10px; }
+.s2-cover-wrap{
+  position:absolute; top:2px; right:6px; width:124px;
+  transform:rotate(2deg);
+}
+.s2-rule{ margin:22px 0; }
+.s2-bar{ display:flex; align-items:flex-start; justify-content:space-between; gap:24px 28px; flex-wrap:wrap; }
+.s2-rate .rate-num{ font-size:56px; }
+.s2-rate .stars{ margin-top:10px; }
+.s2-meta{ display:flex; flex-direction:column; gap:14px; }
+.s2-meta-row{ display:flex; gap:28px; }
+.s2-meta-row .val{ margin-top:5px; }
+.s2 .body{ margin-top:30px; }
+.s2 .patch{ left:-30px; bottom:110px; opacity:.07; transform:rotate(-11deg); }
+@media (max-width:640px){
+  .s2-head{ padding-right:104px; min-height:150px; }
+  .s2 .title{ font-size:29px; }
+  .s2-cover-wrap{ width:86px; top:0; right:0; }
+  .s2-rate .rate-num{ font-size:46px; }
+  .s2-meta-row{ gap:20px; }
+}
+
+/* ── S3 · Catalogue (coal) — a printed index card in negative. The cover
+      hangs clipped over the card's own top edge; the metadata is a ruled
+      table whose format row is typeset text, so nothing ever breaks ragged. ── */
+.s3-cover-wrap{
+  position:absolute; top:-20px; right:30px; width:112px; z-index:4;
+  transform:rotate(2.4deg);
+}
+.s3-cover-wrap .cover{ box-shadow:0 4px 14px rgba(0,0,0,.4); }
+.s3-headroom{ padding-right:150px; }
+.s3 .title{ font-size:30px; }
+.s3 .by{ display:block; margin-top:8px; }
+.s3-tbl{ border-top:1px solid var(--hair); margin-top:22px; }
+.s3-row{
+  display:grid; grid-template-columns:104px 1fr;
+  gap:0 16px; align-items:start;
+  padding:11px 0; border-bottom:1px solid var(--hair);
+}
+.s3-row .lbl{ padding-top:3px; }
+.s3-rate-row{ display:flex; align-items:center; gap:18px; padding:14px 0; border-bottom:1px solid var(--hair); }
+.s3-rate-row .rate-num{ font-size:40px; }
+.s3 .body{ margin-top:24px; }
+.s3 .patch{ right:14px; top:150px; opacity:.08; }
+@media (max-width:640px){
+  .s3-cover-wrap{ width:88px; right:18px; top:-16px; }
+  .s3-headroom{ padding-right:100px; }
+  .s3 .title{ font-size:26px; }
+  .s3-rate-row{ flex-wrap:wrap; gap:10px 18px; }
+}
+
+/* ── S4 · Scrapbook (pink) — deckle-torn bottom edge, washi tape, a pasted
+      title label, a hand margin note. The busiest of the family. ── */
+.s4{
+  background:transparent;
+  box-shadow:none;
+  padding-bottom:44px;
+}
+/* the torn sheet is a layer beneath the content, so the washi tape can hang
+   over the card edge unclipped, and the shadow (drop-shadow, applied after
+   clipping) follows the deckle-torn silhouette instead of a rectangle */
+.s4::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:var(--pink); border-radius:2px;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 14px),
+    97.5% calc(100% - 6px), 94% calc(100% - 13px), 90% calc(100% - 4px),
+    86% calc(100% - 12px), 81.5% calc(100% - 5px), 77% calc(100% - 13px),
+    72% calc(100% - 6px), 67% calc(100% - 11px), 62% calc(100% - 3px),
+    57% calc(100% - 12px), 52% calc(100% - 6px), 47% calc(100% - 13px),
+    42% calc(100% - 5px), 37% calc(100% - 11px), 32% calc(100% - 4px),
+    27% calc(100% - 12px), 22% calc(100% - 6px), 17% calc(100% - 13px),
+    12% calc(100% - 5px), 7% calc(100% - 11px), 3% calc(100% - 4px),
+    0 calc(100% - 14px));
+  filter:drop-shadow(0 1px 2px rgba(27,25,23,.07)) drop-shadow(0 10px 16px rgba(27,25,23,.13));
+}
+.s4-label{
+  display:inline-block;
+  background:var(--card); box-shadow:var(--sh-plate);
+  padding:12px 18px 13px; border-radius:2px;
+  transform:rotate(-1.3deg);
+  max-width:100%;
+}
+.s4-label .title{ font-size:29px; }
+.s4-label .by{ margin-top:5px; display:block; }
+.s4-bar{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px 26px; flex-wrap:wrap; margin-top:24px; }
+.s4-rate .stars{ margin-top:9px; }
+.s4-meta{ display:flex; flex-direction:column; gap:12px; }
+.s4-meta-row{ display:flex; gap:26px; }
+.s4-meta-row .val{ margin-top:4px; }
+.s4-note{
+  font-family:var(--hand); font-size:15px; line-height:1.4; color:var(--accent);
+  transform:rotate(-2deg); max-width:200px;
+}
+.s4 .body{ margin-top:28px; }
+.s4 .plate--in{ --prot-extra:1; }
+.s4 .patch{ left:50%; bottom:-38px; margin-left:-70px; opacity:.09; transform:rotate(8deg); }
+.s4-washi-1{ position:absolute; top:-11px; left:34px; width:92px; height:24px;
+  background:rgba(220,169,76,.42);
+  clip-path:polygon(2% 10%, 0 50%, 3% 92%, 98% 100%, 100% 48%, 97% 2%);
+  transform:rotate(-4deg); z-index:4; }
+.s4-washi-2{ position:absolute; top:26px; right:-20px; width:84px; height:22px;
+  background:rgba(27,25,23,.14);
+  clip-path:polygon(2% 10%, 0 50%, 3% 92%, 98% 100%, 100% 48%, 97% 2%);
+  transform:rotate(52deg); z-index:4; }
+.s4-cover{ width:118px; transform:rotate(-2.2deg); }
+@media (max-width:640px){
+  .s4-label .title{ font-size:25px; }
+  .s4-note{ max-width:160px; font-size:14px; }
+  .s4-cover{ width:96px; }
+}
+
+/* ── S5 · Field Notes (blue) — a gridded notebook leaf with a stapled
+      corner; plates taped in like pressed specimens. ── */
+.s5{
+  background-image:
+    repeating-linear-gradient(0deg, rgba(27,25,23,.055) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(27,25,23,.055) 0 1px, transparent 1px 24px);
+}
+.s5-staple{ position:absolute; top:10px; left:14px; transform:rotate(-38deg); z-index:4; }
+.s5-kicker{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-bottom:16px; }
+.s5 .title{ font-size:29px; }
+.s5 .by{ display:block; margin-top:7px; }
+.s5-grid{
+  display:grid; grid-template-columns:96px 1fr; gap:14px 16px;
+  margin-top:20px; padding:16px 0;
+  border-top:1px dashed var(--hair); border-bottom:1px dashed var(--hair);
+  align-items:start;
+}
+.s5-grid .lbl{ padding-top:3px; }
+.s5-rate{ display:flex; align-items:center; gap:16px; margin-top:20px; }
+.s5-rate .rate-num{ font-size:38px; }
+.s5-side{ display:flex; gap:20px; align-items:flex-start; margin-top:22px; }
+.s5-cover{ width:104px; flex:0 0 auto; transform:rotate(-1.4deg); }
+.s5-obs{ font-family:var(--hand); font-size:15px; line-height:1.5; color:var(--ink-soft); padding-top:6px; }
+.s5 .body{ margin-top:24px; }
+.s5 .patch{ right:-24px; top:-26px; opacity:.09; transform:rotate(22deg); }
+@media (max-width:640px){
+  .s5 .title{ font-size:25px; }
+  .s5-cover{ width:88px; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Share preview — the card at paper size, never viewport-bound
+   ───────────────────────────────────────────────────────────── */
+.share-scrim{
+  position:fixed; inset:0; z-index:100;
+  background:rgba(27,25,23,.5);
+  display:flex; flex-direction:column; align-items:center;
+  padding:20px; overflow:auto;
+  animation:fade 180ms var(--ease) both;
+}
+@keyframes fade{ from{ opacity:0 } to{ opacity:1 } }
+.share-top{
+  width:100%; max-width:760px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:14px;
+}
+.share-top .lbl{ color:rgba(255,255,255,.85); }
+.share-actions{ display:flex; gap:8px; }
+.share-actions button{
+  border:0; cursor:pointer;
+  height:34px; padding:0 16px; border-radius:999px;
+  font-family:var(--mono); font-size:11px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  background:var(--card); color:var(--ink);
+  transition:transform 180ms var(--ease);
+}
+.share-actions button:active{ transform:scale(.96); }
+.share-actions .primary{ background:var(--accent); color:var(--accent-fg); }
+.share-frame-wrap{ transform-origin:top center; }
+.share-frame{ display:block; border:0; background:transparent; }
+/* while the preview is open the picker and pill nav yield the stage —
+   both would float over the scrim's own toolbar otherwise */
+body.share-open .proto-picker, body.share-open .nav{ display:none; }
+
+/* ── Share render mode (?share=1, loaded in the preview iframe at a fixed
+      720px paper width, so media queries resolve against paper, not phone) ── */
+/* solid ground, not transparent — the gap between pages must never show
+   the app underneath the scrim (matches scrim-over-cream, prints white) */
+body.share-mode{ background:rgb(136,133,130); overflow-x:visible; }
+body.share-mode .app{ padding:0; }
+body.share-mode .app-head, body.share-mode .nav,
+body.share-mode .proto-picker, body.share-mode .sheet{ display:none; }
+body.share-mode #stage{ max-width:none; }
+.share-page{
+  width:720px; height:1018px;            /* 1:√2 — an A-series leaf */
+  background:var(--paper);
+  padding:44px;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  position:relative;
+  margin:0 0 20px;
+}
+/* rotate(0) not none — the card must keep its stacking context for the
+   Scrapbook's z-index:-1 torn-sheet layer; !important beats the inline --rot */
+.share-page .card{ animation:none; transform:rotate(0deg) !important; }
+.share-page-no{
+  position:absolute; bottom:16px; left:0; right:0; text-align:center;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-soft);
+}
+@media print{
+  body.share-mode{ background:#fff; }
+  .share-page{ margin:0; page-break-after:always; }
+  .share-page:last-child{ page-break-after:auto; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Picker — verbatim from PICKER.md. Not a design decision.
+   data-position="top" because the app's own pill nav owns bottom-centre.
+   ───────────────────────────────────────────────────────────── */
+.proto-picker{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  z-index:2147483647;
+  display:flex; align-items:center; gap:2px; padding:4px;
+  border-radius:999px;
+  background:rgba(10,10,10,.82);
+  -webkit-backdrop-filter:blur(12px) saturate(1.4);
+  backdrop-filter:blur(12px) saturate(1.4);
+  box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 8px 24px rgba(0,0,0,.24),0 2px 6px rgba(0,0,0,.12);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:13px; line-height:1;
+  -webkit-font-smoothing:antialiased;
+  user-select:none; -webkit-user-select:none;
+}
+.proto-picker-highlight{
+  position:absolute; top:4px; left:0; height:28px;
+  border-radius:999px; background:rgba(255,255,255,.12); will-change:transform;
+}
+.proto-picker[data-ready] .proto-picker-highlight{
+  transition:transform 250ms cubic-bezier(.23,1,.32,1),width 250ms cubic-bezier(.23,1,.32,1);
+}
+@media (prefers-reduced-motion:reduce){
+  .proto-picker[data-ready] .proto-picker-highlight{ transition:none; }
+}
+.proto-picker-item{
+  position:relative; display:flex; align-items:center;
+  height:28px; padding:0 12px; border:0; border-radius:999px;
+  background:transparent; color:rgba(255,255,255,.55);
+  font:inherit; cursor:pointer; transition:color 150ms ease-out;
+}
+.proto-picker-item:hover{ color:rgba(255,255,255,.85); }
+.proto-picker-item:active{ transform:scale(.97); }
+.proto-picker-item:focus-visible{ outline:2px solid rgba(255,255,255,.4); outline-offset:2px; }
+.proto-picker-item[data-active]{ color:#fff; }
+.proto-picker-divider{ width:1px; height:16px; margin:0 4px; background:rgba(255,255,255,.12); }
+.proto-picker-replay{ padding:0 10px; font-size:14px; }
+.proto-picker[data-position="top"]{ bottom:auto; top:24px; }
+@media (max-width:640px){
+  .proto-picker{ max-width:calc(100vw - 16px); overflow-x:auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-head">
+    <h1><span id="head-mark"></span>Flyleaf Press</h1>
+    <span>2026 · 41 read</span>
+  </header>
+
+  <div id="stage"></div>
+
+  <div class="sheet" id="sheet">
+    <div class="sheet-lbl">Sticker sheet — tap to add · drag to place · double-tap to peel off</div>
+    <div class="sheet-row" id="sheet-row"></div>
+  </div>
+</div>
+
+<nav class="nav" aria-label="App">
+  <button aria-current="true">Shelf</button>
+  <button>Write</button>
+  <button id="nav-share">Share</button>
+</nav>
+
+<nav class="proto-picker" data-position="top" aria-label="Prototype variants">
+  <span class="proto-picker-highlight" aria-hidden="true"></span>
+  <button class="proto-picker-item" data-active aria-current="true">Archive</button>
+  <button class="proto-picker-item">Masthead</button>
+  <button class="proto-picker-item">Catalogue</button>
+  <button class="proto-picker-item">Scrapbook</button>
+  <button class="proto-picker-item">Field Notes</button>
+  <span class="proto-picker-divider" aria-hidden="true"></span>
+  <button class="proto-picker-item proto-picker-replay" aria-label="Replay animation (R)">↻</button>
+</nav>
+
+<script>
+/* ─── Share-render mode? (loaded inside the preview iframe) ─── */
+const SHARE = new URLSearchParams(location.search).has('share');
+if (SHARE) document.body.classList.add('share-mode');
+
+/* ─── Seeded record. Identical across styles so only the design varies. ─── */
+const REC = {
+  no:41,
+  title:'The Fifth Season',
+  author:'N. K. Jemisin',
+  series:'The Broken Earth',
+  seriesNo:'Book&nbsp;1',
+  started:'04 Jul 2026',
+  finished:'29 Jul 2026',
+  formats:{ Ebook:false, Audiobook:true, Physical:true },
+  rating:4.75,
+  isbn:'9780316229296',
+  body:[
+    'I put this down twice in the first fifty pages and both times it was because I did not trust it yet. The second person opening felt like a trick, the kind of formal move a book makes when it has nothing underneath. I was wrong about that, and being wrong about it turned out to be the whole point.',
+    'What Jemisin does with structure here is the thing I keep circling back to weeks later. Three timelines you are certain are converging, and they are, but the convergence is not the reveal. The reveal is what it costs, and she makes you complicit in wanting it before she shows you the bill.',
+    'The geology is not set dressing. Every plate boundary is a political one. I listened to the back third on audio while walking and had to stop on the pavement near the end of chapter nineteen, which has happened maybe four times in my reading life.',
+    'Docked a quarter because the interludes lost me twice on the page in a way they never did in my ear. A small complaint against a book that rearranged what I want out of a fantasy series.'
+  ],
+  plates:[
+    { art:'spread', cap:'ch. 19, on the pavement' },
+    { art:'shelf',  cap:'the map I drew wrong' },
+    { art:'window', cap:'my copy, mid-July' }
+  ]
+};
+
+/* ─── The Flyleaf rosette — lifted verbatim from flyleaf/public/leaf-icon.svg.
+       Used only as a translucent patch; never on Flyleaf's sky gradient. ─── */
+const MARK = 'M256 57.6 A74.67 59.73 -90 1 1 256 206.93 A74.67 59.73 -90 1 1 256 57.6 Z M444.69 194.69 A74.67 59.73 -18 1 1 302.66 240.85 A74.67 59.73 -18 1 1 444.69 194.69 Z M372.61 416.51 A74.67 59.73 54 1 1 284.84 295.68 A74.67 59.73 54 1 1 372.61 416.51 Z M139.39 416.51 A74.67 59.73 126 1 1 227.16 295.68 A74.67 59.73 126 1 1 139.39 416.51 Z M67.31 194.69 A74.67 59.73 198 1 1 209.34 240.85 A74.67 59.73 198 1 1 67.31 194.69 Z M217.6 256 A38.4 38.4 0 1 1 294.4 256 A38.4 38.4 0 1 1 217.6 256 Z';
+function mark(size, cls){
+  return `<svg class="${cls || ''}" width="${size}" height="${size}" viewBox="0 0 512 512" aria-hidden="true">
+    <path d="${MARK}" fill="currentColor"/></svg>`;
+}
+function patch(size){ return `<span class="patch-wrap" aria-hidden="true"><span class="patch">${mark(size)}</span></span>`; }
+function colophon(){
+  return `<div class="colo">${mark(13)}<span>Flyleaf Press · Nº ${REC.no}</span></div>`;
+}
+document.getElementById('head-mark').innerHTML = mark(15);
+
+/* ─── Rating: geometric fill, never opacity. 0.25 steps.
+       Every cell carries a drawn outline so the empty part of a half or
+       quarter star stays a visible shape on any ground. ─── */
+const STAR = 'M12 2.4l2.95 5.98 6.6.96-4.77 4.65 1.12 6.57L12 17.47l-5.9 3.1 1.12-6.57L2.45 9.34l6.6-.96z';
+const STEP = 0.25;
+let uid = 0;
+let rating = REC.rating;
+
+function fmtNum(r){ return String(+r.toFixed(2)); }
+
+function starSvg(fill, size){
+  const id = 'clip' + (++uid);
+  const w = (fill * 24).toFixed(3);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">
+    ${fill > 0 ? `<clipPath id="${id}"><rect x="0" y="0" width="${w}" height="24"/></clipPath>
+    <path d="${STAR}" fill="var(--star)" clip-path="url(#${id})"/>` : ''}
+    <path d="${STAR}" fill="none" stroke="var(--star-line)" stroke-width="1.4" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function starRow(r, size){
+  let out = '';
+  for (let i = 0; i < 5; i++) out += starSvg(Math.max(0, Math.min(1, r - i)), size);
+  return `<div class="stars" role="slider" tabindex="0"
+    aria-label="Rating out of 5" aria-valuemin="0" aria-valuemax="5"
+    aria-valuenow="${fmtNum(r)}" aria-valuetext="${fmtNum(r)} out of 5"
+    data-size="${size}">${out}</div>`;
+}
+
+function ratingBlock(size, numClass){
+  return `<div class="rate">
+      <span class="rate-num ${numClass || ''}">${fmtNum(rating)}</span>
+      <span class="rate-of">/ 5</span>
+    </div>
+    ${starRow(rating, size)}`;
+}
+
+function wireRating(root){
+  root.querySelectorAll('.stars').forEach(row => {
+    const set = v => {
+      rating = Math.min(5, Math.max(STEP, Math.round(v / STEP) * STEP));
+      redrawRating(root);
+    };
+    const fromEvent = e => {
+      const b = row.getBoundingClientRect();
+      const unit = (b.width + 4) / 5;
+      set(((e.clientX - b.left) / unit) + STEP / 2);
+    };
+    row.addEventListener('pointerdown', e => { row.setPointerCapture(e.pointerId); fromEvent(e); });
+    row.addEventListener('pointermove', e => { if (row.hasPointerCapture(e.pointerId)) fromEvent(e); });
+    row.addEventListener('keydown', e => {
+      const d = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? STEP
+              : e.key === 'ArrowLeft'  || e.key === 'ArrowDown' ? -STEP : 0;
+      if (!d) return;
+      e.preventDefault();
+      e.stopPropagation();
+      set(rating + d);
+      root.querySelector('.stars')?.focus();
+    });
+  });
+}
+
+function redrawRating(root){
+  root.querySelectorAll('.rate-num').forEach(el => el.textContent = fmtNum(rating));
+  root.querySelectorAll('.stars').forEach(row => {
+    const size = +row.dataset.size;
+    let out = '';
+    for (let i = 0; i < 5; i++) out += starSvg(Math.max(0, Math.min(1, rating - i)), size);
+    row.innerHTML = out;
+    row.setAttribute('aria-valuenow', fmtNum(rating));
+    row.setAttribute('aria-valuetext', fmtNum(rating) + ' out of 5');
+  });
+}
+
+/* ─── Format — the inline typeset line (and the Archive checklist) ─── */
+function fmtLine(stack){
+  const names = Object.keys(REC.formats);
+  return `<div class="fmt ${stack ? 'fmt--stack' : ''}" role="group" aria-label="Format">` +
+    names.map((k, i) =>
+      `<button class="fmt-t" aria-pressed="${REC.formats[k]}">${k}</button>` +
+      (i < names.length - 1 ? `<span class="fmt-sep" aria-hidden="true">·</span>` : '')
+    ).join('') + `</div>`;
+}
+
+function meta(label, value){
+  return `<div><div class="lbl">${label}</div><div class="val">${value}</div></div>`;
+}
+
+/* Real cover or nothing. No generated placeholder, per DESIGN.md.
+   Local catalogue snapshot first (Apple Books art), live openlibrary second —
+   the live host 502s under load and a demo must not go blank for it. */
+function cover(cls){
+  return `<img class="cover ${cls || ''}" alt="Cover of ${REC.title}"
+    src="covers-cache/${REC.isbn}.jpg"
+    onerror="if(!this.dataset.retried){this.dataset.retried=1;this.src='https://covers.openlibrary.org/b/isbn/${REC.isbn}-L.jpg?default=false';}else{this.outerHTML='&lt;div class=\\'cover-missing ${cls || ''}\\'&gt;No cover found · upload one&lt;/div&gt;'}">`;
+}
+
+/* ─── Paperclip — matched to the travel-journal reference: one classic gem
+       clip, plain silver wire, drawn whole IN FRONT of the sheet with a soft
+       lift shadow. No clipped runs, no theatrics — the reference clip is
+       simple and that simplicity is the brief. Straddles the sheet's top
+       edge (edge lands at svg-y 30 of 90 → 22px at rendered size). ─── */
+function pclip(x, y, rot){
+  const gid = 'pg' + (++uid);
+  return `<svg class="pclip" style="left:${x}px;top:${y != null ? y : -22}px;transform:rotate(${rot || 0}deg)"
+    width="26" height="65" viewBox="0 0 36 90" aria-hidden="true">
+    <defs>
+      <linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#9BA1A8"/>
+        <stop offset=".45" stop-color="#E9EBEE"/>
+        <stop offset="1" stop-color="#A8ADB4"/>
+      </linearGradient>
+    </defs>
+    <path d="M11 22 v42 a7 7 0 0 0 14 0 V15 a10.5 10.5 0 0 0 -21 0 v49 a14 14 0 0 0 28 0 V27"
+      fill="none" stroke="url(#${gid})" stroke-width="3.6" stroke-linecap="round"
+      style="filter:drop-shadow(0 1px 1px rgba(27,25,23,.28))"/>
+  </svg>`;
+}
+
+/* Staple for Field Notes */
+function staple(){
+  const gid = 'st' + (++uid);
+  return `<svg class="s5-staple" width="26" height="10" viewBox="0 0 26 10" aria-hidden="true">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D9D9D6"/><stop offset="1" stop-color="#8B8B87"/>
+    </linearGradient></defs>
+    <path d="M2 9 V3 A2 2 0 0 1 4 1 H22 A2 2 0 0 1 24 3 V9"
+      fill="none" stroke="url(#${gid})" stroke-width="2.4"/>
+  </svg>`;
+}
+
+const ART = {
+  spread:`<rect width="124" height="124" fill="#E8E2D6"/>
+    <rect x="10" y="22" width="49" height="80" fill="#FBF9F5"/>
+    <rect x="65" y="22" width="49" height="80" fill="#F2EDE3"/>
+    ${Array.from({length:9},(_,i)=>`<rect x="16" y="${30+i*8}" width="37" height="2" fill="#C9C0AE"/><rect x="71" y="${30+i*8}" width="37" height="2" fill="#C9C0AE"/>`).join('')}`,
+  shelf:`<rect width="124" height="124" fill="#DCD5C7"/>
+    ${[['#C2410C',18,34],['#DCA94C',12,52],['#8F958C',20,44],['#1B1917',10,66],['#C2410C',15,40],['#DCA94C',22,58]]
+      .map((b,i)=>`<rect x="${10+i*18}" y="${104-b[2]}" width="${b[1]}" height="${b[2]}" fill="${b[0]}"/>`).join('')}
+    <rect x="6" y="104" width="112" height="4" fill="#1B1917" opacity=".5"/>`,
+  window:`<rect width="124" height="124" fill="#8F958C"/>
+    <path d="M32 108V52a30 30 0 0 1 60 0v56z" fill="#F4F2ED"/>
+    <path d="M62 24v84M32 66h60" stroke="#8F958C" stroke-width="4"/>
+    <circle cx="86" cy="34" r="9" fill="#DCA94C"/>`
+};
+
+function plate(p, rot, deco, extraCls){
+  return `<figure class="plate plate--in ${extraCls || ''}" style="--prot:${rot}deg">
+    ${deco === 'clip' ? pclip(18) : ''}
+    ${deco === 'tape' ? `<span class="tape" aria-hidden="true"></span>` : ''}
+    ${deco === 'tape2' ? `<span class="tape" aria-hidden="true"></span><span class="tape tape--r" aria-hidden="true"></span>` : ''}
+    <svg class="plate-photo" viewBox="0 0 124 124" role="img" aria-label="Attached photo">${ART[p.art]}</svg>
+    <figcaption class="plate-cap">${p.cap}</figcaption>
+  </figure>`;
+}
+
+/* ─── The body with plates sandwiched between the paragraphs.
+       specs: [{after: paragraphIndex, plate: i, rot, deco}] ─── */
+function bodyWithPlates(specs){
+  let out = '';
+  const offs = ['off-l', 'off-r'];
+  let n = 0;
+  REC.body.forEach((p, i) => {
+    out += `<p>${p}</p>`;
+    specs.filter(s => s.after === i).forEach(s => {
+      out += plate(REC.plates[s.plate], s.rot, s.deco, offs[n++ % 2]);
+    });
+  });
+  return `<div class="body">${out}</div>`;
+}
+
+/* ─── S1 · Archive — the review as a stiff filed object (mustard) ─── */
+function archive(){
+  return `<article class="card card--mustard s1" style="--rot:-1.1deg">
+    ${patch(150)}
+    <div class="s1-rail">
+      ${cover('s1-cover')}
+      ${meta('Started', REC.started)}
+      ${meta('Finished', REC.finished)}
+      <div><div class="lbl">Format</div><div style="margin-top:9px">${fmtLine(true)}</div></div>
+      ${meta('Series', `${REC.series}<br>${REC.seriesNo}`)}
+    </div>
+    <div class="s1-main">
+      <div class="s1-head">
+        <div style="min-width:0">
+          <h2 class="title">${REC.title}</h2>
+          <div class="by" style="margin-top:8px">${REC.author}</div>
+        </div>
+        <div class="s1-rate">${ratingBlock(24)}</div>
+      </div>
+      ${bodyWithPlates([
+        { after:1, plate:0, rot:-1.8, deco:'clip' },
+        { after:2, plate:1, rot:1.4,  deco:'tape' }
+      ]).replace('class="body"', 'class="body" style="margin-top:30px"')}
+      ${colophon()}
+    </div>
+  </article>`;
+}
+
+/* ─── S2 · Masthead — the review as a printed page (butter) ─── */
+function masthead(){
+  return `<article class="card s2" style="--rot:.3deg">
+    ${patch(170)}
+    <div class="s2-head">
+      <div class="s2-kicker">
+        <span class="lbl">Review · Nº ${REC.no}</span>
+        <span class="lbl">${REC.series} · ${REC.seriesNo}</span>
+      </div>
+      <h2 class="title">${REC.title}</h2>
+      <div class="by s2-by">${REC.author}</div>
+      <div class="s2-cover-wrap">
+        ${pclip(14)}
+        ${cover()}
+      </div>
+    </div>
+    <hr class="hr s2-rule">
+    <div class="s2-bar">
+      <div class="s2-rate">${ratingBlock(24)}</div>
+      <div class="s2-meta">
+        <div class="s2-meta-row">
+          ${meta('Started', REC.started)}
+          ${meta('Finished', REC.finished)}
+        </div>
+        <div><div class="lbl">Format</div><div style="margin-top:8px">${fmtLine()}</div></div>
+      </div>
+    </div>
+    ${bodyWithPlates([
+      { after:0, plate:0, rot:-1.6, deco:'tape' },
+      { after:1, plate:1, rot:1.2 },
+      { after:2, plate:2, rot:-.8, deco:'clip' }
+    ]).replace('class="body"', 'class="body" style="margin-top:30px"')}
+    ${colophon()}
+  </article>`;
+}
+
+/* ─── S3 · Catalogue — the record entry, printed in negative (coal) ─── */
+function catalogue(){
+  return `<article class="card card--coal s3" style="--rot:-.8deg">
+    ${patch(120)}
+    <div class="s3-cover-wrap">
+      ${pclip(16)}
+      ${cover()}
+    </div>
+    <div class="s3-headroom">
+      <h2 class="title">${REC.title}</h2>
+      <span class="by">${REC.author}</span>
+    </div>
+    <div class="s3-tbl">
+      <div class="s3-rate-row">${ratingBlock(22)}</div>
+      <div class="s3-row"><span class="lbl">Started</span><span class="val">${REC.started}</span></div>
+      <div class="s3-row"><span class="lbl">Finished</span><span class="val">${REC.finished}</span></div>
+      <div class="s3-row"><span class="lbl">Series</span><span class="val">${REC.series} · ${REC.seriesNo}</span></div>
+      <div class="s3-row"><span class="lbl" style="padding-top:1px">Format</span>${fmtLine()}</div>
+    </div>
+    ${bodyWithPlates([
+      { after:1, plate:0, rot:-1.4, deco:'tape' },
+      { after:2, plate:1, rot:1.5, deco:'clip' }
+    ]).replace('class="body"', 'class="body" style="margin-top:24px"')}
+    ${colophon()}
+  </article>`;
+}
+
+/* ─── S4 · Scrapbook — pasted, taped, torn (pink) ─── */
+function scrapbook(){
+  return `<article class="card card--pink s4" style="--rot:1.3deg">
+    <span class="s4-washi-1" aria-hidden="true"></span>
+    <span class="s4-washi-2" aria-hidden="true"></span>
+    ${patch(140)}
+    <div style="display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap">
+      <div class="s4-cover" style="flex:0 0 auto; position:relative">
+        ${pclip(12)}${cover()}
+      </div>
+      <div style="flex:1; min-width:200px">
+        <div class="s4-label">
+          <h2 class="title">${REC.title}</h2>
+          <span class="by">${REC.author}</span>
+        </div>
+        <div class="s4-bar" style="margin-top:20px">
+          <div class="s4-rate">${ratingBlock(24)}</div>
+          <div class="s4-note">so good I missed my stop. twice.</div>
+        </div>
+      </div>
+    </div>
+    <div class="s4-bar">
+      <div class="s4-meta">
+        <div class="s4-meta-row">
+          ${meta('Started', REC.started)}
+          ${meta('Finished', REC.finished)}
+          ${meta('Series', `${REC.series} · ${REC.seriesNo}`)}
+        </div>
+        <div><div class="lbl">Format</div><div style="margin-top:8px">${fmtLine()}</div></div>
+      </div>
+    </div>
+    ${bodyWithPlates([
+      { after:0, plate:0, rot:-2.6, deco:'tape2' },
+      { after:1, plate:1, rot:2.2,  deco:'clip' },
+      { after:2, plate:2, rot:-1.8, deco:'tape' }
+    ]).replace('class="body"', 'class="body" style="margin-top:28px"')}
+    ${colophon()}
+  </article>`;
+}
+
+/* ─── S5 · Field Notes — the gridded lab leaf (blue) ─── */
+function fieldnotes(){
+  return `<article class="card card--blue s5" style="--rot:-.5deg">
+    ${staple()}
+    ${patch(130)}
+    <div class="s5-kicker">
+      <span class="lbl">Field notes · Entry ${REC.no}</span>
+      <span class="lbl">${REC.series} · ${REC.seriesNo}</span>
+    </div>
+    <h2 class="title">${REC.title}</h2>
+    <span class="by">${REC.author}</span>
+    <div class="s5-side">
+      <div class="s5-cover" style="position:relative">${pclip(10)}${cover()}</div>
+      <div class="s5-obs">observed: one tectonic apocalypse, three narrators, zero wasted chapters.</div>
+    </div>
+    <div class="s5-grid">
+      <span class="lbl">Started</span><span class="val">${REC.started}</span>
+      <span class="lbl">Finished</span><span class="val">${REC.finished}</span>
+      <span class="lbl" style="padding-top:1px">Format</span>${fmtLine()}
+    </div>
+    <div class="s5-rate">${ratingBlock(22)}</div>
+    ${bodyWithPlates([
+      { after:1, plate:0, rot:-1.6, deco:'tape2' },
+      { after:2, plate:2, rot:1.3,  deco:'tape' }
+    ]).replace('class="body"', 'class="body" style="margin-top:24px"')}
+    ${colophon()}
+  </article>`;
+}
+
+const variants = [archive, masthead, catalogue, scrapbook, fieldnotes];
+const variantNames = ['archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes'];
+
+/* ─── Stickers — die-cut SVGs the user can add, drag, and peel off.
+       Persisted per style in localStorage so the share render sees them. ─── */
+const STICKERS = {
+  burst:`<svg width="52" height="52" viewBox="0 0 52 52">
+    <path d="M26 3l5.2 8.9 10-2.4-2.4 10L47.7 24 39 29.2l2.4 10-10-2.4L26 45.7l-5.2-8.9-10 2.4 2.4-10L4.3 24l8.9-5.2-2.4-10 10 2.4z"
+      fill="#DCA94C" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/>
+    <text x="26" y="30" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9.5" font-weight="500" fill="#1B1917" letter-spacing="1">WOW</text>
+  </svg>`,
+  heart:`<svg width="46" height="42" viewBox="0 0 46 42">
+    <path d="M23 38C10 28 3.5 20.5 3.5 13.4 3.5 7.6 8 3.5 13.5 3.5c3.9 0 7.5 2.1 9.5 5.5 2-3.4 5.6-5.5 9.5-5.5 5.5 0 10 4.1 10 9.9C42.5 20.5 36 28 23 38z"
+      fill="#C2410C" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
+  </svg>`,
+  reread:`<svg width="76" height="30" viewBox="0 0 76 30">
+    <rect x="2" y="2" width="72" height="26" rx="13" fill="#1B1917" stroke="#fff" stroke-width="3"/>
+    <text x="38" y="19.5" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9.5" font-weight="500" fill="#FAF8F4" letter-spacing="1.4">REREAD</text>
+  </svg>`,
+  ribbon:`<svg width="30" height="52" viewBox="0 0 30 52">
+    <path d="M5 2h20v46l-10-9-10 9z" fill="#8F958C" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
+  </svg>`,
+  cup:`<svg width="48" height="44" viewBox="0 0 48 44">
+    <path d="M6 12h28v14a12 12 0 0 1-12 12h-4A12 12 0 0 1 6 26z" fill="#F6EBD9" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
+    <path d="M34 15h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#fff" stroke-width="3.2"/>
+    <path d="M34 15h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#1B1917" stroke-width="1.6"/>
+    <path d="M14 8c0-3 3-3 3-6M23 8c0-3 3-3 3-6" fill="none" stroke="#1B1917" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M6 12h28v14a12 12 0 0 1-12 12h-4A12 12 0 0 1 6 26z" fill="none" stroke="#1B1917" stroke-width="1.4" stroke-linejoin="round"/>
+  </svg>`
+};
+
+function stickerStore(){ return 'flyleafpress-stickers-' + variantNames[current]; }
+function loadStickers(){
+  try{ return JSON.parse(localStorage.getItem(stickerStore())) || []; }
+  catch{ return []; }
+}
+function saveStickers(list){ localStorage.setItem(stickerStore(), JSON.stringify(list)); }
+
+function renderStickers(root){
+  const card = root.querySelector('.card');
+  if (!card) return;
+  card.querySelectorAll('.stick').forEach(el => el.remove());
+  loadStickers().forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'stick';
+    el.dataset.i = i;
+    el.style.left = s.x + '%';
+    el.style.top = s.y + '%';
+    el.style.transform = `rotate(${s.rot}deg)`;
+    el.innerHTML = STICKERS[s.kind];
+    card.appendChild(el);
+  });
+  wireStickers(card);
+}
+
+function wireStickers(card){
+  card.querySelectorAll('.stick').forEach(el => {
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      const cardBox = card.getBoundingClientRect();
+      const move = ev => {
+        const x = ((ev.clientX - cardBox.left) / cardBox.width) * 100;
+        const y = ((ev.clientY - cardBox.top) / cardBox.height) * 100;
+        el.style.left = Math.max(-4, Math.min(96, x - 4)) + '%';
+        el.style.top = Math.max(-4, Math.min(96, y - 4)) + '%';
+      };
+      const up = () => {
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', up);
+        const list = loadStickers();
+        const s = list[+el.dataset.i];
+        if (s){ s.x = parseFloat(el.style.left); s.y = parseFloat(el.style.top); saveStickers(list); }
+      };
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
+    });
+    el.addEventListener('dblclick', () => {
+      const list = loadStickers();
+      list.splice(+el.dataset.i, 1);
+      saveStickers(list);
+      renderStickers(stage);
+    });
+  });
+}
+
+function buildSheet(){
+  const row = document.getElementById('sheet-row');
+  if (!row) return;
+  row.innerHTML = Object.keys(STICKERS).map(k =>
+    `<button data-kind="${k}" aria-label="Add ${k} sticker">${STICKERS[k]}</button>`).join('');
+  row.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const list = loadStickers();
+    list.push({ kind:b.dataset.kind, x:6 + Math.min(list.length, 8) * 9, y:2, rot:(list.length % 2 ? 6 : -7) });
+    saveStickers(list);
+    renderStickers(stage);
+  }));
+}
+
+/* ─── Share preview — the card at paper size (720×1018, 1:√2), split to a
+       second page at a paragraph boundary when it overflows. The render
+       happens in an iframe at a fixed 720px viewport so the desktop layout
+       applies no matter what phone the preview is opened on. ─── */
+function openShare(){
+  const scrim = document.createElement('div');
+  scrim.className = 'share-scrim';
+  scrim.innerHTML = `
+    <div class="share-top">
+      <span class="lbl">Share preview · what gets saved</span>
+      <div class="share-actions">
+        <button class="primary" id="share-pdf">Save as PDF</button>
+        <button id="share-close">Close</button>
+      </div>
+    </div>
+    <div class="share-frame-wrap">
+      <iframe class="share-frame" id="share-frame" width="720" height="1038"
+        src="${location.pathname}?share=1&v=${current + 1}" title="Share preview"></iframe>
+    </div>`;
+  document.body.appendChild(scrim);
+  document.body.classList.add('share-open');
+  const close = () => { scrim.remove(); document.body.classList.remove('share-open'); };
+  const wrap = scrim.querySelector('.share-frame-wrap');
+  const frame = scrim.querySelector('#share-frame');
+  const fit = () => {
+    const s = Math.min(1, (window.innerWidth - 40) / 720);
+    wrap.style.transform = `scale(${s})`;
+    wrap.style.marginBottom = -(frame.height * (1 - s)) + 'px';
+  };
+  frame.addEventListener('load', () => {
+    /* let the inner page paginate, then size the frame to the page count */
+    const poll = setInterval(() => {
+      const doc = frame.contentDocument;
+      /* wait for the inner page's own "pagination done" flag — page one
+         exists before page two, so counting early under-sizes the frame */
+      if (doc?.body?.dataset.paginated){
+        clearInterval(poll);
+        frame.height = doc.querySelectorAll('.share-page').length * 1038;
+        fit();
+      }
+    }, 120);
+    setTimeout(() => clearInterval(poll), 4000);
+  });
+  fit();
+  window.addEventListener('resize', fit);
+  scrim.querySelector('#share-close').addEventListener('click', close);
+  scrim.addEventListener('click', e => { if (e.target === scrim) close(); });
+  scrim.querySelector('#share-pdf').addEventListener('click', () => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+  });
+}
+
+/* In share mode: render the card into fixed paper pages, moving trailing
+   blocks (paragraphs and plates, never a fragment of either) to page two
+   until page one fits. Split lands on a block boundary by construction. */
+function paginateShare(){
+  const stage = document.getElementById('stage');
+  stage.innerHTML = `<div class="share-page"><div class="share-page-inner">${variants[current]()}</div>
+    <div class="share-page-no">Flyleaf Press · Nº ${REC.no} · 1</div></div>`;
+  renderStickers(stage);
+  const page1 = stage.querySelector('.share-page');
+  const card1 = page1.querySelector('.card');
+  const body1 = card1.querySelector('.body');
+  const limit = 1018 - 88;                     /* page minus its padding */
+  if (card1.offsetHeight <= limit) {
+    page1.querySelector('.share-page-no').textContent = '';
+    document.body.dataset.paginated = '1';
+    return;
+  }
+
+  /* continuation card: same ground, no header chrome, body only */
+  const page2 = document.createElement('div');
+  page2.className = 'share-page';
+  page2.innerHTML = `<div class="share-page-inner">
+      <article class="card ${card1.className.split(' ').filter(c => c.startsWith('card--')).join(' ')}" style="--rot:0deg">
+        <div class="lbl" style="margin-bottom:18px">${REC.title} · continued</div>
+        <div class="body"></div>
+      </article>
+    </div>
+    <div class="share-page-no">Flyleaf Press · Nº ${REC.no} · 2</div>`;
+  stage.appendChild(page2);
+  const body2 = page2.querySelector('.body');
+  const colo = card1.querySelector('.colo');
+  if (colo) page2.querySelector('.card').appendChild(colo);
+
+  let guard = 40;
+  while (card1.offsetHeight > limit && body1.children.length > 1 && guard--){
+    body2.insertBefore(body1.lastElementChild, body2.firstChild);
+  }
+  document.body.dataset.paginated = '1';
+}
+
+/* ─── Picker wiring — from PICKER.md ─── */
+const stage = document.getElementById('stage');
+const picker = document.querySelector('.proto-picker');
+const highlight = picker.querySelector('.proto-picker-highlight');
+const items = [...picker.querySelectorAll('.proto-picker-item:not(.proto-picker-replay)')];
+const replay = picker.querySelector('.proto-picker-replay');
+let current = 0;
+
+function moveHighlight(){
+  const el = items[current];
+  highlight.style.width = el.offsetWidth + 'px';
+  highlight.style.transform = `translateX(${el.offsetLeft}px)`;
+}
+
+function mount(i){
+  stage.innerHTML = '';
+  requestAnimationFrame(() => {
+    if (SHARE){ paginateShare(); return; }
+    stage.innerHTML = variants[i]();
+    wireRating(stage);
+    stage.querySelectorAll('.fmt-t').forEach(c => c.addEventListener('click', () => {
+      const on = c.getAttribute('aria-pressed') === 'true';
+      c.setAttribute('aria-pressed', String(!on));
+      REC.formats[c.textContent] = !on;
+    }));
+    renderStickers(stage);
+  });
+}
+
+function setActive(i){
+  if (i < 0 || i >= variants.length) return;
+  current = i;
+  items.forEach((el, j) => {
+    el.toggleAttribute('data-active', j === i);
+    if (j === i) el.setAttribute('aria-current', 'true');
+    else el.removeAttribute('aria-current');
+  });
+  moveHighlight();
+  const url = new URL(location);
+  url.searchParams.set('v', i + 1);
+  history.replaceState(null, '', url);
+  mount(i);
+}
+
+if (!SHARE){
+  items.forEach((el, i) => el.addEventListener('click', () => setActive(i)));
+  replay?.addEventListener('click', () => mount(current));
+  window.addEventListener('resize', moveHighlight);
+  document.getElementById('nav-share').addEventListener('click', openShare);
+
+  document.addEventListener('keydown', (e) => {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+    if (e.target.closest?.('[role="slider"]')) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const num = parseInt(e.key, 10);
+    if (num >= 1 && num <= variants.length) setActive(num - 1);
+    else if (e.key === 'ArrowRight') setActive((current + 1) % variants.length);
+    else if (e.key === 'ArrowLeft') setActive((current - 1 + variants.length) % variants.length);
+    else if (e.key === 'r' || e.key === 'R') mount(current);
+  });
+  buildSheet();
+  setActive((parseInt(new URLSearchParams(location.search).get('v'), 10) || 1) - 1);
+  requestAnimationFrame(() => requestAnimationFrame(() => picker.setAttribute('data-ready', '')));
+} else {
+  current = (parseInt(new URLSearchParams(location.search).get('v'), 10) || 1) - 1;
+  /* fonts.ready can resolve before any face is requested (the stage is empty
+     at load) — request the measuring faces explicitly, then paginate */
+  Promise.all([
+    document.fonts.load('17px Kalam'),
+    document.fonts.load('26px "Playfair Display"'),
+    document.fonts.load('11px "IBM Plex Mono"'),
+  ]).then(() => document.fonts.ready)
+    .then(() => requestAnimationFrame(() => mount(current)));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,679 @@
+/* ─────────────────────────────────────────────────────────────
+   Flyleaf Press — app chrome. NEUTRAL: black ink on paper/white.
+   The pastels and the terracotta live INSIDE the shareable cards;
+   the app around them stays quiet. Small pastel swatches (style
+   pickers) are the only colour the chrome carries.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --paper:#F4F2ED;
+  /* chrome surfaces sit CLOSE to the paper — a step lighter, not stark white */
+  --card-w:#FAF8F3;
+  --ink:#1B1917;
+  --ink-soft:#6B655C;
+  --rule:#E0DBD1;
+  --accent:#C2410C;      /* card-internal only — never on app chrome */
+  --accent-fg:#FAF8F4;
+  --mustard:#DCA94C;
+  --butter:#F6EBD9;
+  --coal:#221E1B;
+  --pink:#F3D9DD;
+  --blue:#DAE4EE;
+  --cream:#F4F2ED;
+
+  --serif:"Playfair Display",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --hand:"Kalam",cursive;
+
+  /* shadows retired by request — elevation is drawn with hairline rules instead */
+  --sh-card:0 0 rgba(0,0,0,0);
+  --sh-plate:0 0 rgba(0,0,0,0);
+  --sh-nav:0 0 rgba(0,0,0,0);
+
+  --ease:cubic-bezier(.2,0,0,1);
+  --gutter:32px;
+}
+@media (max-width:640px){ :root{ --gutter:20px; } }
+
+/* ── dark mode — CHROME ONLY. The cards are printed paper objects and keep
+   their grounds in both themes; below, .card-wrap and .share-page re-pin the
+   printed palette so nothing inside a card ever inverts. Neutral grey — the
+   dark chrome is a dimmed room, not a coffee stain; only the cards stay warm.
+   Applied via data-theme on <html> (system option resolved in App). ── */
+:root[data-theme="dark"]{
+  --paper:#151515;
+  --card-w:#1E1E1E;
+  --ink:#E9E9E9;
+  --ink-soft:#969696;
+  --rule:#343434;
+  --accent-fg:#151515;
+  --sh-card:0 0 rgba(0,0,0,0);
+  --sh-plate:0 0 rgba(0,0,0,0);
+  --sh-nav:0 0 rgba(0,0,0,0);
+}
+/* the printed palette, restored wherever a card renders */
+:root[data-theme="dark"] .card-wrap,
+:root[data-theme="dark"] .share-page{
+  --paper:#F4F2ED; --ink:#1B1917; --ink-soft:#6B655C;
+  --rule:#E0DBD1; --accent-fg:#FAF8F4;
+}
+/* …and in EVERY theme the polaroid whites stay true white — the softened
+   chrome surface above is an app decision, not a printed one */
+.card-wrap, .share-page{ --card-w:#FFFFFF; }
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body,figure,figcaption,h1,h2,h3,p{ margin:0; }
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:13px;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+button{ font-family:var(--mono); }
+img{ max-width:100%; }
+
+/* ── page scaffold ── */
+.page{
+  min-height:100vh; min-height:100dvh;
+  padding:28px var(--gutter) 128px;
+  display:flex; flex-direction:column; align-items:center;
+  overflow-x:clip;
+}
+.page-inner{ width:100%; max-width:680px; }
+
+.app-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:16px; padding-bottom:14px; margin-bottom:28px;
+  border-bottom:1px solid var(--rule);
+}
+.app-head h1{
+  font-family:var(--serif); font-weight:500; font-size:19px; line-height:1;
+  letter-spacing:-.01em; display:flex; align-items:center; gap:9px;
+}
+/* neutral chrome: the rosette prints in ink here, not a colour */
+.app-head h1 svg{ display:block; color:var(--ink); }
+.app-head > span{
+  font-size:10.5px; font-weight:500; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-soft);
+}
+
+.ui-lbl{
+  font-family:var(--mono); font-size:10.5px; font-weight:500; line-height:1.2;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft);
+}
+.ui-h{
+  font-family:var(--serif); font-weight:600; letter-spacing:-.012em;
+  font-size:26px; line-height:1.15;
+}
+
+/* ── buttons — ink on paper, paper on ink. Never terracotta. ── */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border:0; cursor:pointer;
+  height:40px; padding:0 20px; border-radius:999px;
+  background:var(--ink); color:var(--accent-fg);
+  font-family:var(--mono); font-size:11px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  transition:transform 160ms var(--ease), opacity 160ms var(--ease);
+}
+.btn:active{ transform:scale(.97); }
+.btn:disabled{ opacity:.4; cursor:default; }
+.btn--ghost{
+  background:var(--card-w); color:var(--ink);
+  box-shadow:inset 0 0 0 1px var(--rule);
+}
+.btn--sm{ height:32px; padding:0 14px; font-size:10.5px; }
+/* a ghost button that is also a state (e.g. "No cover") fills when chosen */
+.btn--ghost[aria-pressed="true"]{ background:var(--ink); color:var(--accent-fg); box-shadow:none; }
+.btn--danger{ background:transparent; color:var(--ink-soft); box-shadow:inset 0 0 0 1px var(--rule); }
+
+/* ── white panels ── */
+.panel{
+  background:var(--card-w); border-radius:3px; border:1px solid var(--rule);
+  padding:22px;
+}
+.panel + .panel{ margin-top:16px; }
+
+/* ── the month notice — NEUTRAL: white card, rule border, ink text ── */
+.notice{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px 18px; flex-wrap:wrap;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  padding:16px 18px; margin-bottom:24px;
+}
+.notice-txt .ui-lbl{ margin-bottom:5px; }
+.notice-txt p{ font-size:12.5px; line-height:1.5; color:var(--ink); }
+
+/* ── the floating pill nav, per the Flyleaf shell (mechanics only): a
+   bottom-centred capsule that hugs its tabs. Tabs are icon-only at rest;
+   the ACTIVE tab grows into an icon + label capsule, filled --ink. The
+   one real action — add a book — is its own round button beside the bar,
+   never inside it. ── */
+.tabbar{
+  position:fixed; left:50%; bottom:calc(14px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  z-index:40;
+  display:flex; align-items:center; gap:10px;
+  max-width:calc(100vw - 20px);
+}
+.tab-pill{
+  display:flex; align-items:center; gap:2px;
+  background:var(--card-w);
+  border:1px solid var(--rule); border-radius:999px;
+  box-shadow:var(--sh-nav);
+  padding:5px;
+  min-width:0;
+}
+.tab-pill a{
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  min-width:44px; min-height:44px;
+  padding:10px 12px; border-radius:999px;
+  color:var(--ink-soft); text-decoration:none;
+  font-family:var(--mono); font-size:10.5px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase; line-height:1;
+  transition:color 180ms var(--ease), background 180ms var(--ease);
+  -webkit-tap-highlight-color:transparent;
+  white-space:nowrap;
+}
+.tab-pill a{ --tab-bg:var(--card-w); }
+.tab-pill a svg{ display:block; width:20px; height:20px; flex:none; }
+.tab-pill a .tab-lbl{ display:none; }
+.tab-pill a[aria-current="page"]{
+  --tab-bg:var(--ink);
+  padding-inline:15px;
+  background:var(--ink); color:var(--accent-fg);
+}
+.tab-pill a[aria-current="page"] .tab-lbl{ display:block; }
+/* the main action: add a book, write the review — its own button by the pill */
+.tab-add{
+  width:50px; height:50px; border-radius:50%; flex:none;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--ink); color:var(--accent-fg);
+  border:1px solid var(--rule);
+  box-shadow:var(--sh-nav);
+  text-decoration:none;
+  transition:transform 160ms var(--ease);
+}
+.tab-add:active{ transform:scale(.94); }
+.tab-add svg{ display:block; width:22px; height:22px; }
+@media (max-width:389px){
+  .tabbar{ gap:8px; }
+  .tab-pill a{ padding:10px 10px; }
+  .tab-pill a[aria-current="page"]{ padding-inline:12px; }
+}
+
+/* ── forms ── */
+/* the editor reads as a stack of titled sections — a rule above each heading
+   marks the seam, the way a printed form rules off its parts */
+.form-sec{ margin-bottom:36px; }
+.form-sec-h{
+  padding-top:14px; margin-bottom:18px;
+  border-top:1px solid var(--rule);
+  color:var(--ink);
+}
+/* the page header already rules off below itself — a second rule right under
+   it would read as an empty section */
+.form-sec:first-of-type .form-sec-h{ border-top:0; padding-top:0; }
+.field{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.form-sec .field:last-child{ margin-bottom:0; }
+.field input[type="text"], .field input[type="search"], .field input[type="date"], .field textarea, .field select{
+  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
+  color:var(--ink); font-family:var(--mono); font-size:13px;
+  padding:11px 12px; outline:none; width:100%;
+  transition:border-color 160ms var(--ease);
+}
+.field input:focus, .field textarea:focus{ border-color:var(--ink); }
+.field textarea{ resize:vertical; min-height:220px; line-height:1.6; }
+.field textarea.hand{
+  font-family:var(--hand); font-size:16.5px; line-height:1.74; min-height:300px;
+}
+/* the writing canvas opens as its own full page on request — a small
+   control pinned inside the inline canvas takes you there */
+.canvas-wrap{ position:relative; }
+.canvas-wrap textarea.hand{ display:block; padding-bottom:52px; resize:none; }
+.write-focus{
+  position:fixed; inset:0; z-index:120;
+  display:flex; flex-direction:column;
+  background:var(--paper);
+  padding:18px 20px calc(18px + env(safe-area-inset-bottom));
+}
+.write-focus-head{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:14px;
+}
+.write-focus-head .ui-lbl{
+  margin:0; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.write-focus-head .write-focus-done{ position:static; right:auto; bottom:auto; flex:none; }
+.write-focus textarea.hand{
+  flex:1; width:100%; min-height:0; resize:none; outline:none;
+  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
+  color:var(--ink); font-family:var(--hand); font-size:16.5px; line-height:1.74;
+  padding:16px 18px;
+  transition:border-color 160ms var(--ease);
+}
+.write-focus textarea.hand:focus{ border-color:var(--ink); }
+.canvas-expand{
+  position:absolute; right:10px; bottom:10px;
+  height:30px; padding:0 14px; cursor:pointer;
+  background:var(--card-w); color:var(--ink-soft);
+  border:1px solid var(--rule); border-radius:999px;
+  font-family:var(--mono); font-size:10px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  transition:color 160ms var(--ease), border-color 160ms var(--ease);
+}
+.canvas-expand:hover{ color:var(--ink); border-color:var(--ink); }
+.field-hint{ font-size:11px; line-height:1.5; color:var(--ink-soft); }
+
+/* ── shelf toolbar: search + sort + display ── */
+.shelf-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
+.shelf-tools input[type="search"]{
+  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
+  color:var(--ink); font-family:var(--mono); font-size:12.5px;
+  height:40px; padding:0 12px; outline:none; width:100%;
+  transition:border-color 160ms var(--ease);
+}
+.shelf-tools input[type="search"]:focus{ border-color:var(--ink); }
+.shelf-tools-row{ display:flex; align-items:center; gap:10px; }
+.shelf-tools-row .dd{ flex:1; min-width:0; }
+.shelf-tools-row .seg{ flex-shrink:0; }
+
+/* ── app-drawn dropdown (Select) — the native control crowded its chevron ── */
+.dd{ position:relative; }
+.dd-btn{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  width:100%; height:40px; padding:0 14px; cursor:pointer;
+  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
+  color:var(--ink); font-family:var(--mono); font-size:12.5px; text-align:left;
+  transition:border-color 160ms var(--ease);
+}
+.dd-btn:focus-visible, .dd-btn[aria-expanded="true"]{ border-color:var(--ink); outline:none; }
+.dd-btn svg{ flex:none; color:var(--ink-soft); }
+.dd-btn > span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dd-list{
+  position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:30;
+  margin:0; padding:4px; list-style:none;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  max-height:290px; overflow-y:auto;
+}
+.dd-list li{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:0 10px; border-radius:2px; cursor:pointer; min-height:40px;
+  font-family:var(--mono); font-size:12px; color:var(--ink);
+}
+.dd-list li.is-active{ background:var(--paper); }
+.dd-list li svg{ flex:none; color:var(--ink); }
+
+/* suggestions — a paper slip pinned under the search box */
+.shelf-search{ position:relative; }
+.shelf-sugg{
+  position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:30;
+  margin:0; padding:4px; list-style:none;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  box-shadow:var(--sh-card); max-height:290px; overflow-y:auto;
+}
+.shelf-sugg li{
+  display:flex; align-items:center; gap:10px;
+  padding:8px 9px; border-radius:2px; cursor:pointer;
+  font-family:var(--mono); font-size:12px; min-height:44px;
+}
+.shelf-sugg li.is-active, .shelf-sugg li:hover{ background:var(--paper); }
+.shelf-sugg img, .shelf-sugg-miss{
+  width:22px; height:31px; object-fit:cover; border-radius:1.5px;
+  border:1px solid var(--rule); flex-shrink:0; background:var(--paper);
+}
+.shelf-sugg-t{
+  color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.shelf-sugg-a{
+  margin-left:auto; padding-left:10px; flex-shrink:0; color:var(--ink-soft);
+  font-size:10.5px; letter-spacing:.06em; text-transform:uppercase;
+  max-width:38%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.shelf-sugg-by{
+  flex-shrink:0; width:22px; text-align:center; color:var(--ink-soft);
+  font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+}
+
+/* format toggle — same inline mono line as the cards */
+.fmt-pick{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:6px; row-gap:8px; }
+.fmt-pick button{
+  border:0; padding:2px 1px 4px; background:transparent; cursor:pointer;
+  font-size:11.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-soft); opacity:.62;
+  border-bottom:2px solid transparent;
+  transition:color 160ms var(--ease), opacity 160ms var(--ease), border-color 160ms var(--ease);
+}
+.fmt-pick button[aria-pressed="true"]{ color:var(--ink); opacity:1; border-bottom-color:currentColor; }
+.fmt-pick .sep{ color:var(--ink-soft); opacity:.45; font-size:11.5px; }
+
+/* interactive stars (write flow) */
+.stars-input{
+  display:flex; gap:4px; cursor:ew-resize; touch-action:none;
+  padding:6px 0; border-radius:3px; width:max-content;
+}
+.stars-input:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+.stars-input svg{ display:block; }
+/* one calm line: the stars, then a modest numeral — the caption lives in the
+   field hint below, so nothing wraps at 360px */
+.rate-input-row{ display:flex; align-items:center; gap:16px; }
+.rate-input-num{
+  font-family:var(--serif); font-weight:600; font-size:22px; line-height:1;
+  letter-spacing:-.01em; font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.rate-input-of{ font-family:var(--mono); font-size:11px; font-weight:400; color:var(--ink-soft); }
+
+/* ── style picker (review styles + collage styles as themes) ── */
+.style-pick{ display:flex; flex-wrap:wrap; gap:8px; }
+.style-pick button{
+  display:inline-flex; align-items:center; gap:8px;
+  border:1px solid var(--rule); border-radius:999px; cursor:pointer;
+  background:var(--card-w); color:var(--ink-soft);
+  height:34px; padding:0 14px 0 9px;
+  font-size:10.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  transition:color 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.style-pick button[aria-pressed="true"]{
+  color:var(--ink); border-color:var(--ink);
+  box-shadow:inset 0 0 0 1px var(--ink);
+}
+.style-dot{
+  width:16px; height:16px; border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(27,25,23,.18);
+  flex:0 0 auto;
+}
+
+/* ── library (home) ── */
+.lib{ display:flex; flex-direction:column; gap:12px; }
+.lib-row{
+  display:grid; grid-template-columns:52px 1fr auto; gap:0 16px; align-items:center;
+  background:var(--card-w); border-radius:3px; border:1px solid var(--rule);
+  padding:12px 16px 12px 12px;
+  text-decoration:none; color:var(--ink);
+  transition:transform 160ms var(--ease);
+}
+.lib-row:hover{ transform:translateY(-1px); }
+.lib-cover{ width:52px; aspect-ratio:2/3; object-fit:cover; border-radius:2px;
+  box-shadow:var(--sh-plate); background:var(--paper); display:block; }
+.lib-cover-miss{
+  width:52px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:2px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:7px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+  text-align:center; padding:4px;
+}
+.lib-t{ font-family:var(--serif); font-weight:600; font-size:16px; line-height:1.25; letter-spacing:-.01em; }
+.lib-a{ font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
+.lib-r{ text-align:right; }
+.lib-r .r-num{ font-family:var(--serif); font-weight:600; font-size:16px; font-variant-numeric:tabular-nums; }
+.lib-dot{ width:10px; height:10px; border-radius:50%; display:inline-block;
+  box-shadow:inset 0 0 0 1px rgba(27,25,23,.18); margin-left:8px; vertical-align:-1px; }
+.lib-month-h{ margin:26px 0 14px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+.lib-month-h:first-child{ margin-top:0; }
+
+/* ── search results ── */
+.res{ display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+.res-row{
+  display:grid; grid-template-columns:44px 1fr auto; gap:0 14px; align-items:center;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  padding:10px 14px 10px 10px; cursor:pointer; text-align:left;
+  transition:border-color 160ms var(--ease);
+}
+.res-row:hover{ border-color:var(--ink); }
+.res-row img{ width:44px; aspect-ratio:2/3; object-fit:cover; border-radius:2px; background:var(--paper); }
+.res-t{ font-family:var(--serif); font-weight:600; font-size:14.5px; line-height:1.25; }
+.res-a{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:3px; }
+.res-src{ font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
+
+/* current cover summary — one tile + a line of state + the Edit button;
+   the full candidate grid lives in the modal so long lists never swallow the form */
+.cov-cur{
+  display:flex; align-items:center; gap:16px;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  padding:12px;
+}
+.cov-cur > img{
+  width:64px; aspect-ratio:2/3; object-fit:cover; border-radius:2px;
+  background:var(--paper); flex:none; display:block;
+}
+.cov-cur .cov-none{
+  width:64px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:2px;
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  font-size:8px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+  padding:6px; flex:none;
+}
+.cov-cur-txt{
+  display:flex; flex-direction:column; align-items:flex-start; gap:10px; min-width:0;
+}
+
+/* cover candidate picker */
+.cov-pick{ display:flex; gap:10px; flex-wrap:wrap; }
+.cov-pick button{
+  border:2px solid transparent; border-radius:3px; padding:2px; background:transparent; cursor:pointer;
+}
+.cov-pick button[aria-pressed="true"]{ border-color:var(--ink); }
+.cov-pick img{ width:68px; aspect-ratio:2/3; object-fit:cover; border-radius:2px; display:block; background:var(--paper); }
+.cov-pick .cov-none{
+  width:68px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:2px;
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  font-size:8px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); padding:6px;
+}
+
+/* plates editor */
+.plate-edit{ display:flex; flex-direction:column; gap:12px; }
+.plate-edit-row{
+  display:grid; grid-template-columns:64px 1fr auto; gap:0 14px; align-items:center;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:3px; padding:10px;
+}
+.plate-edit-row img{ width:64px; aspect-ratio:1; object-fit:cover; border-radius:2px; background:var(--paper); display:block; }
+.plate-edit-row input{
+  border:0; border-bottom:1px solid var(--rule); background:transparent;
+  font-family:var(--hand); font-size:15px; color:var(--ink); padding:6px 2px; width:100%; outline:none;
+}
+.plate-edit-row input:focus{ border-bottom-color:var(--ink); }
+
+/* ── card display wrapper ── */
+.card-wrap{ width:100%; }
+
+/* ── share sheet ── */
+.share-scrim{
+  position:fixed; inset:0; z-index:100;
+  background:rgba(27,25,23,.5);
+  display:flex; flex-direction:column; align-items:center;
+  padding:20px; overflow:auto;
+  animation:fade 180ms var(--ease) both;
+}
+@keyframes fade{ from{ opacity:0 } to{ opacity:1 } }
+.share-sheet{
+  width:100%; max-width:760px;
+  background:var(--paper); border-radius:4px; border:1px solid var(--rule);
+  padding:22px; margin:auto 0;
+}
+.share-sheet-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.share-preview-wrap{ overflow:hidden; margin-top:16px; }
+.share-preview-scale{ transform-origin:top left; }
+/* the preview shows exactly what exports: tight pages hugging the card */
+.share-preview-scale .share-page{
+  border:1px solid var(--rule); margin-bottom:20px;
+  height:auto; min-height:0; padding:26px; overflow:visible;
+}
+.share-preview-scale .share-page-no{ position:static; margin-top:18px; }
+.share-preview-scale .share-page-no:empty{ display:none; }
+.share-note{ font-size:11px; line-height:1.5; color:var(--ink-soft); margin-top:10px; }
+
+/* ── modal sheet (cover picker) — same scrim as the share sheet ── */
+.modal-sheet{
+  width:100%; max-width:520px;
+  background:var(--paper); border-radius:4px; border:1px solid var(--rule);
+  padding:22px; margin:auto 0;
+}
+.modal-top{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:16px;
+}
+.modal-sheet .cov-pick{ margin:14px 0; }
+.modal-sheet .field-hint{ margin-bottom:10px; }
+.modal-actions{
+  display:flex; gap:10px; flex-wrap:wrap;
+  border-top:1px solid var(--rule); padding-top:16px; margin-top:6px;
+}
+
+/* ── in-app confirm — window.confirm is a no-op in some installed-PWA
+   webviews, so destructive actions ask on paper instead ── */
+.confirm-sheet{
+  width:100%; max-width:400px;
+  background:var(--paper); border-radius:4px; border:1px solid var(--rule);
+  padding:22px; margin:auto 0;
+}
+.confirm-sheet p{
+  font-size:12.5px; line-height:1.65; color:var(--ink);
+  margin:12px 0 20px;
+}
+.confirm-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+/* onboarding */
+.onb{ min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:32px var(--gutter); }
+.onb-inner{ width:100%; max-width:440px; text-align:center; }
+.onb-mark{ color:var(--ink); margin-bottom:18px; display:flex; justify-content:center; }
+.onb h1{ font-family:var(--serif); font-weight:600; font-size:34px; letter-spacing:-.015em; line-height:1.1; }
+.onb-sub{ font-size:12px; line-height:1.7; color:var(--ink-soft); margin:16px 0 30px; }
+.onb .field{ text-align:left; }
+.onb .style-pick{ justify-content:center; }
+
+/* settings rows */
+.set-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; border-bottom:1px solid var(--rule); }
+.set-row:last-child{ border-bottom:0; }
+.set-row-txt p{ font-size:11px; line-height:1.55; color:var(--ink-soft); margin-top:4px; max-width:380px; }
+.set-row-txt .ui-lbl{ color:var(--ink); }
+/* neutral toggle */
+.toggle{
+  position:relative; width:44px; height:26px; border-radius:999px; border:0; cursor:pointer;
+  background:var(--rule); transition:background 180ms var(--ease); flex:0 0 auto;
+}
+.toggle::after{
+  content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+  background:var(--card-w);
+  transition:transform 180ms var(--ease);
+}
+.toggle[aria-checked="true"]{ background:var(--ink); }
+.toggle[aria-checked="true"]::after{ transform:translateX(18px); }
+
+/* months grid */
+.mo-list{ display:flex; flex-direction:column; gap:12px; }
+.mo-row{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  background:var(--card-w); border-radius:3px; border:1px solid var(--rule);
+  padding:18px 20px; text-decoration:none; color:var(--ink);
+  transition:transform 160ms var(--ease);
+}
+.mo-row:hover{ transform:translateY(-1px); }
+.mo-row-t{ font-family:var(--serif); font-weight:600; font-size:19px; letter-spacing:-.01em; }
+.mo-row-s{ font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
+.mo-open-tag{
+  font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+  border:1px solid var(--rule); border-radius:999px; padding:5px 10px; color:var(--ink-soft);
+}
+
+/* empty states */
+.empty{
+  text-align:center; padding:60px 20px; color:var(--ink-soft);
+  border:1px dashed var(--rule); border-radius:3px;
+}
+.empty .ui-h{ color:var(--ink); font-size:22px; margin-bottom:10px; }
+.empty p{ font-size:12px; line-height:1.7; max-width:340px; margin:0 auto 22px; }
+
+/* busy overlay while rasterizing */
+.busy{
+  position:fixed; inset:0; z-index:200; background:rgba(244,242,237,.8);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+}
+
+/* ── Home — the personal masthead ── */
+.home-mast{ display:flex; align-items:center; gap:16px; margin-bottom:26px; }
+.home-hello{ font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
+.home-who{
+  font-family:var(--serif); font-weight:600; font-size:30px; line-height:1.08;
+  letter-spacing:-.015em; margin-top:4px;
+}
+.home-tally{ font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px; }
+
+/* the face on its paper disc — ring and ground belong to the chrome */
+.face{
+  display:inline-flex; border-radius:50%; overflow:hidden; flex:0 0 auto;
+  background:var(--card-w); box-shadow:inset 0 0 0 1px var(--rule);
+}
+.face img{ display:block; }
+.face-picker{ display:flex; flex-wrap:wrap; gap:8px; }
+.face-picker button{
+  border:2px solid transparent; border-radius:50%; padding:2px; background:transparent; cursor:pointer;
+  transition:border-color 160ms var(--ease);
+}
+.face-picker button[aria-checked="true"]{ border-color:var(--ink); }
+
+/* home stat strip */
+.home-stats{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:3px;
+  overflow:hidden; margin-bottom:24px;
+}
+.home-stat{ background:var(--card-w); padding:14px 16px; }
+.home-stat-n{
+  font-family:var(--serif); font-weight:600; font-size:24px; line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.home-stat .ui-lbl{ margin-top:6px; font-size:9px; }
+
+/* section head with a trailing link */
+.sec-h{ margin:26px 0 14px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+.sec-h a{ text-decoration:none; }
+
+/* ── segmented control (shelf view switch) — iOS-flavoured, ink on paper ── */
+.seg{
+  display:inline-flex; padding:4px; gap:2px; border-radius:9px;
+  background:var(--rule);
+}
+.seg button{
+  border:0; cursor:pointer; border-radius:6px; height:32px; padding:0 16px;
+  background:transparent; color:var(--ink-soft);
+  font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  transition:background 160ms var(--ease), color 160ms var(--ease);
+}
+.seg button[aria-pressed="true"], .seg button[aria-checked="true"]{
+  background:var(--card-w); color:var(--ink);
+}
+
+/* ── shelf covers view ── */
+.shelf-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:18px 14px; }
+.shelf-cell{ text-decoration:none; color:var(--ink); display:block; }
+.shelf-cell img{
+  width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:2px; display:block;
+  box-shadow:var(--sh-plate); background:var(--card-w);
+}
+.shelf-cell .lib-cover-miss{ width:100%; aspect-ratio:2/3; }
+.shelf-cell-t{
+  font-family:var(--serif); font-weight:600; font-size:12px; line-height:1.3;
+  margin-top:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.shelf-cell-r{
+  font-size:10px; letter-spacing:.08em; color:var(--ink-soft); margin-top:3px;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ── collapsed card preview: long reviews stay hand-sized until opened ── */
+.card-clamp{ position:relative; max-height:420px; overflow:hidden; }
+.card-clamp::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:110px;
+  background:linear-gradient(to bottom, transparent, var(--paper));
+  pointer-events:none;
+}
+.card-clamp-btn{ display:flex; justify-content:center; margin-top:12px; }
+
+/* print: only the paginated pages */
+@media print{
+  body > #root{ display:none; }
+  .tabbar, .share-scrim, .busy{ display:none !important; }
+  body{ background:#fff; }
+  .print-host{ position:static !important; }
+}

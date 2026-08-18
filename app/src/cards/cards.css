@@ -1,0 +1,481 @@
+/* ─────────────────────────────────────────────────────────────
+   Card styles — ported from the prototypes. IMPORTANT: no viewport
+   media queries in here. Mobile sizing is the .card-compact class,
+   set by the container that knows its own width — so a share render
+   at a fixed 720px always gets the full desktop layout, no matter
+   what phone it happens on.
+   ───────────────────────────────────────────────────────────── */
+
+.card-wrap{ --pad:28px; }
+.card-wrap.card-compact{ --pad:22px; }
+
+.card{
+  position:relative;
+  border-radius:2px;
+  padding:var(--pad);
+  box-shadow:var(--sh-card);
+  transform:rotate(var(--rot,0deg));
+  animation:rise 220ms var(--ease) both;
+  color:var(--tx);
+}
+@keyframes rise{
+  from{ opacity:0; transform:rotate(var(--rot,0deg)) translateY(8px); }
+  to  { opacity:1; transform:rotate(var(--rot,0deg)) translateY(0); }
+}
+@media (prefers-reduced-motion:reduce){ .card{ animation:none; } }
+
+/* Base first, ground modifiers after — equal specificity, source order wins. */
+.card{
+  --tx:var(--ink);
+  --meta:var(--ink-soft);
+  --num:var(--accent);
+  --hair:var(--rule);
+  --star:var(--mustard);
+  --star-line:rgba(27,25,23,.58);
+  --plate-g:var(--card-w);
+  background:var(--butter);
+}
+.card--mustard{
+  background:var(--mustard);
+  --meta:rgba(27,25,23,.72); --num:var(--ink);
+  --hair:rgba(27,25,23,.18);
+  --star:var(--ink); --star-line:rgba(27,25,23,.62);
+}
+.card--coal{
+  background:var(--coal);
+  --tx:var(--cream);
+  --meta:rgba(244,242,237,.66); --num:var(--cream);
+  --hair:rgba(244,242,237,.22);
+  --star:var(--mustard); --star-line:rgba(244,242,237,.55);
+}
+.card--pink{
+  background:var(--pink);
+  --hair:rgba(27,25,23,.14);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+.card--blue{
+  background:var(--blue);
+  --hair:rgba(27,25,23,.14);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+
+.card .lbl{
+  font-family:var(--mono); font-size:10.5px; font-weight:500; line-height:1.2;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--meta);
+}
+.card .val{ font-family:var(--mono); font-size:12.5px; line-height:1.45; letter-spacing:.01em; color:var(--tx); }
+.card .title{
+  font-family:var(--serif); font-weight:600;
+  font-size:34px; line-height:1.12; letter-spacing:-.012em;
+}
+.card .by{ font-family:var(--serif); font-style:italic; font-size:17px; line-height:1.35; color:var(--meta); }
+.card .body{
+  font-family:var(--hand); font-weight:400;
+  font-size:17px; line-height:1.72;
+  /* no measure cap — the writing runs the full padded width of the card */
+  color:var(--tx);
+}
+.card .body p{ margin:0 0 15px; }
+.card .body > :last-child{ margin-bottom:0; }
+.card-compact .card .title{ font-size:27px; line-height:1.15; }
+.card-compact .card .body{ font-size:16.5px; line-height:1.74; }
+
+/* Format — an inline mono line, never boxes. */
+.fmt{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:4px; row-gap:6px; }
+.fmt-t{
+  padding:0 1px 3px;
+  font-family:var(--mono); font-size:11.5px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  color:var(--meta); opacity:.62;
+  border-bottom:2px solid transparent;
+}
+.fmt-t[data-on="true"]{ color:var(--tx); opacity:1; border-bottom-color:currentColor; }
+.fmt-sep{ color:var(--meta); opacity:.45; font-size:11.5px; }
+
+/* Archive rail keeps a stacked checklist — same facts, ledger clothing */
+.fmt--stack{ flex-direction:column; align-items:flex-start; gap:7px; }
+.fmt--stack .fmt-sep{ display:none; }
+.fmt--stack .fmt-t{ display:flex; align-items:center; gap:7px; border-bottom:0; }
+.fmt--stack .fmt-t::before{
+  content:""; width:11px; height:11px; flex:0 0 auto;
+  border:1.5px solid currentColor; border-radius:2px;
+}
+.fmt--stack .fmt-t[data-on="true"]::before{
+  background:currentColor;
+  box-shadow:inset 0 0 0 2px var(--fmt-well, var(--mustard));
+}
+
+/* Rating — numeral AND geometrically-filled stars, 0.25 steps */
+.rate{ display:flex; align-items:baseline; gap:12px; }
+.rate-num{
+  font-family:var(--serif); font-weight:600;
+  font-size:44px; line-height:1; letter-spacing:-.02em;
+  color:var(--num);
+  font-variant-numeric:tabular-nums;
+}
+.rate-of{ font-family:var(--mono); font-size:12.5px; color:var(--meta); }
+.stars{ display:flex; gap:4px; padding:4px 0; }
+.stars svg{ display:block; }
+
+/* Cover — real cover or nothing. No generated placeholder. */
+.cover{
+  display:block; width:100%; height:auto;
+  aspect-ratio:2/3; object-fit:cover;
+  border-radius:2px; box-shadow:var(--sh-plate);
+  background:var(--paper);
+}
+.cover-missing{
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  aspect-ratio:2/3; border:1px dashed var(--hair); border-radius:2px;
+  padding:12px;
+  font-family:var(--mono); font-size:9.5px; font-weight:500;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--meta);
+}
+
+/* ── Polaroid plates — a pasted row at the foot of the review (back at the
+      bottom, per feedback). A review with no plates simply has no row. ── */
+.plate-row{
+  display:flex; flex-wrap:wrap; gap:24px 20px;
+  justify-content:center; align-items:flex-start;
+  margin-top:32px;
+}
+.plate{
+  position:relative;
+  width:186px;
+  padding:14px 14px 0;
+  background:var(--plate-g);
+  border-radius:3px;
+  box-shadow:var(--sh-plate);
+  transform:rotate(var(--prot,0deg));
+}
+.card-compact .plate{ width:158px; }
+.plate-photo{ display:block; width:100%; height:auto; aspect-ratio:1; border-radius:1px; object-fit:cover; background:var(--paper); }
+.plate-cap{
+  font-family:var(--hand); font-size:13.5px; line-height:1.25;
+  color:var(--ink-soft);
+  min-height:44px; display:flex; align-items:center;
+  padding:5px 1px 6px;
+}
+.card-compact .plate-cap{ font-size:12.5px; min-height:40px; }
+
+/* Washi tape — translucent, torn ends */
+.tape{
+  position:absolute; top:-10px; left:50%;
+  width:64px; height:20px; margin-left:-32px;
+  background:var(--tape-c, rgba(220,169,76,.42));
+  clip-path:polygon(3% 8%, 0 46%, 4% 90%, 97% 100%, 100% 55%, 96% 4%);
+  transform:rotate(-3deg);
+}
+.tape--r{ left:auto; right:-16px; top:8px; margin:0; transform:rotate(56deg); }
+
+.pclip{ position:absolute; z-index:3; pointer-events:none; }
+
+/* Logo patch — the rosette, translucent, clipped to the card rectangle */
+.patch-wrap{ position:absolute; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; }
+.patch{ position:absolute; pointer-events:none; color:var(--tx); }
+
+.colo{
+  display:flex; align-items:center; gap:8px;
+  margin-top:26px; padding-top:16px;
+  border-top:1px solid var(--hair);
+  font-family:var(--mono); font-size:9.5px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--meta);
+}
+.colo svg{ display:block; opacity:.75; }
+
+.hr{ height:1px; background:var(--hair); border:0; margin:0; }
+
+/* ── S1 · Archive (mustard) ─────────────────────────────────── */
+.s1{ display:grid; grid-template-columns:112px 1fr; gap:0 28px; }
+.s1 .fmt--stack{ --fmt-well:var(--mustard); }
+.s1-rail{ display:flex; flex-direction:column; gap:20px; border-right:1px solid var(--hair); padding-right:20px; }
+.s1-rail > div > .val{ margin-top:5px; }
+.s1-main{ min-width:0; }
+.s1-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.s1-rate{ flex:0 0 auto; text-align:right; }
+.s1-rate .rate{ justify-content:flex-end; }
+.s1-rate .stars{ justify-content:flex-end; margin-top:10px; }
+.s1-cover{ width:100%; transform:rotate(2deg); }
+.s1 .body{ margin-top:30px; }
+.s1 .patch{ right:-26px; bottom:64px; opacity:.10; transform:rotate(14deg); }
+.s1 > .plate-row, .s1 > .colo{ grid-column:1 / -1; }
+.card-compact .s1{ grid-template-columns:1fr; gap:0; }
+/* single-column order: main → rail → plates → colophon (colophon always closes the card) */
+.card-compact .s1 > .plate-row{ order:3; }
+.card-compact .s1 > .colo{ order:4; }
+.card-compact .s1-rail{
+  display:grid; grid-template-columns:1fr 1fr; gap:16px 20px;
+  border-right:0; padding-right:0;
+  order:2; border-top:1px solid var(--hair);
+  padding-top:22px; margin:26px 0 0;
+}
+.card-compact .s1-main{ order:1; }
+.card-compact .s1-head{ flex-direction:column; gap:22px; }
+.card-compact .s1-rate{ text-align:left; }
+.card-compact .s1-rate .rate, .card-compact .s1-rate .stars{ justify-content:flex-start; }
+.card-compact .s1-cover{ width:92px; grid-column:1; grid-row:span 2; align-self:start; }
+
+/* ── S2 · Masthead (butter) ─────────────────────────────────── */
+.s2-head{ position:relative; padding-right:150px; min-height:196px; }
+.s2-kicker{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-bottom:18px; }
+.s2 .title{ font-size:40px; }
+.s2-by{ margin-top:10px; }
+.s2-cover-wrap{
+  position:absolute; top:2px; right:6px; width:124px;
+  transform:rotate(2deg);
+}
+.s2-rule{ margin:22px 0; }
+.s2-bar{ display:flex; align-items:flex-start; justify-content:space-between; gap:24px 28px; flex-wrap:wrap; }
+.s2-rate .rate-num{ font-size:56px; }
+.s2-rate .stars{ margin-top:10px; }
+.s2-meta{ display:flex; flex-direction:column; gap:14px; }
+.s2-meta-row{ display:flex; gap:28px; }
+.s2-meta-row .val{ margin-top:5px; }
+.s2 .body{ margin-top:30px; }
+.s2 .patch{ left:-30px; bottom:110px; opacity:.07; transform:rotate(-11deg); }
+.card-compact .s2-head{ padding-right:104px; min-height:150px; }
+.card-compact .s2 .title{ font-size:29px; }
+.card-compact .s2-cover-wrap{ width:86px; top:0; right:0; }
+.card-compact .s2-rate .rate-num{ font-size:46px; }
+.card-compact .s2-meta-row{ gap:20px; }
+
+/* ── S3 · Catalogue (coal) ──────────────────────────────────── */
+.s3-cover-wrap{
+  position:absolute; top:-20px; right:30px; width:112px; z-index:4;
+  transform:rotate(2.4deg);
+}
+.s3-cover-wrap .cover{ box-shadow:none; }
+.s3-headroom{ padding-right:150px; }
+.s3 .title{ font-size:30px; }
+.s3 .by{ display:block; margin-top:8px; }
+.s3-tbl{ border-top:1px solid var(--hair); margin-top:22px; }
+.s3-row{
+  display:grid; grid-template-columns:104px 1fr;
+  gap:0 16px; align-items:start;
+  padding:11px 0; border-bottom:1px solid var(--hair);
+}
+.s3-row .lbl{ padding-top:3px; }
+.s3-rate-row{ display:flex; align-items:center; gap:18px; padding:14px 0; border-bottom:1px solid var(--hair); }
+.s3-rate-row .rate-num{ font-size:40px; }
+.s3 .body{ margin-top:24px; }
+.s3 .patch{ right:14px; top:150px; opacity:.08; }
+.card-compact .s3-cover-wrap{ width:88px; right:18px; top:-16px; }
+.card-compact .s3-headroom{ padding-right:100px; }
+.card-compact .s3 .title{ font-size:26px; }
+.card-compact .s3-rate-row{ flex-wrap:wrap; gap:10px 18px; }
+
+/* ── S4 · Scrapbook (pink) — deckle-torn bottom edge, washi tape,
+      a pasted title label. The margin note is gone, per feedback. ── */
+.s4{
+  background:transparent;
+  box-shadow:none;
+  padding-bottom:44px;
+}
+.s4::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:var(--pink); border-radius:2px;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 14px),
+    97.5% calc(100% - 6px), 94% calc(100% - 13px), 90% calc(100% - 4px),
+    86% calc(100% - 12px), 81.5% calc(100% - 5px), 77% calc(100% - 13px),
+    72% calc(100% - 6px), 67% calc(100% - 11px), 62% calc(100% - 3px),
+    57% calc(100% - 12px), 52% calc(100% - 6px), 47% calc(100% - 13px),
+    42% calc(100% - 5px), 37% calc(100% - 11px), 32% calc(100% - 4px),
+    27% calc(100% - 12px), 22% calc(100% - 6px), 17% calc(100% - 13px),
+    12% calc(100% - 5px), 7% calc(100% - 11px), 3% calc(100% - 4px),
+    0 calc(100% - 14px));
+  filter:drop-shadow(0 1px 2px rgba(27,25,23,.07)) drop-shadow(0 10px 16px rgba(27,25,23,.13));
+}
+.s4-label{
+  display:inline-block;
+  background:var(--card-w); box-shadow:var(--sh-plate);
+  padding:12px 18px 13px; border-radius:2px;
+  transform:rotate(-1.3deg);
+  max-width:100%;
+}
+.s4-label .title{ font-size:29px; }
+.s4-label .by{ margin-top:5px; display:block; }
+.s4-bar{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px 26px; flex-wrap:wrap; margin-top:24px; }
+.s4-rate .stars{ margin-top:9px; }
+.s4-meta{ display:flex; flex-direction:column; gap:12px; }
+.s4-meta-row{ display:flex; gap:26px; flex-wrap:wrap; }
+.s4-meta-row .val{ margin-top:4px; }
+.s4 .body{ margin-top:28px; }
+.s4 .patch{ left:50%; bottom:-38px; margin-left:-70px; opacity:.09; transform:rotate(8deg); }
+.s4-washi-1{ position:absolute; top:-11px; left:34px; width:92px; height:24px;
+  background:rgba(220,169,76,.42);
+  clip-path:polygon(2% 10%, 0 50%, 3% 92%, 98% 100%, 100% 48%, 97% 2%);
+  transform:rotate(-4deg); z-index:4; }
+.s4-washi-2{ position:absolute; top:26px; right:-20px; width:84px; height:22px;
+  background:rgba(27,25,23,.14);
+  clip-path:polygon(2% 10%, 0 50%, 3% 92%, 98% 100%, 100% 48%, 97% 2%);
+  transform:rotate(52deg); z-index:4; }
+.s4-cover{ width:118px; transform:rotate(-2.2deg); }
+.card-compact .s4-label .title{ font-size:25px; }
+.card-compact .s4-cover{ width:96px; }
+
+/* ── S5 · Field Notes (blue) ────────────────────────────────── */
+.s5{
+  background-image:
+    repeating-linear-gradient(0deg, rgba(27,25,23,.055) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(27,25,23,.055) 0 1px, transparent 1px 24px);
+}
+.s5-staple{ position:absolute; top:10px; left:14px; transform:rotate(-38deg); z-index:4; }
+.s5-kicker{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-bottom:16px; }
+.s5 .title{ font-size:29px; }
+.s5 .by{ display:block; margin-top:7px; }
+.s5-grid{
+  display:grid; grid-template-columns:96px 1fr; gap:14px 16px;
+  margin-top:20px; padding:16px 0;
+  border-top:1px dashed var(--hair); border-bottom:1px dashed var(--hair);
+  align-items:start;
+}
+.s5-grid .lbl{ padding-top:3px; }
+.s5-rate{ display:flex; align-items:center; gap:16px; margin-top:20px; }
+.s5-rate .rate-num{ font-size:38px; }
+.s5-side{ display:flex; gap:20px; align-items:flex-start; margin-top:22px; }
+.s5-cover{ width:104px; flex:0 0 auto; transform:rotate(-1.4deg); }
+.s5-obs{ font-family:var(--hand); font-size:15px; line-height:1.5; color:var(--ink-soft); padding-top:6px; }
+.s5 .body{ margin-top:24px; }
+.s5 .patch{ right:-24px; top:-26px; opacity:.09; transform:rotate(22deg); }
+.card-compact .s5 .title{ font-size:25px; }
+.card-compact .s5-cover{ width:88px; }
+
+/* ─────────────────────────────────────────────────────────────
+   Collage cards — the five monthly styles
+   ───────────────────────────────────────────────────────────── */
+.mo-head{ display:flex; align-items:baseline; justify-content:space-between;
+  gap:12px; flex-wrap:wrap; margin-bottom:22px; }
+.mo-title{ font-family:var(--serif); font-weight:600; font-size:26px; letter-spacing:-.012em; }
+.mo-sub{ display:flex; align-items:center; gap:8px; }
+.mo-sub svg{ display:block; opacity:.8; }
+
+.stars-s{ display:inline-flex; gap:2px; vertical-align:-2px; }
+.stars-s svg{ display:block; }
+.r-num{ font-family:var(--serif); font-weight:600; font-variant-numeric:tabular-nums; }
+
+.cov{ display:block; width:100%; height:auto; aspect-ratio:2/3; object-fit:cover;
+  border-radius:1.5px; box-shadow:var(--sh-plate); background:var(--paper); }
+.cov-miss{
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  aspect-ratio:2/3; border:1px dashed rgba(27,25,23,.3); border-radius:1.5px; padding:8px;
+  font-family:var(--mono); font-size:8px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--meta, var(--ink-soft));
+}
+
+/* C1 · Contact Sheet (coal) */
+.c1{ background:var(--coal); --tx:var(--cream); --meta:rgba(244,242,237,.6); }
+.c1-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px 16px; }
+.c1-cell{ min-width:0; }
+.c1-no{ font-family:var(--mono); font-size:9px; letter-spacing:.16em; color:var(--meta); margin-bottom:6px; text-transform:uppercase; }
+.c1-meta{ display:flex; align-items:baseline; gap:7px; margin-top:8px; flex-wrap:wrap; }
+.c1 .r-num{ font-size:15px; color:var(--cream); }
+.c1 .patch{ right:-22px; bottom:-24px; opacity:.09; transform:rotate(18deg); }
+.card-compact .c1-grid{ grid-template-columns:repeat(2,1fr); }
+
+/* C2 · Shelf (butter) */
+.c2{ background:var(--butter); }
+.c2-rail{ display:grid; grid-template-columns:repeat(3,1fr); gap:0 20px;
+  align-items:end; padding:0 4px; }
+.card-compact .c2-rail{ gap:0 10px; }
+.c2-book{ position:relative; padding-bottom:14px; min-width:0; }
+.c2-book .cov{ transform:rotate(var(--lean,0deg)); transform-origin:bottom center; }
+.c2-edge{ height:5px; background:var(--ink); opacity:.75; border-radius:1px;
+  margin:0 -12px; position:relative; }
+.c2-edge::after{ content:""; position:absolute; left:6px; right:-4px; top:5px; height:4px;
+  background:rgba(27,25,23,.16); transform:skewX(-42deg); }
+.c2-meta{ text-align:center; padding-top:12px; }
+.c2 .r-num{ font-size:14px; }
+.c2-stars{ margin-top:3px; }
+.c2 .patch{ left:-26px; top:-20px; opacity:.08; transform:rotate(-12deg); }
+
+/* C3 · Tickets (pink) */
+.c3{ background:var(--pink); }
+.c3-stack{ display:flex; flex-direction:column; gap:14px; }
+.c3-t{
+  display:grid; grid-template-columns:44px 1fr auto; gap:0 14px; align-items:center;
+  background:var(--card-w); box-shadow:var(--sh-plate); border-radius:2px;
+  padding:10px 14px 10px 10px;
+  transform:rotate(var(--tr,0deg));
+  position:relative;
+}
+.c3-t::after{
+  content:""; position:absolute; right:86px; top:4px; bottom:4px; width:0;
+  border-right:2px dashed var(--rule);
+}
+.c3-t .cov{ width:44px; }
+.c3-name{ font-family:var(--serif); font-weight:600; font-size:15px; letter-spacing:-.01em; line-height:1.2; }
+.c3-adm{ font-family:var(--mono); font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
+.c3-end{ text-align:right; padding-left:18px; }
+.c3-end .r-num{ font-size:17px; color:var(--accent); }
+.c3-end .stars-s{ margin-top:3px; }
+.c3 .patch{ right:-24px; bottom:30px; opacity:.09; transform:rotate(14deg); }
+.card-compact .c3-t{ grid-template-columns:38px 1fr auto; }
+.card-compact .c3-t::after{ right:74px; }
+.card-compact .c3-t .cov{ width:38px; }
+.card-compact .c3-name{ font-size:13.5px; }
+
+/* C4 · Pinboard (blue) */
+.c4{ background:var(--blue);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px); }
+.c4-board{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px 18px; }
+.c4-pin{ position:relative; min-width:0; transform:rotate(var(--pr,0deg)); }
+.c4-photo{ background:var(--card-w); padding:8px 8px 0; box-shadow:var(--sh-plate); border-radius:2px; }
+.c4-cap{ font-family:var(--hand); font-size:13px; line-height:1.3; color:var(--ink-soft);
+  padding:6px 2px 8px; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
+.c4-cap .r-num{ font-family:var(--hand); font-weight:700; font-size:13.5px; color:var(--accent); }
+.c4-tack{ position:absolute; top:-7px; left:50%; margin-left:-7px; z-index:2; }
+.c4 .patch{ left:50%; bottom:-30px; margin-left:-60px; opacity:.08; }
+.card-compact .c4-board{ grid-template-columns:repeat(2,1fr); gap:22px 14px; }
+
+/* C5 · Ledger (mustard) */
+.c5{ background:var(--mustard); --meta:rgba(27,25,23,.72); }
+.c5-tbl{ border-top:1.5px solid rgba(27,25,23,.55); }
+.c5-r{
+  display:grid; grid-template-columns:34px 1fr auto; gap:0 14px; align-items:center;
+  padding:10px 0; border-bottom:1px solid rgba(27,25,23,.22);
+}
+.c5-r .cov{ width:34px; }
+.c5-name{ font-family:var(--serif); font-weight:600; font-size:15px; line-height:1.25; letter-spacing:-.01em; min-width:0; }
+.c5-fmt{ font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--meta); margin-top:3px; }
+.c5-rate{ text-align:right; }
+.c5-rate .r-num{ font-size:16px; }
+.c5-rate .stars-s{ margin-top:2px; }
+.c5-total{ display:flex; justify-content:space-between; align-items:baseline; padding-top:14px; }
+.c5 .patch{ right:-28px; top:-26px; opacity:.10; transform:rotate(20deg); }
+.card-compact .c5-name{ font-size:13.5px; }
+.c5 .lbl{ font-family:var(--mono); font-size:10.5px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--meta); }
+
+/* ─────────────────────────────────────────────────────────────
+   Share pages — fixed 720×1018 (1:√2) leaves the export rasterizes.
+   Collage pages keep natural height (min one leaf).
+   ───────────────────────────────────────────────────────────── */
+.share-page{
+  width:720px; height:1018px;
+  background:var(--paper);
+  padding:44px;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+.share-page--free{ height:auto; min-height:1018px; overflow:visible; }
+/* tight capture: the exported PNG hugs the card on a slim even mat instead of
+   rasterizing the whole leaf — the padding stays > the tallest overhang (the
+   paperclip and washi tape reach ~20px past the card edge) */
+.share-page--tight{ height:auto; min-height:0; padding:26px; overflow:visible; }
+.share-page--tight .share-page-no{ position:static; margin-top:18px; }
+.share-page--tight .share-page-no:empty{ display:none; }
+/* rotate(0) not none — the card must keep its stacking context for the
+   Scrapbook's z-index:-1 torn-sheet layer; !important beats the inline --rot */
+.share-page .card{ animation:none; transform:rotate(0deg) !important; }
+.share-page-no{
+  position:absolute; bottom:16px; left:0; right:0; text-align:center;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-soft);
+}
+@media print{
+  .share-page{ margin:0 auto; page-break-after:always; box-shadow:none; }
+  .share-page:last-child{ page-break-after:auto; }
+}

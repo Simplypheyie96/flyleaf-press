@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+dist/
+dev-dist/
+*.tsbuildinfo
+.vercel
+.playwright-mcp/
+.impeccable/
