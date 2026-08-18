@@ -12,6 +12,7 @@ import { renderCollage, type MonthData } from '../cards/collage'
 import { paragraphs } from '../format'
 import { fontEmbedCss } from '../fonts'
 import { isIOS } from '../pwa'
+import { encodePng, CAN_STREAM_PNG } from './png'
 
 /* Neither layout splits. The wide one stopped first, on the argument that a
    leaf which can grow is the whole point of a printed card and a page break
@@ -215,11 +216,26 @@ async function settleImages(pages: HTMLElement[]): Promise<void> {
   await Promise.all(
     imgs.map(async (img) => {
       try {
-        if (!img.complete)
-          await new Promise<void>((r) => {
-            img.addEventListener('load', () => r(), { once: true })
-            img.addEventListener('error', () => r(), { once: true })
-          })
+        if (!img.complete) {
+          /* The export host is offscreen, and an offscreen image is the first
+             thing a busy renderer defers — measured at 142 SECONDS for one
+             400x600 cover, on the run where the leaf underneath it was 36000px
+             tall. Asking for it explicitly is most of the cure; the 10s race
+             is the rest, because a wait that can be starved indefinitely is
+             not a wait, it is a hang. Losing the race costs the cover in that
+             one file, which is the same thing that happens if the image is
+             simply broken, and is plainly better than an export that never
+             returns. */
+          img.fetchPriority = 'high'
+          img.loading = 'eager'
+          await Promise.race([
+            new Promise<void>((r) => {
+              img.addEventListener('load', () => r(), { once: true })
+              img.addEventListener('error', () => r(), { once: true })
+            }),
+            new Promise<void>((r) => setTimeout(r, 10_000)),
+          ])
+        }
         await img.decode()
       } catch {
         /* undecodable — let it render as whatever it renders as */
@@ -228,36 +244,105 @@ async function settleImages(pages: HTMLElement[]): Promise<void> {
   )
 }
 
-/* How many device pixels per CSS pixel this particular leaf can afford.
-   Now that a review is always one image, a long one is a very tall one — and
-   a canvas has two ceilings, both of which a browser enforces by quietly
-   handing back something other than what was asked for. Neither raises an
-   error, so left alone the sheet would print a size the file does not have,
-   and on iOS a long review would come back blank at the exact moment the
-   single-image rule is doing the most work.
+/* The two ceilings a canvas has, both enforced by quietly handing back
+   something other than what was asked for. The area one is about 16.7 million
+   pixels (WebKit's; Chrome's is far higher, but the file has to survive being
+   made on a phone) and the side one is 16384 — measured, not assumed: a
+   684 × 24530 export came back from Chrome as 456 × 16384, scaled down
+   without complaint and without an error.
 
-   The area ceiling is about 16.7 million pixels (WebKit's; Chrome's is far
-   higher, but the file has to survive being made on a phone). The side
-   ceiling is 16384 — measured, not assumed: a 684 × 24530 export came back
-   from Chrome as 456 × 16384, scaled down without complaint.
-
-   There is deliberately no floor at 1×. A review long enough to be pushed
-   below it is past 16000 CSS px of prose, and a slightly soft image of the
-   whole review is still the thing that was asked for, where a browser-clamped
-   one is a file whose size nobody predicted. Ordinary reviews are nowhere
-   near either ceiling and keep the full 2×. */
+   These bound the *canvas*, not the PNG, which addresses 2^31 a side. So a
+   leaf too tall for one canvas is drawn in horizontal bands and written
+   through `encodePng`, which streams scanlines and never holds the picture.
+   Length stops costing sharpness: every export is EXPORT_SCALE, whatever the
+   review's length. See src/share/png.ts. */
+/* the ground a saved image is painted on, matching --paper */
+const PAPER = '#F4F2ED'
 const MAX_CANVAS_PX = 16_777_216
 const MAX_CANVAS_SIDE = 16_384
+/* How much of one band is resident as pixels at a time. Well under the area
+   ceiling on purpose: at 900px wide this is a 27MB ImageData, and a phone
+   that has to hold two of them mid-swap is the machine this has to work on.
+   Smaller bands would be gentler still and cost a full re-rasterization each,
+   since every band re-renders the leaf clipped to its own slice. */
+const BAND_PX = 6_000_000
+
+function fitsOneCanvas(w: number, h: number, k: number): boolean {
+  const dw = Math.round(w * k)
+  const dh = Math.round(h * k)
+  return dw <= MAX_CANVAS_SIDE && dh <= MAX_CANVAS_SIDE && dw * dh <= MAX_CANVAS_PX
+}
+
+/* Only reached where CompressionStream is missing — Safari before 16.4, and
+   nothing else current. There the old behaviour is the honest one: drop the
+   pixel ratio until the canvas will hold the image, and let `pixelSize` print
+   the reduced figure so the sheet still describes the file it is about to
+   write. */
 function exportScale(page: HTMLElement): number {
   const w = page.offsetWidth
   const h = page.offsetHeight
   if (!w || !h) return EXPORT_SCALE
+  if (CAN_STREAM_PNG || fitsOneCanvas(w, h, EXPORT_SCALE)) return EXPORT_SCALE
   return Math.min(
     EXPORT_SCALE,
     Math.sqrt(MAX_CANVAS_PX / (w * h)),
     MAX_CANVAS_SIDE / w,
     MAX_CANVAS_SIDE / h
   )
+}
+
+/* One leaf, at full scale, however tall it is.
+
+   html-to-image paints by serializing the DOM into a single <svg> and loading
+   that as an image, so the expensive half — cloning, inlining the cover,
+   embedding the faces — is done once here and the result is a string. Each
+   band then wraps that same string in an outer <svg> whose viewBox is panned
+   down the leaf, which crops without re-cloning anything.
+
+   The band boundaries are chosen in device rows and are even, so at
+   EXPORT_SCALE = 2 every band maps exactly two device pixels to one CSS
+   pixel at an integer offset. That is what keeps the joins invisible: a band
+   whose origin landed on a half pixel would resample the text a hair
+   differently from its neighbour and draw a line across the review. */
+async function tallPng(
+  page: HTMLElement,
+  toSvg: (n: HTMLElement, o: Record<string, unknown>) => Promise<string>,
+  fontEmbedCSS: string
+): Promise<Blob> {
+  const w = page.offsetWidth
+  const h = page.offsetHeight
+  const k = EXPORT_SCALE
+  const url = await toSvg(page, { width: w, height: h, backgroundColor: PAPER, fontEmbedCSS })
+  const inner = decodeURIComponent(url.slice(url.indexOf(',') + 1))
+
+  const dw = Math.round(w * k)
+  const dh = Math.round(h * k)
+  const bandDev =
+    Math.max(2, 2 * Math.floor(Math.min(MAX_CANVAS_SIDE, BAND_PX / dw) / 2))
+
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+
+  async function* bands() {
+    for (let top = 0; top < dh; top += bandDev) {
+      const dhi = Math.min(bandDev, dh - top)
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${dhi / k}" ` +
+        `viewBox="0 ${top / k} ${w} ${dhi / k}">${inner}</svg>`
+      const img = new Image()
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+      await img.decode()
+      canvas.width = dw
+      canvas.height = dhi
+      ctx.fillStyle = PAPER
+      ctx.fillRect(0, 0, dw, dhi)
+      ctx.drawImage(img, 0, 0, dw, dhi)
+      const px = ctx.getImageData(0, 0, dw, dhi)
+      yield { data: px.data, width: dw, height: dhi }
+    }
+  }
+
+  return encodePng(dw, dh, bands())
 }
 
 /* Pages are always saved TIGHT: the leaf collapses to hug the card on a slim
@@ -268,7 +353,7 @@ function exportScale(page: HTMLElement): number {
 async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
   /* The rasterizer is a third of the bundle and nobody needs it to read a
      review — it loads the first time someone actually shares. */
-  const { toPng } = await import('html-to-image')
+  const { toPng, toSvg } = await import('html-to-image')
   await document.fonts.ready
   /* Hand it the faces rather than letting it hunt for them. Left to itself it
      walks document.styleSheets and refetches every @font-face it finds, which
@@ -279,11 +364,19 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
   const blobs: Blob[] = []
   for (const page of pages) {
     resolveSvgVars(page)
+    /* One canvas while one canvas will hold it, which is every ordinary
+       review and every collage — that path is the faster one and it is the
+       one this app spends nearly all its time on. The banded writer takes
+       over only where the alternative used to be a soft image. */
+    if (CAN_STREAM_PNG && !fitsOneCanvas(page.offsetWidth, page.offsetHeight, EXPORT_SCALE)) {
+      blobs.push(await tallPng(page, toSvg, fontEmbedCSS))
+      continue
+    }
     const dataUrl = await toPng(page, {
       pixelRatio: exportScale(page),
       width: page.offsetWidth,
       height: page.offsetHeight,
-      backgroundColor: '#F4F2ED',
+      backgroundColor: PAPER,
       fontEmbedCSS,
     })
     const res = await fetch(dataUrl)
