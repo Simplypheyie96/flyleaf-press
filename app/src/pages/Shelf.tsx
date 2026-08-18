@@ -8,8 +8,7 @@ import { fmtRating, monthKey, monthName } from '../format'
 import { Select } from '../components/Select'
 
 /* The Shelf — the whole library in the reader's choice of display (rows or a
-   wall of covers; the choice persists), searchable by title or author, and
-   sortable. Date sorts keep the month groupings; rating and title sorts are
+   wall of covers; the choice persists), searchable and sortable. Date sorts keep the month groupings; rating and title sorts are
    one flat run — a month heading over a rating order would lie about both. */
 
 type SortKey = 'newest' | 'oldest' | 'rating-hi' | 'rating-lo' | 'title'
@@ -75,8 +74,18 @@ export function Shelf({ settings }: { settings: Settings }) {
     else setQ(s.name)
   }
 
+  /* Search reaches the writing too. The point of the app is the long review,
+     and half of what anyone remembers about a book is a phrase they wrote about
+     it rather than its title — "the one where I went on about the salt". The
+     suggestions above stay title-and-author: a fragment from the middle of a
+     paragraph is a result, not something to autocomplete to. */
   const found = needle
-    ? reviews.filter((r) => r.title.toLowerCase().includes(needle) || r.author.toLowerCase().includes(needle))
+    ? reviews.filter(
+        (r) =>
+          r.title.toLowerCase().includes(needle) ||
+          r.author.toLowerCase().includes(needle) ||
+          (r.body || '').toLowerCase().includes(needle)
+      )
     : reviews
   const rows = sortRows(found, sort)
 
@@ -145,7 +154,7 @@ export function Shelf({ settings }: { settings: Settings }) {
               <input
                 type="search"
                 value={q}
-                placeholder="Search title or author"
+                placeholder="Search books, authors, reviews"
                 aria-label="Search the shelf"
                 role="combobox"
                 aria-expanded={showSugg}

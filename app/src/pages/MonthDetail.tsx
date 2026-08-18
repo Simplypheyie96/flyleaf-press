@@ -5,11 +5,11 @@ import { db } from '../db'
 import type { Settings, CollageId, ExportShape } from '../types'
 import { COLLAGE_IDS, COLLAGE_NAMES, COLLAGE_GROUNDS } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
-import { DownloadSheet } from '../components/DownloadSheet'
+import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
 import { renderCollage, type MonthData } from '../cards/collage'
 import {
-  shareCollageImage, canShareFiles, buildCollagePage, collageBaseName, type ExportMode,
+  shareCollageImage, buildCollagePage, collageBaseName, type ExportMode,
 } from '../share/export'
 import { monthKey, monthName, currentMonthKey } from '../format'
 
@@ -18,12 +18,9 @@ import { monthKey, monthName, currentMonthKey } from '../format'
 export function MonthDetail({ settings }: { settings: Settings }) {
   const { key } = useParams()
   const [style, setStyle] = useState<CollageId>(settings.defaultCollage)
-  const [busy, setBusy] = useState(false)
-  const [msg, setMsg] = useState('')
-  const [shareable] = useState(canShareFiles)
-  /* Download shows what it's about to write; Share hands it straight to
-     another app, which shows it for us */
-  const [downloading, setDownloading] = useState(false)
+  /* one way out — the sheet shows the collage, its shape, and both
+     destinations */
+  const [sharing, setSharing] = useState(false)
 
   const books = useLiveQuery(
     () => db.reviews.orderBy('finished').toArray((all) => all.filter((r) => monthKey(r.finished) === key)),
@@ -43,24 +40,6 @@ export function MonthDetail({ settings }: { settings: Settings }) {
 
   if (!month) return null
   const open = key === currentMonthKey()
-
-  const run = async (mode: ExportMode) => {
-    setBusy(true)
-    setMsg('Preparing the image…')
-    try {
-      const res = await shareCollageImage(month, style, mode, settings.exportShape)
-      if (res.ok)
-        setMsg(
-          res.method === 'share'
-            ? 'Shared.'
-            : res.method === 'save'
-              ? 'Sent to the share sheet.'
-              : 'Saved — check your downloads.'
-        )
-    } finally {
-      setBusy(false)
-    }
-  }
 
   return (
     <div className="page">
@@ -101,40 +80,26 @@ export function MonthDetail({ settings }: { settings: Settings }) {
                 review card uses, so the actions stay within reach */}
             <CollapsedCard html={renderCollage(month, style)} />
 
-            {/* the style picker and the card are already on this page, so a
-                sheet would only repeat them — Share and Download act straight
-                from here on the style shown above */}
-            <div className="detail-acts">
-              <button className="btn" onClick={() => run('share')} disabled={busy || !shareable}
-                title={shareable ? undefined : 'This browser can’t pass files to other apps'}>
-                Share
-              </button>
-              <button className="btn" onClick={() => setDownloading(true)} disabled={busy}>
-                Download
-              </button>
+            {/* the style picker and the card are already on this page, so the
+                sheet carries no picker of its own — it opens on the shape and
+                the two destinations */}
+            <div className="detail-acts detail-acts--one">
+              <button className="btn" onClick={() => setSharing(true)}>Share</button>
             </div>
-            {!shareable && (
-              <p className="field-hint" style={{ marginTop: 10 }}>
-                This browser can’t pass files to other apps. Download saves the image instead.
-              </p>
-            )}
-            {msg && <p className="field-hint" role="status" style={{ marginTop: 10 }}>{msg}</p>}
           </>
         )}
       </div>
 
-      {downloading && (
-        <DownloadSheet
+      {sharing && (
+        <ExportSheet
           heading={month.name}
           baseName={collageBaseName(month)}
           build={build}
           shape={settings.exportShape}
           onShape={(s) => db.settings.update(1, { exportShape: s })}
-          onDownload={async (s) => {
-            const res = await shareCollageImage(month, style, 'download', s)
-            if (res.ok) setMsg('Saved — check your downloads.')
-          }}
-          onClose={() => setDownloading(false)}
+          exportImages={(mode: ExportMode, shape: ExportShape) =>
+            shareCollageImage(month, style, mode, shape)}
+          onClose={() => setSharing(false)}
         />
       )}
     </div>

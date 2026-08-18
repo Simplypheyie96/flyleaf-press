@@ -622,6 +622,9 @@ img{ max-width:100%; }
    the things you do less often and wraps freely. */
 .detail-acts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:24px; }
 .detail-acts .btn{ min-width:0; padding:0 12px; }
+/* one action, one full-width button — the grid's two columns would otherwise
+   leave Share sitting on half the row with nothing beside it */
+.detail-acts--one{ grid-template-columns:1fr; }
 .detail-acts--minor{
   display:flex; flex-wrap:wrap; gap:10px;
   margin-top:14px; padding-top:18px; border-top:1px solid var(--rule);

@@ -227,14 +227,16 @@ function fieldnotes(rec: Review): string {
     <span class="by">${escapeHtml(rec.author)}</span>
     <div class="s5-side">
       <div class="s5-cover" style="position:relative">${pclip(10)}${cover(rec)}</div>
+      <div class="s5-detail">
+        <div class="s5-grid">
+          <span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span>
+          <span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span>
+          ${rec.pages ? `<span class="lbl">Pages</span><span class="val">${rec.pages}</span>` : ''}
+          <span class="lbl" style="padding-top:1px">Format</span>${fmtLine(rec)}
+        </div>
+        <div class="s5-rate">${ratingBlock(rec.rating, 22)}</div>
+      </div>
     </div>
-    <div class="s5-grid">
-      <span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span>
-      <span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span>
-      ${rec.pages ? `<span class="lbl">Pages</span><span class="val">${rec.pages}</span>` : ''}
-      <span class="lbl" style="padding-top:1px">Format</span>${fmtLine(rec)}
-    </div>
-    <div class="s5-rate">${ratingBlock(rec.rating, 22)}</div>
     ${body(rec, 24)}
     ${plateRow(rec)}
     ${colophon(rec)}

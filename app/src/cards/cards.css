@@ -323,22 +323,34 @@
 .s5-kicker{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-bottom:16px; }
 .s5 .title{ font-size:29px; }
 .s5 .by{ display:block; margin-top:7px; }
+/* The cover and the facts sit on one line. The cover used to have that row to
+   itself and the details ran underneath it, which left a column of blank grid
+   paper the width of the card beside a 104px picture — the single emptiest
+   space on any of the five cards. */
+.s5-side{ display:flex; gap:22px; align-items:flex-start; margin-top:22px; }
+.s5-cover{ width:104px; flex:0 0 auto; transform:rotate(-1.4deg); }
+.s5-detail{ flex:1 1 0; min-width:0; }
 .s5-grid{
-  display:grid; grid-template-columns:96px 1fr; gap:14px 16px;
-  margin-top:20px; padding:16px 0;
-  border-top:1px dashed var(--hair); border-bottom:1px dashed var(--hair);
+  display:grid; grid-template-columns:82px 1fr; gap:13px 14px;
+  padding:2px 0 16px;
+  border-bottom:1px dashed var(--hair);
   align-items:start;
 }
 .s5-grid .lbl{ padding-top:3px; }
-.s5-rate{ display:flex; align-items:center; gap:16px; margin-top:20px; }
-.s5-rate .rate-num{ font-size:38px; }
-.s5-side{ display:flex; gap:20px; align-items:flex-start; margin-top:22px; }
-.s5-cover{ width:104px; flex:0 0 auto; transform:rotate(-1.4deg); }
+.s5-grid .val{ min-width:0; overflow-wrap:anywhere; }
+/* the format run is four words and separators in a column ~200px wide on a
+   phone, so it wraps rather than pushing the card sideways */
+.s5-grid .fmt{ flex-wrap:wrap; }
+.s5-rate{ display:flex; align-items:center; gap:16px; margin-top:16px; }
+.s5-rate .rate-num{ font-size:34px; }
 .s5-obs{ font-family:var(--hand); font-size:15px; line-height:1.5; color:var(--ink-soft); padding-top:6px; }
 .s5 .body{ margin-top:24px; }
 .s5 .patch{ right:-24px; top:-26px; opacity:.09; transform:rotate(22deg); }
 .card-compact .s5 .title{ font-size:25px; }
+.card-compact .s5-side{ gap:16px; }
 .card-compact .s5-cover{ width:88px; }
+.card-compact .s5-grid{ grid-template-columns:72px 1fr; gap:11px 12px; }
+.card-compact .s5-rate .rate-num{ font-size:30px; }
 
 /* ─────────────────────────────────────────────────────────────
    Collage cards — the five monthly styles

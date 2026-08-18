@@ -6,18 +6,19 @@ import type { Settings, StyleId, ExportShape } from '../types'
 import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
 import { Confirm } from '../components/Confirm'
-import { ShareSheet } from '../components/ShareSheet'
-import { DownloadSheet } from '../components/DownloadSheet'
+import { ExportSheet } from '../components/ExportSheet'
+import { StylePicker } from '../components/StylePicker'
 import { renderReviewCard } from '../cards/review'
 import { bury } from '../sync/backup'
 import {
-  paginateReview, shareReviewImages, printReviewPdf, canShareFiles,
-  reviewBaseName, type ExportMode,
+  paginateReview, shareReviewImages, printReviewPdf, reviewBaseName,
+  type ExportMode,
 } from '../share/export'
 
 /* One review. The card shows COLLAPSED to hand size — a long review would
-   otherwise run the whole phone — and opens on request. Style choice lives on
-   the share sheet only; the pick made there persists as the review's style. */
+   otherwise run the whole phone — and opens on request. Sharing is one button
+   opening one sheet: the card as it will go out, the style, the shape, and then
+   either hand it to an app or save it. */
 
 export function ReviewDetail({ settings }: { settings: Settings }) {
   const { id } = useParams()
@@ -27,31 +28,12 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
      first render, and a stale link would sit on a blank page forever */
   const rec = useLiveQuery(() => db.reviews.get(Number(id)).then((r) => r ?? null), [id])
   const [sharing, setSharing] = useState(false)
-  /* Download opens a sheet; Share does not. Sharing hands the image straight
-     to another app, which shows it to you itself — a preview step there would
-     be a picture of a picture. Downloading writes a file to the device, so it
-     gets to show what it is writing and how large first. */
-  const [downloading, setDownloading] = useState(false)
   const [confirming, setConfirming] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [msg, setMsg] = useState('')
-  /* desktop browsers mostly can't hand files to another app — the button stays
-     visible and says why rather than vanishing */
-  const [shareable] = useState(canShareFiles)
 
-  /* The style sheet previews in the shape this device actually saves in. It
-     used to force the wide layout on the theory that grounds compare better
-     across a broad card — but the sheet also shares and downloads, and a note
-     under it reading "One image" while the save produced three was worse than
-     any advantage a wider swatch gave. */
+  /* The preview builds in the review's own saved style — the picker inside the
+     sheet writes the pick straight to the record, so there is only ever one
+     answer to "which style is this card". */
   const build = useCallback(
-    (style: StyleId, host: HTMLDivElement) =>
-      rec ? paginateReview(rec, style, host, settings.exportShape) : [],
-    [rec, settings.exportShape]
-  )
-  /* the download preview always uses the review's own saved style — the style
-     choice belongs to the card, not to the act of saving it */
-  const buildSaved = useCallback(
     (host: HTMLDivElement, shape: ExportShape) =>
       rec ? paginateReview(rec, rec.style, host, shape) : [],
     [rec]
@@ -77,28 +59,6 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
         </div>
       </div>
     )
-
-  /* the review's own style is what ships — the sheet is where that is changed,
-     but changing it is not a step you have to walk through to share */
-  const run = async (mode: ExportMode) => {
-    setBusy(true)
-    setMsg('Preparing images…')
-    try {
-      const res = await shareReviewImages(rec, rec.style, mode, settings.exportShape)
-      if (res.ok)
-        setMsg(
-          res.method === 'share'
-            ? 'Shared.'
-            : res.method === 'save'
-              /* iOS saved them through the system sheet — where they landed is
-                 the user's own choice in it, so don't claim a location */
-              ? `Sent ${res.pages} image${res.pages > 1 ? 's' : ''} to the share sheet.`
-              : `Saved ${res.pages} image${res.pages > 1 ? 's' : ''} — check your downloads.`
-        )
-    } finally {
-      setBusy(false)
-    }
-  }
 
   /* in-app confirm, never window.confirm() — that silently no-ops in some
      installed-PWA webviews, which read as "the delete button does nothing" */
@@ -129,60 +89,39 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
 
         <CollapsedCard html={renderReviewCard(rec)} />
 
-        {/* Share and Download are the two things anyone came here to do, so they
-            are the two buttons on the page — not a sheet you open to find them.
-            The sheet is now only for changing the style, which is a choice, not
-            a step on the way out. */}
-        <div className="detail-acts">
-          <button className="btn" onClick={() => run('share')} disabled={busy || !shareable}
-            title={shareable ? undefined : 'This browser can’t pass files to other apps'}>
-            Share
-          </button>
-          <button className="btn" onClick={() => setDownloading(true)} disabled={busy}>
-            Download
-          </button>
+        {/* One way out. Sharing and saving are the same act until the last
+            step, and the step they both needed — seeing the card and choosing
+            its shape — used to sit behind only one of them. */}
+        <div className="detail-acts detail-acts--one">
+          <button className="btn" onClick={() => setSharing(true)}>Share</button>
         </div>
-        {!shareable && (
-          <p className="field-hint" style={{ marginTop: 10 }}>
-            This browser can’t pass files to other apps. Download saves the image instead.
-          </p>
-        )}
-        {msg && <p className="field-hint" role="status" style={{ marginTop: 10 }}>{msg}</p>}
 
         <div className="detail-acts detail-acts--minor">
-          <button className="btn btn--ghost" onClick={() => setSharing(true)}>Change style</button>
           <Link className="btn btn--ghost" to={`/review/${rec.id}/edit`}>Edit</Link>
           <button className="btn btn--danger" onClick={() => setConfirming(true)}>Delete</button>
         </div>
       </div>
 
       {sharing && (
-        <ShareSheet
-          heading={rec.title}
-          ids={STYLE_IDS}
-          names={STYLE_NAMES}
-          grounds={STYLE_GROUNDS}
-          initial={rec.style}
-          build={build}
-          onStyle={(style) => db.reviews.update(rec.id!, { style })}
-          exportImages={(style, mode) => shareReviewImages(rec, style, mode, settings.exportShape)}
-          printPdf={settings.pdfEnabled ? (style) => printReviewPdf(rec, style) : undefined}
-          onClose={() => setSharing(false)}
-        />
-      )}
-
-      {downloading && (
-        <DownloadSheet
+        <ExportSheet
           heading={rec.title}
           baseName={reviewBaseName(rec)}
-          build={buildSaved}
+          picker={
+            <StylePicker
+              ids={STYLE_IDS}
+              names={STYLE_NAMES}
+              grounds={STYLE_GROUNDS}
+              value={rec.style}
+              onChange={(style: StyleId) => db.reviews.update(rec.id!, { style })}
+            />
+          }
           shape={settings.exportShape}
           onShape={setShape}
-          onDownload={async (s) => {
-            const res = await shareReviewImages(rec, rec.style, 'download', s)
-            if (res.ok) setMsg(`Saved ${res.pages} image${res.pages > 1 ? 's' : ''} — check your downloads.`)
-          }}
-          onClose={() => setDownloading(false)}
+          build={build}
+          exportImages={(mode: ExportMode, shape: ExportShape) =>
+            shareReviewImages(rec, rec.style, mode, shape)}
+          printPdf={settings.pdfEnabled ? () => printReviewPdf(rec, rec.style) : undefined}
+          onClose={() => setSharing(false)}
         />
       )}
 

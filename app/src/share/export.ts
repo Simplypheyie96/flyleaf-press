@@ -172,6 +172,58 @@ export function buildCollagePage(
   return ground([host.querySelector('.share-page') as HTMLElement], shape)
 }
 
+/* `var()` inside an SVG presentation attribute has to be resolved to a literal
+   before anything is rasterized. html-to-image deep-clones an <svg> subtree
+   wholesale and copies computed styles onto the <svg> ELEMENT alone — its
+   children keep only their presentation attributes, and the card stylesheet is
+   not in the cloned document at all. So `fill="var(--star)"` arrives with
+   nothing to resolve against: an invalid fill falls back to black and an
+   invalid stroke to none. That is exactly the rating that came out black on the
+   coal catalogue card, and the empty stars that disappeared from every share
+   while looking right on screen. */
+const VAR_RE = /var\(\s*(--[\w-]+)\s*(?:,\s*([^)]*))?\)/g
+function resolveSvgVars(root: HTMLElement): void {
+  for (const el of root.querySelectorAll<SVGElement>('svg [fill], svg [stroke]')) {
+    let cs: CSSStyleDeclaration | undefined
+    for (const attr of ['fill', 'stroke'] as const) {
+      const v = el.getAttribute(attr)
+      if (!v || !v.includes('var(')) continue
+      cs = cs || getComputedStyle(el)
+      el.setAttribute(
+        attr,
+        v.replace(VAR_RE, (_m, name: string, fallback?: string) =>
+          cs!.getPropertyValue(name).trim() || (fallback || '').trim() || 'currentColor'
+        )
+      )
+    }
+  }
+}
+
+/* Every picture decoded before anything is rasterized. html-to-image paints the
+   DOM by loading it as one big SVG data URL, and an image the browser has not
+   finished decoding is simply not in that paint — which is why a cover or a
+   plate would show in the preview and then be missing from the file, and why
+   going back and doing it again "fixed" it: the second attempt found the image
+   already decoded. Failures are swallowed on purpose; a cover that will not
+   decode is not a reason to refuse to export the review. */
+async function settleImages(pages: HTMLElement[]): Promise<void> {
+  const imgs = pages.flatMap((p) => [...p.querySelectorAll('img')])
+  await Promise.all(
+    imgs.map(async (img) => {
+      try {
+        if (!img.complete)
+          await new Promise<void>((r) => {
+            img.addEventListener('load', () => r(), { once: true })
+            img.addEventListener('error', () => r(), { once: true })
+          })
+        await img.decode()
+      } catch {
+        /* undecodable — let it render as whatever it renders as */
+      }
+    })
+  )
+}
+
 /* Pages are always saved TIGHT: the leaf collapses to hug the card on a slim
    even mat, so the file is the card, never the ground it was composed on. The
    full leaf survives only in the print/PDF path, where paper pages mean
@@ -187,8 +239,10 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
      is where the wrong-face bug lived and is also the slowest part of an
      export — and it would repeat the whole search once per page. */
   const fontEmbedCSS = await fontEmbedCss()
+  await settleImages(pages)
   const blobs: Blob[] = []
   for (const page of pages) {
+    resolveSvgVars(page)
     const dataUrl = await toPng(page, {
       pixelRatio: EXPORT_SCALE,
       width: page.offsetWidth,
