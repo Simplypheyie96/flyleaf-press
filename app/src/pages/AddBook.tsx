@@ -86,10 +86,16 @@ export function AddBook() {
           <div className="res">
             <p className="field-hint" role="status">
               {result.answered === 0
-                ? 'The search never happened — none of the three catalogues answered. Check your connection and try again.'
+                ? result.limited > 0
+                  ? 'The catalogues are turning us away for a moment — they limit how often they can be asked. Wait a few seconds and try again, or enter it by hand.'
+                  : 'The search never happened — none of the three catalogues answered. Check your connection and try again.'
                 : result.candidates.length === 0
                   ? `Not in these catalogues (${result.answered} of ${result.asked} answered). You can still enter it by hand.`
-                  : `${result.candidates.length} match${result.candidates.length > 1 ? 'es' : ''} · ${result.answered} of ${result.asked} catalogues answered.`}
+                  : `${result.candidates.length} match${result.candidates.length > 1 ? 'es' : ''} · ${result.answered} of ${result.asked} catalogues answered.` +
+                    /* Why one is missing, when we know why. Without this the
+                       count reads as a fault; a quota is a wait, and saying so
+                       stops it looking like the search is broken. */
+                    (result.limited > 0 ? ' One is rate-limiting us, so an edition or two may be missing.' : '')}
             </p>
             {result.candidates.map((c, i) => (
               <button key={i} className="res-row" onClick={() => pick(c)}>

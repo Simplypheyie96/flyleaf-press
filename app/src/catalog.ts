@@ -23,6 +23,75 @@ export interface SearchResult {
   /** how many of the three catalogues answered at all */
   answered: number
   asked: number
+  /** how many turned us away rather than failed — a quota, not a fault. Worth
+      distinguishing: "we are being rate-limited" is a wait-and-retry, while a
+      catalogue that errored is a different problem and might never come back
+      on this query. */
+  limited: number
+}
+
+type Source = Candidate['source']
+
+/** A catalogue said no because of a quota, not because it broke. */
+class RateLimited extends Error {
+  constructor(public source: Source) {
+    super(source + ' is rate limiting')
+  }
+}
+
+/* Google Books allows a small number of anonymous requests per IP per minute,
+   shared by everyone behind that address. Search-as-you-type spends them fast,
+   and a phone on carrier NAT can arrive already over the line — which is how a
+   perfectly working app ends up reporting "2 of 3 catalogues answered" to
+   someone who has typed nothing unusual.
+
+   Three things are done about it, in order of how much they help:
+
+   1. An optional API key. Quota then counts against the key, not the IP.
+      Compiled into the bundle and therefore public, so it is only safe with
+      an HTTP-referrer restriction set on it in the Google Cloud console —
+      see .env.example. Unset, everything below still applies.
+   2. A per-query cache, so retyping, backspacing, or coming back to the same
+      book does not spend the allowance twice. The catalogues are answering
+      about published books; the answer does not change within a session.
+   3. A cooldown. Once a catalogue has said 429, asking it again immediately
+      is both futile and part of the problem, so it is skipped for a minute
+      and reported as limited rather than silently retried. */
+const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_BOOKS_KEY
+
+const COOLDOWN_MS = 60_000
+const coolUntil: Record<Source, number> = { openlibrary: 0, apple: 0, google: 0 }
+
+/** Turn a bad response into either a RateLimited (and a cooldown) or a plain
+    error. Google reports an exhausted quota as 403 as often as 429, so both
+    count; for the others only 429 does. */
+function reject(source: Source, status: number): never {
+  const limited = status === 429 || (source === 'google' && status === 403)
+  if (limited) {
+    coolUntil[source] = Date.now() + COOLDOWN_MS
+    throw new RateLimited(source)
+  }
+  throw new Error(source + ' ' + status)
+}
+
+/* Small LRU, session-lifetime. Bounded because a long add-a-book session can
+   type a lot of queries and this is holding cover URLs, not just ids. */
+const CACHE_MAX = 60
+const cache = new Map<string, Candidate[]>()
+
+async function ask(source: Source, q: string, run: () => Promise<Candidate[]>): Promise<Candidate[]> {
+  const key = source + '\u0000' + q.trim().toLowerCase()
+  const hit = cache.get(key)
+  if (hit) {
+    cache.delete(key)
+    cache.set(key, hit)
+    return hit
+  }
+  if (Date.now() < coolUntil[source]) throw new RateLimited(source)
+  const list = await run()
+  cache.set(key, list)
+  if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value as string)
+  return list
 }
 
 export function isIsbn(q: string): boolean {
@@ -41,7 +110,7 @@ async function searchOpenLibrary(q: string): Promise<Candidate[]> {
     ? `https://openlibrary.org/search.json?isbn=${encodeURIComponent(q.replace(/[-\s]/g, ''))}&limit=8&fields=${OL_FIELDS}`
     : `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=${OL_FIELDS}`
   const res = await fetch(url)
-  if (!res.ok) throw new Error('openlibrary ' + res.status)
+  if (!res.ok) reject('openlibrary', res.status)
   const data = await res.json()
   return (data.docs || []).map((d: any): Candidate => {
     const covers: string[] = []
@@ -65,7 +134,7 @@ async function searchOpenLibrary(q: string): Promise<Candidate[]> {
 async function searchApple(q: string): Promise<Candidate[]> {
   const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=ebook&limit=8`
   const res = await fetch(url)
-  if (!res.ok) throw new Error('apple ' + res.status)
+  if (!res.ok) reject('apple', res.status)
   const data = await res.json()
   return (data.results || []).map((r: any): Candidate => ({
     title: r.trackName,
@@ -78,9 +147,11 @@ async function searchApple(q: string): Promise<Candidate[]> {
 
 async function searchGoogle(q: string): Promise<Candidate[]> {
   const query = isIsbn(q) ? `isbn:${q.replace(/[-\s]/g, '')}` : q
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8`
+  const url =
+    `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8` +
+    (GOOGLE_KEY ? `&key=${encodeURIComponent(GOOGLE_KEY)}` : '')
   const res = await fetch(url)
-  if (!res.ok) throw new Error('google ' + res.status)
+  if (!res.ok) reject('google', res.status)
   const data = await res.json()
   return (data.items || []).map((it: any): Candidate => {
     const v = it.volumeInfo || {}
@@ -106,9 +177,15 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
    normalized title+author) fold into the trusted row but keep every cover
    candidate so the user can flip through all catalogue art. */
 export async function searchBooks(q: string): Promise<SearchResult> {
-  const sources = [searchOpenLibrary(q), searchApple(q), searchGoogle(q)]
-  const settled = await Promise.allSettled(sources)
+  const settled = await Promise.allSettled([
+    ask('openlibrary', q, () => searchOpenLibrary(q)),
+    ask('apple', q, () => searchApple(q)),
+    ask('google', q, () => searchGoogle(q)),
+  ])
   const answered = settled.filter((s) => s.status === 'fulfilled').length
+  const limited = settled.filter(
+    (s) => s.status === 'rejected' && s.reason instanceof RateLimited,
+  ).length
   const lists = settled.map((s) => (s.status === 'fulfilled' ? s.value : []))
 
   const merged: Candidate[] = []
@@ -130,7 +207,7 @@ export async function searchBooks(q: string): Promise<SearchResult> {
       }
     }
   }
-  return { candidates: merged.slice(0, 12), answered, asked: 3 }
+  return { candidates: merged.slice(0, 12), answered, asked: 3, limited }
 }
 
 /* Last resort for a page count. Apple's ebook API never reports one and

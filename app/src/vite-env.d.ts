@@ -11,6 +11,12 @@ interface ImportMetaEnv {
       credential, and there is no client secret anywhere in this app. Unset in
       a build means the Drive backup hides itself entirely. */
   readonly VITE_GOOGLE_CLIENT_ID?: string
+  /** Google Books API key. Optional, and public by design in the same way —
+      it is compiled into the bundle, so it must be restricted by HTTP
+      referrer in the Google Cloud console, which is what actually protects
+      it. Unset, the app simply asks Google Books anonymously and lives with
+      the shared per-IP quota. */
+  readonly VITE_GOOGLE_BOOKS_KEY?: string
 }
 
 interface ImportMeta {
