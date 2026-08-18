@@ -6,11 +6,27 @@ import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { startAutoSync } from './sync/sync'
 import { initServiceWorker } from './pwa'
+import { Analytics } from '@vercel/analytics/react'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <App />
+      {/* Page views only, and only the shape of the path. Vercel's script sends
+          no cookies and builds no profile, but /review/12 would still put a row
+          of this reader's own library into a dashboard — and a thousand distinct
+          paths that say nothing. beforeSend collapses the two id routes to their
+          pattern; a null return would drop the event entirely. It sits outside
+          the router deliberately: it listens to history itself, so it needs no
+          route context and keeps working on the pages App renders without one. */}
+      <Analytics
+        beforeSend={(e) => ({
+          ...e,
+          url: e.url
+            .replace(/\/review\/[^/?#]+/, '/review/:id')
+            .replace(/\/collage\/[^/?#]+/, '/collage/:month'),
+        })}
+      />
     </ErrorBoundary>
   </StrictMode>
 )

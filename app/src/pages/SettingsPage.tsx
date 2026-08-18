@@ -114,7 +114,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           <h1>Settings</h1>
           {/* literally true: backup is a file this app writes and hands to you,
               and there is nowhere else for a review to go */}
-          <span>Local-first · nothing is ever stored on our servers</span>
+          <span>Local-first · your library never leaves this device</span>
         </header>
 
         <div className="panel">
@@ -282,7 +282,8 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           </p>
           <p>
             Your library lives on this device, in this browser. No account, no server of ours,
-            and nothing is sent anywhere. To keep a copy or move to a new phone, use Export
+            and no review, cover or date ever leaves it. The host counts page views — which
+            screens get opened, nothing about what is on them. To keep a copy or move to a new phone, use Export
             library above — one file holding every review and cover — and Import library reads
             it back.
           </p>
