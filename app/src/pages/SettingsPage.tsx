@@ -112,8 +112,8 @@ export function SettingsPage({ settings }: { settings: Settings }) {
       <div className="page-inner">
         <header className="app-head">
           <h1>Settings</h1>
-          {/* true whether or not Drive is connected — a backup goes to the
-              user's own Drive, never to a server of ours */}
+          {/* literally true: backup is a file this app writes and hands to you,
+              and there is nowhere else for a review to go */}
           <span>Local-first · nothing is ever stored on our servers</span>
         </header>
 
@@ -270,14 +270,21 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           <p>
             Most reading apps cut a review short, reflow it, or won't let you share it at all.
             This one keeps yours whole: write however much you want, and it comes out as a printed
-            card — cover, rating, dates, page count and all — splitting to a second page at a
-            paragraph break when it needs to. Each month assembles itself into a collage of
-            everything you finished.
+            card — cover, rating, dates, page count and all — running onto another page at a
+            paragraph break when it needs to.
+          </p>
+          {/* the collage had the last sentence of the paragraph above, where it
+              read as an afterthought. It is half of what the app makes, so it
+              gets its own paragraph. */}
+          <p>
+            When a month closes it assembles itself: everything you finished, on one collage card
+            in the same paper, to share or keep alongside the reviews.
           </p>
           <p>
-            Your library lives on this device, in this browser. Nothing is sent anywhere unless you
-            connect your own Google Drive for backup, and there is no account and no server of ours
-            at any point.
+            Your library lives on this device, in this browser. No account, no server of ours,
+            and nothing is sent anywhere. To keep a copy or move to a new phone, use Export
+            library above — one file holding every review and cover — and Import library reads
+            it back.
           </p>
           {/* the check sits beside the number it checks, at the very bottom
               of the page. "Local-first PWA" gave up the slot: the header and
