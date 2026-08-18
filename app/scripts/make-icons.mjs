@@ -88,6 +88,19 @@ for (const s of [192, 512]) {
 }
 writeFileSync(join(ICONS, 'icon.svg'), svg(512, 512, 0.48))
 
+/* public/icons/og.png — the social card — is deliberately NOT generated here.
+   It carries the name in Playfair and the line in Plex Mono, and this script
+   cannot draw either: ImageMagick has no usable font on a bare install (see
+   the WORDS probe above), and a launch image can survive that because the
+   in-page splash supplies the words a moment later. A link preview gets one
+   frame and no second chance, so a wordless social card is not an acceptable
+   fallback — it would just be a flower on paper.
+   It was drawn instead on a <canvas> in a real browser, where the web fonts
+   the app already loads are available, at 1200x630 with the same composition
+   as the launch screen. Regenerating it means doing that again; leaving it out
+   of this script is the point, so that `npm run icons` cannot overwrite a card
+   that has words with one that does not. */
+
 /* — iOS launch images — the device pixel sizes Safari matches on, portrait.
    Landscape falls back to the icon-less ground, which is the right thing:
    a stretched mark reads worse than plain paper. */

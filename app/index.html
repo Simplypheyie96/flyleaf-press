@@ -4,9 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Write long book reviews and share them whole, as printed cards. Local-first — your library lives on your device." />
+    <!-- press.flyleaf.cc is the app's one address. The .vercel.app domain
+         308s here (see vercel.json), so a link that names it is not merely
+         untidy: two origins means two IndexedDBs, and a library saved on one
+         is invisible from the other. -->
+    <link rel="canonical" href="https://press.flyleaf.cc/" />
+    <meta property="og:url" content="https://press.flyleaf.cc/" />
+    <meta property="og:site_name" content="Flyleaf Press" />
     <meta property="og:title" content="Flyleaf Press" />
     <meta property="og:description" content="Write long book reviews and share them whole, as printed cards." />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://press.flyleaf.cc/icons/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The Flyleaf Press rosette above the words Flyleaf Press, long book reviews, printed." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Flyleaf Press" />
+    <meta name="twitter:description" content="Write long book reviews and share them whole, as printed cards." />
+    <meta name="twitter:image" content="https://press.flyleaf.cc/icons/og.png" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F4F2ED" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#151515" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
