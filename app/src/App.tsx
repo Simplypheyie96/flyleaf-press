@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSettings } from './db'
-import { seedIfEmpty } from './seed'
+import { autoSeedInDev } from './seed'
 import { Nav } from './components/Nav'
 import { Onboarding } from './pages/Onboarding'
 import { Home } from './pages/Home'
@@ -41,7 +41,7 @@ export default function App() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    Promise.all([getSettings(), seedIfEmpty()]).then(() => setReady(true))
+    Promise.all([getSettings(), autoSeedInDev()]).then(() => setReady(true))
   }, [])
 
   const settings = useLiveQuery(() => db.settings.get(1), [])

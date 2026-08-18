@@ -71,7 +71,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
     setConfirming(null)
     await db.reviews.clear()
     await seedIfEmpty()
-    setMsg('Demo library restored.')
+    setMsg('Demo library loaded.')
   }
 
   const clearAll = async () => {
@@ -186,10 +186,10 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           </div>
           <div className="set-row">
             <div className="set-row-txt">
-              <div className="ui-lbl">Restore demo library</div>
-              <p>Puts back the three seeded months to explore the styles with.</p>
+              <div className="ui-lbl">Load the demo library</div>
+              <p>Three months of invented reading, for trying the card styles against text of a real length.</p>
             </div>
-            <button className="btn btn--ghost btn--sm" onClick={() => setConfirming('demo')}>Restore</button>
+            <button className="btn btn--ghost btn--sm" onClick={() => setConfirming('demo')}>Load</button>
           </div>
           <div className="set-row">
             <div className="set-row-txt">
@@ -265,9 +265,9 @@ export function SettingsPage({ settings }: { settings: Settings }) {
 
       {confirming === 'demo' && (
         <Confirm
-          title="Restore the demo library?"
+          title="Load the demo library?"
           body="Everything on the shelf is replaced by the three seeded months. Your own reviews are deleted."
-          action="Restore demo"
+          action="Load demo"
           onConfirm={resetDemo}
           onCancel={() => setConfirming(null)}
         />

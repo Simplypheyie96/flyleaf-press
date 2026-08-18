@@ -45,8 +45,12 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
         /* the iOS launch images are a megabyte the app never reads — Safari
-           fetches them itself at install time, so they stay out of precache */
-        globIgnores: ['**/splash/**'],
+           fetches them itself at install time, so they stay out of precache.
+           The demo covers are 2.6MB and belong to a library that only loads if
+           someone presses the button in Settings, so precaching them made every
+           new user pay for reading they will never see. They are still served
+           on demand; the demo is just not available offline-first. */
+        globIgnores: ['**/splash/**', '**/covers/**'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         runtimeCaching: [
           {
