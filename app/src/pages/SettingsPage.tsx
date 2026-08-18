@@ -196,19 +196,6 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               <button className="btn btn--ghost btn--sm" onClick={() => promptInstall()}>Install</button>
             ) : null}
           </div>
-          <div className="set-row">
-            <div className="set-row-txt">
-              <div className="ui-lbl">Check for updates</div>
-              <p>
-                New versions install themselves the next time the app is opened. This goes and
-                looks now — useful when the app has been left open for days.
-              </p>
-              {updateMsg && <p role="status">{updateMsg}</p>}
-            </div>
-            <button className="btn btn--ghost btn--sm" disabled={checking} onClick={runUpdateCheck}>
-              {checking ? 'Checking…' : 'Check'}
-            </button>
-          </div>
         </div>
 
         <div className="panel">
@@ -292,10 +279,17 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             connect your own Google Drive for backup, and there is no account and no server of ours
             at any point.
           </p>
+          {/* the check sits beside the number it checks, at the very bottom
+              of the page. "Local-first PWA" gave up the slot: the header and
+              the paragraph above both already say it, and a control earns the
+              space more than a third restatement does. */}
           <div className="about-foot">
             <span className="ui-lbl">Version {__APP_VERSION__}</span>
-            <span className="ui-lbl">Local-first PWA</span>
+            <button className="btn btn--ghost btn--sm" disabled={checking} onClick={runUpdateCheck}>
+              {checking ? 'Checking…' : 'Check for updates'}
+            </button>
           </div>
+          {updateMsg && <p className="field-hint" role="status" style={{ marginTop: 12 }}>{updateMsg}</p>}
         </div>
       </div>
 

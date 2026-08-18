@@ -681,8 +681,11 @@ img{ max-width:100%; }
    uncapped on purpose. */
 .about p{ font-size:12px; line-height:1.7; color:var(--ink-soft); max-width:430px; }
 .about p + p{ margin-top:12px; }
+/* the footer now pairs a label with a button, so it centres them: stretched,
+   the label's text sits at the top of a 32px box and reads 10px high of the
+   button beside it */
 .about-foot{
-  display:flex; flex-wrap:wrap; gap:8px 18px;
+  display:flex; align-items:center; flex-wrap:wrap; gap:8px 18px;
   margin-top:18px; padding-top:16px; border-top:1px solid var(--rule);
 }
 .about-foot .ui-lbl{ color:var(--ink-soft); }
