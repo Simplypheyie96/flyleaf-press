@@ -94,8 +94,8 @@ img{ max-width:100%; }
 .page-inner{ width:100%; max-width:680px; }
 
 .app-head{
-  display:flex; align-items:baseline; justify-content:space-between;
-  gap:16px; padding-bottom:14px; margin-bottom:28px;
+  display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+  gap:6px 16px; padding-bottom:14px; margin-bottom:28px;
   border-bottom:1px solid var(--rule);
 }
 .app-head h1{
@@ -107,9 +107,15 @@ img{ max-width:100%; }
 .app-head > span{
   font-size:10.5px; font-weight:500; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-soft);
-  /* the back link never wraps or gets squeezed by a long title beside it */
-  flex:none; white-space:nowrap;
+  /* Held to its own width where it fits, dropped to the next line where it
+     does not. It used to be flex:none AND nowrap, which together mean "run off
+     the side of the screen rather than break" — true of a back link, which is
+     two words, and wrong for a caption, which ran 396px inside a 320px header
+     and was clipped by the page's own overflow. */
+  flex:0 1 auto; min-width:0; text-align:right;
 }
+/* the back link is the one thing in that slot that must never break */
+.app-head > span a{ white-space:nowrap; }
 /* title over caption, where the headline is a real book title and so has to be
    free to wrap — min-width:0 is what lets it, inside a flex row */
 .head-id{ display:flex; flex-direction:column; gap:6px; min-width:0; }
@@ -185,7 +191,13 @@ img{ max-width:100%; }
    one real action — add a book — is its own round button beside the bar,
    never inside it. ── */
 .tabbar{
-  position:fixed; left:50%; bottom:calc(14px + env(safe-area-inset-bottom));
+  /* In a browser tab the inset is 0 and the bar floats 14px off the bottom.
+     Installed, iOS reports a 34px inset for the home indicator, and ADDING
+     the two put the bar 48px up — a visible shelf of empty paper under it,
+     which is what "the navbar sits too high" was. The inset is clearance, not
+     a margin to stack on: sitting the bar AT the top of the safe area clears
+     the indicator exactly, so the two numbers compete rather than accumulate. */
+  position:fixed; left:50%; bottom:max(14px, env(safe-area-inset-bottom));
   transform:translateX(-50%);
   z-index:40;
   display:flex; align-items:center; gap:10px;
@@ -274,15 +286,15 @@ img{ max-width:100%; }
    gives each control 150px, and 16px digits plus WebKit's own gaps between
    the three sub-fields need nearly all of it. The measured value is 106px of
    content box against a 102px run — the earlier 12/40 clipped the year. */
-.date-wrap input[type="date"]{ padding-left:11px; padding-right:33px; }
+.date-wrap input[type="date"]{ padding-left:11px; padding-right:38px; }
 .date-ph{
   position:absolute; left:12px; top:50%; transform:translateY(-50%);
   font-family:var(--mono); font-size:13px; color:var(--ink-soft);
   pointer-events:none; opacity:0;
 }
 .date-ico{
-  position:absolute; right:10px; top:50%; transform:translateY(-50%);
-  width:15px; height:15px; pointer-events:none;
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  width:16px; height:16px; pointer-events:none;
   fill:none; stroke:var(--ink-soft); stroke-width:1.3; stroke-linecap:round;
 }
 /* the real button, invisible, over our glyph — so opening the picker is the
@@ -415,16 +427,22 @@ img{ max-width:100%; }
 }
 
 /* format toggle — same inline mono line as the cards */
-.fmt-pick{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:6px; row-gap:8px; }
+/* Underlined words separated by interpuncts read as a caption, which is why
+   the one required field on the form was the one people walked past. They are
+   chips now: a box you can see the edge of, a fill when it is on, and a target
+   a thumb can hit. */
+.fmt-pick{ display:flex; flex-wrap:wrap; gap:8px; }
 .fmt-pick button{
-  border:0; padding:2px 1px 4px; background:transparent; cursor:pointer;
+  padding:9px 14px; min-height:38px; cursor:pointer;
+  border:1px solid var(--rule); border-radius:999px; background:var(--card-w);
+  font-family:var(--mono);
   font-size:11.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
-  color:var(--ink-soft); opacity:.62;
-  border-bottom:2px solid transparent;
-  transition:color 160ms var(--ease), opacity 160ms var(--ease), border-color 160ms var(--ease);
+  color:var(--ink-soft);
+  transition:color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
 }
-.fmt-pick button[aria-pressed="true"]{ color:var(--ink); opacity:1; border-bottom-color:currentColor; }
-.fmt-pick .sep{ color:var(--ink-soft); opacity:.45; font-size:11.5px; }
+.fmt-pick button[aria-pressed="true"]{
+  background:var(--ink); border-color:var(--ink); color:var(--paper);
+}
 
 /* interactive stars (write flow) */
 .stars-input{
@@ -580,6 +598,16 @@ img{ max-width:100%; }
   .date-ph{ font-size:16px; }
 }
 
+/* Started and finished read as a pair, so they sit side by side — but only
+   where both can hold a full date. WebKit's date edit is three sub-fields with
+   its own gaps between them, and at 16px (which touch forces, below) that run
+   measures 102px before any padding: at 360px a two-up row leaves 105px of
+   content box, which fit by luck rather than by rule and clipped the year the
+   moment the glyph beside it was given room to breathe. Below 400px they
+   stack, and each one has the whole column. */
+.date-row{ display:grid; grid-template-columns:1fr; gap:16px; }
+@media (min-width: 400px){ .date-row{ grid-template-columns:1fr 1fr; } }
+
 /* ── card display wrapper ── */
 .card-wrap{ width:100%; }
 
@@ -720,6 +748,7 @@ img{ max-width:100%; }
 /* the action never breaks across two lines — at 360px a two-word label like
    "Sync now" wrapped while every other button in the app stayed on one */
 .set-row > .btn{ white-space:nowrap; flex:none; }
+.set-row-txt{ min-width:0; }
 .set-row-txt p{ font-size:11px; line-height:1.55; color:var(--ink-soft); margin-top:4px; max-width:380px; }
 .set-row-txt .ui-lbl{ color:var(--ink); }
 /* stands in the button's place when a row has a state to report rather than

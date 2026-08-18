@@ -355,11 +355,59 @@
 /* ─────────────────────────────────────────────────────────────
    Collage cards — the five monthly styles
    ───────────────────────────────────────────────────────────── */
+/* The head is the one place the five styles announce that they ARE five
+   styles, so each carries its own arrangement. Two faces and one rosette
+   throughout — what changes is the axis, the rule, and what gets counted. */
 .mo-head{ display:flex; align-items:baseline; justify-content:space-between;
   gap:12px; flex-wrap:wrap; margin-bottom:22px; }
 .mo-title{ font-family:var(--serif); font-weight:600; font-size:26px; letter-spacing:-.012em; }
 .mo-sub{ display:flex; align-items:center; gap:8px; }
 .mo-sub svg{ display:block; opacity:.8; }
+.mo-line{ display:flex; align-items:center; gap:10px; min-width:0; }
+.mo-line svg{ display:block; opacity:.8; flex:none; }
+.mo-kick{
+  font-family:var(--mono); font-size:9px; font-weight:500;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--meta, var(--ink-soft));
+}
+
+/* C1 · edge-labelled, the way a proof sheet is */
+.mo-head--c1{ display:block; }
+.mo-head--c1 .mo-title{ margin:7px 0 9px; }
+.mo-head--c1 .mo-sub{ padding-top:9px; border-top:1px solid rgba(244,242,237,.3); }
+
+/* C2 · the mark leads and the head closes on a shelf edge, the same rail the
+   covers stand on further down */
+.mo-head--c2{ display:block; }
+.mo-head--c2 .mo-edge{
+  display:flex; justify-content:flex-end; margin-top:12px; padding-top:8px;
+  border-top:3px solid rgba(27,25,23,.5);
+}
+
+/* C3 · centred and perforated, like the top of a stub book */
+.mo-head--c3{ display:block; text-align:center; }
+.mo-head--c3 .mo-title{ margin:7px 0 0; }
+.mo-head--c3 .mo-perf{ margin:11px 0 10px; border-top:2px dashed rgba(27,25,23,.35); }
+.mo-head--c3 .mo-sub{ justify-content:center; }
+
+/* C4 · a board takes a slip pinned to it, not a masthead printed on it */
+.mo-head--c4{ display:block; padding-top:6px; }
+.mo-head--c4 .mo-slip{
+  position:relative; display:inline-block;
+  background:var(--card-w); box-shadow:var(--sh-plate);
+  padding:16px 22px 14px; border-radius:2px; transform:rotate(-1.1deg);
+}
+.mo-head--c4 .mo-tack{
+  position:absolute; top:-6px; left:50%; transform:translateX(-50%); display:block;
+}
+.mo-head--c4 .mo-title{ font-size:24px; }
+.mo-head--c4 .mo-sub{ margin-top:7px; }
+
+/* C5 · a register head — month left, the range of entries right, one heavy
+   rule under the pair. That rule is the ONLY one here: .mo-stats gives up its
+   bottom border on this style, because two full-width rules 20px apart read
+   as a printing fault rather than as two sections. */
+.mo-head--c5{ align-items:center; padding-bottom:11px; border-bottom:2.5px solid rgba(27,25,23,.55); }
+.c5 .mo-stats{ border-bottom:0; padding-bottom:0; margin-bottom:22px; }
 
 /* The month in numbers — a ruled strip under the head, shared by all five
    styles and inheriting each ground's ink. Cells wrap rather than shrink, so
@@ -407,7 +455,12 @@
 .c1 .r-num{ font-size:15px; color:var(--cream); }
 .c1 .patch{ right:-22px; bottom:-24px; opacity:.09; transform:rotate(18deg); }
 /* on a phone the grid is always two up, however long the month is */
-.card-compact .c1-grid{ grid-template-columns:repeat(2,1fr); }
+/* The compact card is a 350px column, so a heavy month cannot inherit the four
+   or five the wide shape holds — five covers there would be 54px across. It is
+   auto-fit rather than a fixed count because repeat() takes an <integer> and
+   nothing else: min() and calc() are not legal there, so "as many as fit above
+   this width" is the only way to say it in CSS. */
+.card-compact .c1-grid{ grid-template-columns:repeat(auto-fit, minmax(84px, 1fr)); gap:14px 12px; }
 
 /* C2 · Shelf (butter) */
 .c2{ background:var(--butter); }
@@ -416,7 +469,9 @@
 /* the rail keeps its JS-decided column count on a phone — the rows were
    sliced to that width, so overriding it here would wrap a book onto a rail
    of its own and part it from its rating */
-.card-compact .c2-rail{ gap:0 10px; }
+/* both the cover rail and the meta rail under it take the same rule, so they
+   resolve to the same number of columns and stay in step */
+.card-compact .c2-rail{ gap:0 10px; grid-template-columns:repeat(auto-fit, minmax(78px, 1fr)); }
 .c2-book{ position:relative; padding-bottom:14px; min-width:0; }
 .c2-book .cov{ transform:rotate(var(--lean,0deg)); transform-origin:bottom center; }
 .c2-edge{ height:5px; background:var(--ink); opacity:.75; border-radius:1px;
@@ -440,26 +495,30 @@
   transform:rotate(var(--tr,0deg));
   position:relative;
 }
-.c3-t::after{
-  content:""; position:absolute; right:86px; top:4px; bottom:4px; width:0;
-  border-right:2px dashed var(--rule);
-}
+/* the perforation is drawn ON the stub, not at a measured distance from the
+   right edge. It used to be an ::after pinned at right:86px, which is a guess
+   at how wide the rating column happens to be — and that column is as wide as
+   its stars, so a long month, whose tickets are narrower, put the stars on
+   top of the line instead of beside it. As a border it cannot land anywhere
+   but exactly left of the stub. */
 .c3-t .cov{ width:44px; }
 .c3-name{ font-family:var(--serif); font-weight:600; font-size:15px; letter-spacing:-.01em; line-height:1.2; }
 .c3-adm{ font-family:var(--mono); font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
-.c3-end{ text-align:right; padding-left:18px; }
+.c3-end{
+  display:flex; flex-direction:column; align-items:flex-end; justify-content:center;
+  align-self:stretch; text-align:right;
+  padding-left:16px; border-left:2px dashed var(--rule);
+}
 .c3-end .r-num{ font-size:17px; color:var(--accent); }
 .c3-end .stars-s{ margin-top:3px; }
 .c3 .patch{ right:-24px; bottom:30px; opacity:.09; transform:rotate(14deg); }
 /* a split ticket has half the width — the stub shortens with it */
 .c3-stack.is-split .c3-t{ grid-template-columns:36px 1fr auto; padding:9px 12px 9px 9px; }
-.c3-stack.is-split .c3-t::after{ right:64px; }
 .c3-stack.is-split .c3-t .cov{ width:36px; }
 .c3-stack.is-split .c3-name{ font-size:13.5px; }
 .c3-stack.is-split .c3-end{ padding-left:12px; }
 .card-compact .c3-stack{ grid-template-columns:1fr; }
 .card-compact .c3-t{ grid-template-columns:38px 1fr auto; }
-.card-compact .c3-t::after{ right:74px; }
 .card-compact .c3-t .cov{ width:38px; }
 .card-compact .c3-name{ font-size:13.5px; }
 
@@ -476,7 +535,7 @@
 .c4-cap .r-num{ font-family:var(--hand); font-weight:700; font-size:13.5px; color:var(--accent); }
 .c4-tack{ position:absolute; top:-7px; left:50%; margin-left:-7px; z-index:2; }
 .c4 .patch{ left:50%; bottom:-30px; margin-left:-60px; opacity:.08; }
-.card-compact .c4-board{ grid-template-columns:repeat(2,1fr); gap:22px 14px; }
+.card-compact .c4-board{ grid-template-columns:repeat(auto-fit, minmax(92px, 1fr)); gap:22px 14px; }
 
 /* C5 · Ledger (mustard) */
 .c5{ background:var(--mustard); --meta:rgba(27,25,23,.72); }

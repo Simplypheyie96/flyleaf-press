@@ -112,9 +112,10 @@ export function SettingsPage({ settings }: { settings: Settings }) {
       <div className="page-inner">
         <header className="app-head">
           <h1>Settings</h1>
-          {/* literally true: backup is a file this app writes and hands to you,
-              and there is nowhere else for a review to go */}
-          <span>Local-first · your library never leaves this device</span>
+          {/* the caption slot is beside the title, not under it — a sentence
+              does not fit there at 360px. Where the library lives is the About
+              card's job, at the bottom of this very page. */}
+          <span>Local-first</span>
         </header>
 
         <div className="panel">

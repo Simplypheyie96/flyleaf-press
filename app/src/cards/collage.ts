@@ -26,10 +26,65 @@ function cov(b: Review, cls?: string): string {
   return `<img class="cov ${cls || ''}" alt="Cover of ${escapeHtml(b.title)}" loading="lazy" src="${b.cover}">`
 }
 
-function moHead(m: MonthData): string {
-  return `<div class="mo-head">
-    <div class="mo-title">${m.name}</div>
-    <div class="mo-sub">${mark(13)}<span class="lbl">${m.books.length} book${m.books.length === 1 ? '' : 's'} · Flyleaf Press</span></div>
+/* Each style heads itself. One shared masthead across all five made the top
+   of every collage identical and the style picker feel like a colour swap —
+   the styles are five different printed objects, and the first thing you read
+   is where that has to be true. They keep the same two faces and the same
+   rosette; what differs is the arrangement, the rule under it, and what the
+   count is called, because a contact sheet counts frames and a ledger counts
+   entries. */
+type HeadId = 'c1' | 'c2' | 'c3' | 'c4' | 'c5'
+
+function moHead(m: MonthData, id: HeadId): string {
+  const n = m.books.length
+  const t = escapeHtml(m.name)
+
+  /* C1 · a contact sheet is labelled on its own edge, so the kicker sits above
+     the month and the count is in frames */
+  if (id === 'c1')
+    return `<div class="mo-head mo-head--c1">
+      <div class="mo-kick">Contact sheet · Flyleaf Press</div>
+      <div class="mo-title">${t}</div>
+      <div class="mo-sub">${mark(13)}<span class="lbl">${n} frame${n === 1 ? '' : 's'}</span></div>
+    </div>`
+
+  /* C2 · the mark leads, and the head closes on a drawn shelf edge with the
+     count sitting on it — the same rail the covers stand on below */
+  if (id === 'c2')
+    return `<div class="mo-head mo-head--c2">
+      <div class="mo-line">${mark(15)}<div class="mo-title">${t}</div></div>
+      <div class="mo-edge"><span class="lbl">${n} spine${n === 1 ? '' : 's'}</span></div>
+    </div>`
+
+  /* C3 · centred and perforated, like the top of a stub book */
+  if (id === 'c3')
+    return `<div class="mo-head mo-head--c3">
+      <div class="mo-kick">Box office · Flyleaf Press</div>
+      <div class="mo-title">${t}</div>
+      <div class="mo-perf"></div>
+      <div class="mo-sub">${mark(13)}<span class="lbl">${n} stub${n === 1 ? '' : 's'}</span></div>
+    </div>`
+
+  /* C4 · a board has a card pinned to it rather than a masthead printed on it,
+     so the head is a small tacked slip sitting at an angle */
+  if (id === 'c4')
+    return `<div class="mo-head mo-head--c4">
+      <div class="mo-slip">
+        <svg class="mo-tack" width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="5.4" fill="var(--accent)"/>
+          <circle cx="5.4" cy="5.4" r="1.7" fill="rgba(255,255,255,.55)"/>
+        </svg>
+        <div class="mo-title">${t}</div>
+        <div class="mo-sub">${mark(12)}<span class="lbl">${n} pinned</span></div>
+      </div>
+    </div>`
+
+  /* C5 · a register head: month left, the range of entries right, one heavy
+     rule under the pair — and that rule is the only one, which is why the
+     stats strip drops its own bottom border on this style */
+  return `<div class="mo-head mo-head--c5">
+    <div class="mo-line">${mark(13)}<div class="mo-title">${t}</div></div>
+    <span class="lbl">Entries 01–${String(n).padStart(2, '0')}</span>
   </div>`
 }
 
@@ -80,7 +135,12 @@ function listCols(n: number): number {
   return n > 6 ? 2 : 1
 }
 function gridCols(n: number): number {
-  return n > 12 ? 4 : 3
+  /* three is right for an ordinary month; a heavy one would otherwise run the
+     card down the page in a narrow ribbon, so the grid widens instead of the
+     card growing taller */
+  if (n > 18) return 5
+  if (n > 12) return 4
+  return 3
 }
 
 function fmts(b: Review): string {
@@ -94,7 +154,7 @@ function contact(m: MonthData): string {
   const ink = 'var(--mustard)', line = 'rgba(244,242,237,.55)'
   return `<article class="card c1" style="--rot:-.6deg">
     ${patchC(150)}
-    ${moHead(m)}
+    ${moHead(m, 'c1')}
     ${moStats(m)}
     <div class="c1-grid" style="--cols:${gridCols(m.books.length)}">
       ${m.books.map((b, i) => `
@@ -117,7 +177,7 @@ function shelf(m: MonthData): string {
   for (let i = 0; i < m.books.length; i += per) rows.push(m.books.slice(i, i + per))
   return `<article class="card c2" style="--rot:.5deg; --cols:${per}">
     ${patchC(140)}
-    ${moHead(m)}
+    ${moHead(m, 'c2')}
     ${moStats(m)}
     ${rows.map((row) => `
       <div class="c2-rail">
@@ -142,7 +202,7 @@ function tickets(m: MonthData): string {
   const cols = listCols(m.books.length)
   return `<article class="card c3" style="--rot:-.8deg">
     ${patchC(150)}
-    ${moHead(m)}
+    ${moHead(m, 'c3')}
     ${moStats(m)}
     <div class="c3-stack ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
       ${m.books.map((b, i) => `
@@ -150,7 +210,7 @@ function tickets(m: MonthData): string {
           ${cov(b)}
           <div style="min-width:0; padding-right:14px">
             <div class="c3-name">${escapeHtml(b.title)}</div>
-            <div class="c3-adm">Admit one · ${fmts(b)}</div>
+            <div class="c3-adm">${escapeHtml(b.author)} · ${fmts(b)}</div>
           </div>
           <div class="c3-end">
             <span class="r-num">${fmtRating(b.rating)}</span>
@@ -165,7 +225,7 @@ function tickets(m: MonthData): string {
 function pinboard(m: MonthData): string {
   return `<article class="card c4" style="--rot:.7deg">
     ${patchC(130)}
-    ${moHead(m)}
+    ${moHead(m, 'c4')}
     ${moStats(m)}
     <div class="c4-board" style="--cols:${gridCols(m.books.length)}">
       ${m.books.map((b, i) => `
@@ -190,7 +250,7 @@ function ledger(m: MonthData): string {
   const pages = m.books.reduce((s, b) => s + (b.pages || 0), 0)
   return `<article class="card c5" style="--rot:-.5deg">
     ${patchC(140)}
-    ${moHead(m)}
+    ${moHead(m, 'c5')}
     ${moStats(m)}
     <div class="c5-tbl ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
       ${m.books.map((b) => `

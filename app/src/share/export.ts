@@ -244,6 +244,63 @@ async function settleImages(pages: HTMLElement[]): Promise<void> {
   )
 }
 
+/* And then re-drawn, at the size the file will actually use them.
+
+   settleImages above proves the browser HAS the picture; it does not make the
+   picture survive the trip. The rasterizer paints by serializing the DOM into
+   one <svg> and loading THAT as an image, so every <img> inside it travels as
+   whatever string is in its src — a stored cover is a dataURL of the original
+   catalogue art, which can be 2000px wide and a megabyte of base64 for a box
+   that renders 104px across. Several of those on one leaf build a data: URL
+   big enough to hit the length ceiling an <img> src has, and a src over the
+   ceiling does not error: the image is simply blank. That is the bug where a
+   cover shows in the preview, vanishes from the file, and comes back if you
+   go and do it again — a second attempt differs only in what else happened to
+   be in flight, which is exactly the shape of a limit you are sitting on the
+   edge of.
+
+   Baking removes the edge rather than moving it. Each picture is drawn to a
+   canvas at its laid-out box times the export scale and handed back as JPEG,
+   so the string in the src is the size of the thing on the card instead of
+   the size of the thing the catalogue had — typically 30-60x smaller. It also
+   makes the decode a fact rather than a hope: drawImage cannot succeed on a
+   picture the browser has not got.
+
+   A draw that throws is left exactly as it was. That is the cross-origin case
+   (a tainted canvas cannot be read back), and there the old path is no worse
+   than it ever was. */
+async function bakeImages(pages: HTMLElement[]): Promise<void> {
+  const imgs = pages.flatMap((p) => [...p.querySelectorAll('img')])
+  for (const img of imgs) {
+    try {
+      if (!img.naturalWidth || !img.naturalHeight) continue
+      const box = img.getBoundingClientRect()
+      const w = Math.max(1, Math.round(box.width * EXPORT_SCALE))
+      const h = Math.max(1, Math.round(box.height * EXPORT_SCALE))
+      /* never upscale: a 60px thumbnail asked to fill 300px gains nothing but
+         bytes, so the natural size is the ceiling */
+      const k = Math.min(1, img.naturalWidth / w, img.naturalHeight / h)
+      const cw = Math.max(1, Math.round(w * k))
+      const ch = Math.max(1, Math.round(h * k))
+      const c = document.createElement('canvas')
+      c.width = cw
+      c.height = ch
+      const g = c.getContext('2d')!
+      /* the grounds are all light, so a photo with alpha lands on paper
+         rather than on the black a JPEG would otherwise give it */
+      g.fillStyle = PAPER
+      g.fillRect(0, 0, cw, ch)
+      g.drawImage(img, 0, 0, cw, ch)
+      const baked = c.toDataURL('image/jpeg', 0.92)
+      if (baked.length > 32 && baked.length < img.src.length) img.src = baked
+    } catch {
+      /* tainted or undrawable — leave the original src alone */
+    }
+  }
+  /* the swapped sources are new images; give them the same guarantee */
+  await settleImages(pages)
+}
+
 /* The two ceilings a canvas has, both enforced by quietly handing back
    something other than what was asked for. The area one is about 16.7 million
    pixels (WebKit's; Chrome's is far higher, but the file has to survive being
@@ -361,6 +418,7 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
      export — and it would repeat the whole search once per page. */
   const fontEmbedCSS = await fontEmbedCss()
   await settleImages(pages)
+  await bakeImages(pages)
   const blobs: Blob[] = []
   for (const page of pages) {
     resolveSvgVars(page)

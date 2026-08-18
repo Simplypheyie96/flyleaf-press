@@ -264,27 +264,34 @@ export function Write() {
 
         <section className="form-sec">
           <h2 className="ui-lbl form-sec-h">The reading</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="date-row">
             <DateField id="w-started" label="Date started" value={started} onChange={setStarted} />
             <DateField id="w-finished" label="Date finished" value={finished} onChange={setFinished} />
-          </div>
-          <div className="field">
-            <span className="ui-lbl">Formats — pick all that apply</span>
-            <div className="fmt-pick">
-              {FORMAT_NAMES.map((f, i) => (
-                <span key={f} style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
-                  {i > 0 && <span className="sep">·</span>}
-                  <button type="button" aria-pressed={formats.includes(f)} onClick={() => toggleFormat(f)}>
-                    {f}
-                  </button>
-                </span>
-              ))}
-            </div>
           </div>
           <div className="field">
             <span className="ui-lbl">Rating</span>
             <StarInput value={rating} onChange={setRating} />
             <p className="field-hint">Quarter steps — drag, or use the arrow keys.</p>
+          </div>
+        </section>
+
+        {/* Format is required to save, and as one more label inside "The
+            reading" it read as an aside and got walked past — so the review
+            could not be saved and the reason was three fields up. Its own
+            heading is what makes it a step rather than a detail, and the
+            chips are drawn as real buttons for the same reason. */}
+        <section className="form-sec">
+          <h2 className="ui-lbl form-sec-h">The format</h2>
+          <div className="field">
+            <span className="ui-lbl">Pick all that apply</span>
+            <div className="fmt-pick">
+              {FORMAT_NAMES.map((f) => (
+                <button key={f} type="button" aria-pressed={formats.includes(f)}
+                  onClick={() => toggleFormat(f)}>
+                  {f}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
