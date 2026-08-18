@@ -145,9 +145,6 @@ export function ExportSheet({
         <div className="share-preview-wrap" ref={wrapRef}>
           <div className="card-wrap share-preview-scale" ref={hostRef} />
         </div>
-        <p className="share-note">
-          {pages === 1 ? 'One image.' : `Splits at a paragraph — ${pages} images.`}
-        </p>
 
         <div className="field" style={{ marginTop: 18 }}>
           <span className="ui-lbl">Shape</span>

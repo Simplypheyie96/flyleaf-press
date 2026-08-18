@@ -6,22 +6,27 @@
    in. That is exactly what the export shape selects. */
 
 import type { Review, StyleId, CollageId, ExportShape } from '../types'
-import { EXPORT_SCALE, SHAPE_LEAF_H, SHAPE_W } from '../types'
+import { EXPORT_SCALE, SHAPE_W } from '../types'
 import { renderReviewCard } from '../cards/review'
 import { renderCollage, type MonthData } from '../cards/collage'
 import { paragraphs } from '../format'
 import { fontEmbedCss } from '../fonts'
 import { isIOS } from '../pwa'
 
-/* The wide layout never splits. A leaf that can grow is the whole point of a
-   printed card on a desktop screen — the review reads as one object, and the
-   only thing a page break buys there is a second file to send. The phone
-   layout still splits, because a 350px column of prose really does run to a
-   picture nobody can read on a phone. Infinity rather than a very large
-   number: the splitter's tests are `> PAGE_LIMIT`, so this is exactly "never",
-   with no height at which it quietly starts breaking again. */
-const pageLimit = (shape: ExportShape) =>
-  shape === 'wide' ? Infinity : SHAPE_LEAF_H[shape] - 88 /* minus its own padding */
+/* Neither layout splits. The wide one stopped first, on the argument that a
+   leaf which can grow is the whole point of a printed card and a page break
+   only buys a second file to send. The phone shape kept a ceiling on the
+   theory that a 350px column runs to a picture nobody can read — but a review
+   arriving as three or four separate images is worse than a tall one: a phone
+   scrolls, and a set of files has to be sent in order and looked at in order
+   to make sense. So one review is one image, at either shape.
+
+   Infinity rather than a very large number: every test below is
+   `> PAGE_LIMIT`, so this is exactly "never", with no height at which it
+   quietly starts breaking again. The splitter itself is left standing — it is
+   unreachable at this constant and reachable again the moment a real limit is
+   put back, which is a cheaper way to hold the option than deleting it. */
+const PAGE_LIMIT = Infinity
 
 export function makeHost(): HTMLDivElement {
   const host = document.createElement('div')
@@ -68,7 +73,6 @@ export function paginateReview(
   shape: ExportShape
 ): HTMLElement[] {
   prepHost(host, shape)
-  const PAGE_LIMIT = pageLimit(shape)
   host.innerHTML = `<div class="share-page"><div>${renderReviewCard(rec, style)}</div>
     <div class="share-page-no"></div></div>`
   const page1 = host.querySelector('.share-page') as HTMLElement
@@ -224,6 +228,38 @@ async function settleImages(pages: HTMLElement[]): Promise<void> {
   )
 }
 
+/* How many device pixels per CSS pixel this particular leaf can afford.
+   Now that a review is always one image, a long one is a very tall one — and
+   a canvas has two ceilings, both of which a browser enforces by quietly
+   handing back something other than what was asked for. Neither raises an
+   error, so left alone the sheet would print a size the file does not have,
+   and on iOS a long review would come back blank at the exact moment the
+   single-image rule is doing the most work.
+
+   The area ceiling is about 16.7 million pixels (WebKit's; Chrome's is far
+   higher, but the file has to survive being made on a phone). The side
+   ceiling is 16384 — measured, not assumed: a 684 × 24530 export came back
+   from Chrome as 456 × 16384, scaled down without complaint.
+
+   There is deliberately no floor at 1×. A review long enough to be pushed
+   below it is past 16000 CSS px of prose, and a slightly soft image of the
+   whole review is still the thing that was asked for, where a browser-clamped
+   one is a file whose size nobody predicted. Ordinary reviews are nowhere
+   near either ceiling and keep the full 2×. */
+const MAX_CANVAS_PX = 16_777_216
+const MAX_CANVAS_SIDE = 16_384
+function exportScale(page: HTMLElement): number {
+  const w = page.offsetWidth
+  const h = page.offsetHeight
+  if (!w || !h) return EXPORT_SCALE
+  return Math.min(
+    EXPORT_SCALE,
+    Math.sqrt(MAX_CANVAS_PX / (w * h)),
+    MAX_CANVAS_SIDE / w,
+    MAX_CANVAS_SIDE / h
+  )
+}
+
 /* Pages are always saved TIGHT: the leaf collapses to hug the card on a slim
    even mat, so the file is the card, never the ground it was composed on. The
    full leaf survives only in the print/PDF path, where paper pages mean
@@ -244,7 +280,7 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
   for (const page of pages) {
     resolveSvgVars(page)
     const dataUrl = await toPng(page, {
-      pixelRatio: EXPORT_SCALE,
+      pixelRatio: exportScale(page),
       width: page.offsetWidth,
       height: page.offsetHeight,
       backgroundColor: '#F4F2ED',
@@ -263,9 +299,13 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
 export function pixelSize(pages: HTMLElement[]): { w: number; h: number; n: number } {
   const first = pages[0]
   if (!first) return { w: 0, h: 0, n: 0 }
+  /* the same scale the file will actually be written at, not the nominal one —
+     printing 2× figures over an image the canvas ceiling forced down to 1.4×
+     would make the sheet lie about the thing it exists to show */
+  const k = exportScale(first)
   return {
-    w: Math.round(first.offsetWidth * EXPORT_SCALE),
-    h: Math.round(first.offsetHeight * EXPORT_SCALE),
+    w: Math.round(first.offsetWidth * k),
+    h: Math.round(first.offsetHeight * k),
     n: pages.length,
   }
 }
@@ -401,8 +441,9 @@ export async function shareCollageImage(
 export function pageCount(rec: Review, style: StyleId, shape: ExportShape = 'phone'): number {
   const host = makeHost()
   try {
-    /* the phone layout by default: it is the only one that splits now, so it
-       is the only one this question has an interesting answer for */
+    /* Always 1 while PAGE_LIMIT is Infinity. Kept as a measurement rather than
+       a hardcoded 1 so the sheet's copy follows the splitter instead of
+       asserting something about it. */
     return paginateReview(rec, style, host, shape).length
   } finally {
     host.remove()
@@ -448,9 +489,3 @@ export function printLibraryPdf(reviews: Review[]): void {
   requestAnimationFrame(() => window.print())
 }
 
-export function splitPreviewNote(rec: Review, style: StyleId, shape: ExportShape = 'phone'): string {
-  const n = pageCount(rec, style, shape)
-  return n === 1
-    ? 'Fits one page'
-    : `${n} pages · splits at a paragraph boundary — shared whole, as ${n} images`
-}

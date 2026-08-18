@@ -145,11 +145,6 @@ export const SHAPE_W: Record<ExportShape, number> = {
   wide: SHAPE_CARD_W.wide + MAT * 2,
   phone: SHAPE_CARD_W.phone + MAT * 2,
 }
-/* Where a long review splits. The wide leaf is 1:√2 paper; the phone leaf is a
-   real handset viewport, so a phone-layout page is a screenful rather than a
-   third of one — scaling the paper ratio down instead would have quartered the
-   area and turned an ordinary review into four images. */
-export const SHAPE_LEAF_H: Record<ExportShape, number> = { wide: 1018, phone: 844 }
 
 export interface Settings {
   id: number
