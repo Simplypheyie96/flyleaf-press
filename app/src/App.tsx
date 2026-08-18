@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSettings } from './db'
-import { autoSeedInDev } from './seed'
 import { Nav } from './components/Nav'
 import { Onboarding } from './pages/Onboarding'
 import { Home } from './pages/Home'
@@ -37,11 +36,20 @@ function MonthRedirect() {
   return <Navigate to={key ? `/collage/${key}` : '/collage'} replace />
 }
 
+/* The demo shelf on the dev server, and nowhere else. Dynamic import inside
+   the DEV branch: a static one would keep the fixture in the production graph
+   even though the call never runs. */
+async function seedTheDevServer() {
+  if (!import.meta.env.DEV) return
+  const { seedIfEmpty } = await import('./seed')
+  await seedIfEmpty()
+}
+
 export default function App() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    Promise.all([getSettings(), autoSeedInDev()]).then(() => setReady(true))
+    Promise.all([getSettings(), seedTheDevServer()]).then(() => setReady(true))
   }, [])
 
   const settings = useLiveQuery(() => db.settings.get(1), [])

@@ -2,7 +2,27 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+import { rm } from 'node:fs/promises'
+import { resolve } from 'node:path'
+
 import pkg from './package.json'
+
+/* The demo covers live in public/ so the dev server can serve them at the
+   /covers/ paths the fixture stores. Nothing in a build ever asks for them —
+   the fixture itself is gone from the bundle — so shipping 1.9MB of jpgs to
+   the edge would be dead weight on every deploy. Dropped after the bundle is
+   written, which is also after the service worker has been generated, so the
+   precache manifest is unaffected. */
+function dropDemoCovers() {
+  return {
+    name: 'drop-demo-covers',
+    apply: 'build' as const,
+    enforce: 'post' as const,
+    async closeBundle() {
+      await rm(resolve(__dirname, 'dist/covers'), { recursive: true, force: true })
+    },
+  }
+}
 
 export default defineConfig({
   /* one source of truth for the version — package.json — so the About card
@@ -46,10 +66,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
         /* the iOS launch images are a megabyte the app never reads — Safari
            fetches them itself at install time, so they stay out of precache.
-           The demo covers are 2.6MB and belong to a library that only loads if
-           someone presses the button in Settings, so precaching them made every
-           new user pay for reading they will never see. They are still served
-           on demand; the demo is just not available offline-first. */
+           The demo covers are not in the deploy at all (see dropDemoCovers
+           below); this keeps them out of the manifest on the dev-adjacent
+           builds too, so the two can never disagree. */
         globIgnores: ['**/splash/**', '**/covers/**'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         runtimeCaching: [
@@ -70,5 +89,6 @@ export default defineConfig({
         ],
       },
     }),
+    dropDemoCovers(),
   ],
 })

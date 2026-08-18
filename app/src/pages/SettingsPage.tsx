@@ -8,7 +8,6 @@ import { Mark } from '../components/Mark'
 import { Confirm } from '../components/Confirm'
 import { ChoiceSheet } from '../components/ChoiceSheet'
 import { printLibraryPdf } from '../share/export'
-import { seedIfEmpty } from '../seed'
 import { bury, exportLibrary, mergeLibrary } from '../sync/backup'
 import { SyncPanel } from '../components/SyncPanel'
 
@@ -67,9 +66,13 @@ export function SettingsPage({ settings }: { settings: Settings }) {
 
   /* destructive actions confirm in-app — window.confirm() is unreliable in
      installed PWAs, where it can silently return false */
+  /* Dev-only, and dynamically imported so the fixture is not in the production
+     graph at all. A shipped app has real users; a button that replaces their
+     shelf with a stranger's fourteen books has no business next to it. */
   const resetDemo = async () => {
     setConfirming(null)
     await db.reviews.clear()
+    const { seedIfEmpty } = await import('../seed')
     await seedIfEmpty()
     setMsg('Demo library loaded.')
   }
@@ -184,13 +187,18 @@ export function SettingsPage({ settings }: { settings: Settings }) {
                 e.target.value = ''
               }} />
           </div>
-          <div className="set-row">
-            <div className="set-row-txt">
-              <div className="ui-lbl">Load the demo library</div>
-              <p>Three months of invented reading, for trying the card styles against text of a real length.</p>
+          {import.meta.env.DEV && (
+            <div className="set-row">
+              <div className="set-row-txt">
+                <div className="ui-lbl">Load the demo library</div>
+                <p>
+                  Three months of invented reading, for trying the card styles against text of a
+                  real length. Dev server only — this row does not exist in a build.
+                </p>
+              </div>
+              <button className="btn btn--ghost btn--sm" onClick={() => setConfirming('demo')}>Load</button>
             </div>
-            <button className="btn btn--ghost btn--sm" onClick={() => setConfirming('demo')}>Load</button>
-          </div>
+          )}
           <div className="set-row">
             <div className="set-row-txt">
               <div className="ui-lbl">Delete everything</div>
@@ -263,7 +271,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
         />
       )}
 
-      {confirming === 'demo' && (
+      {import.meta.env.DEV && confirming === 'demo' && (
         <Confirm
           title="Load the demo library?"
           body="Everything on the shelf is replaced by the three seeded months. Your own reviews are deleted."

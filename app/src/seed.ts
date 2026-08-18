@@ -3,13 +3,16 @@
    shorter entries around it. Every field is exactly what the real Add flow
    would have written, which is what makes it worth measuring layouts against.
 
-   It is NOT installed for a real user. A reading app that opens holding
-   somebody else's fourteen books is not "lived-in", it is wrong: the shelf,
-   the month collages and the running Nº all describe reading that never
-   happened, and the first thing a new user would have to do is work out which
-   of these are theirs. Production opens empty, on the empty states.
-   It loads in two places only — the dev server, and the explicit
-   "Restore demo library" button in Settings. */
+   THIS IS A DEV FIXTURE AND NOTHING ELSE. It loads on the dev server and
+   nowhere else — there is no button for it in a build, because a shipped app
+   has real users and none of them want a stranger's fourteen books: the shelf,
+   the month collages and the running Nº would all describe reading that never
+   happened, and a "load the demo" button sitting next to their own library is
+   an invitation to wreck it. Both call sites import this file dynamically from
+   inside an `import.meta.env.DEV` branch, so the prose below and the 1.9MB of
+   cover art it points at are dropped from the production bundle entirely
+   (verified by grepping dist — see also the drop-demo-covers plugin in
+   vite.config.ts, which keeps the jpgs themselves out of the deploy). */
 
 import { db } from './db'
 import type { Review } from './types'
@@ -131,8 +134,7 @@ const SEED: Omit<Review, 'id'>[] = [
   },
 ]
 
-/** Install the demo books. Only ever called deliberately — from Settings, or
- *  from the dev-server boot below. */
+/** Install the demo books. Dev only — see the note at the top of this file. */
 export async function seedIfEmpty(): Promise<void> {
   // Transaction serializes concurrent callers (StrictMode double-mounts the
   // effect in dev) so the empty-check and the write are atomic.
@@ -141,13 +143,4 @@ export async function seedIfEmpty(): Promise<void> {
     if (count > 0) return
     await db.reviews.bulkAdd(SEED as Review[])
   })
-}
-
-/** What App calls on boot: in a build it does nothing, so production opens on
- *  the empty states. The SEED array itself still ships — Settings can install
- *  it on request, so the bundler cannot drop it — but its 2.6MB of cover art
- *  is kept out of the service worker's precache and fetched only if someone
- *  actually presses the button (see globIgnores in vite.config.ts). */
-export async function autoSeedInDev(): Promise<void> {
-  if (import.meta.env.DEV) await seedIfEmpty()
 }
