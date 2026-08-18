@@ -32,12 +32,19 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'icons/icon.svg'],
+      /* src/pwa.ts registers the worker instead of the plugin's injected
+         snippet — holding the registration is the only way to offer a
+         "Check for updates" button, since without it there is nothing to
+         call .update() on. */
+      injectRegister: null,
+      /* No includeAssets: globPatterns below already sweeps everything
+         copied out of public/, so listing the icons here as well put each
+         one into the precache manifest twice. */
       manifest: {
         id: '/',
         name: 'Flyleaf Press',
         short_name: 'Flyleaf',
-        description: 'Write long book reviews and share them whole, as printed cards.',
+        description: 'Write long book reviews and share them whole, as printed cards — and every month as a collage.',
         lang: 'en',
         dir: 'ltr',
         categories: ['books', 'lifestyle', 'productivity'],
@@ -69,7 +76,10 @@ export default defineConfig({
            The demo covers are not in the deploy at all (see dropDemoCovers
            below); this keeps them out of the manifest on the dev-adjacent
            builds too, so the two can never disagree. */
-        globIgnores: ['**/splash/**', '**/covers/**'],
+        /* og.png is the link-preview card — it is fetched by other people's
+           servers, never by the app, so precaching it would be 47KB of
+           offline storage for an image no client will ever ask for. */
+        globIgnores: ['**/splash/**', '**/covers/**', '**/og.png'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         runtimeCaching: [
           {

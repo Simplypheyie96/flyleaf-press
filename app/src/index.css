@@ -169,8 +169,15 @@ img{ max-width:100%; }
   background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
   padding:16px 18px; margin-bottom:24px;
 }
+/* the text shrinks so the buttons keep the same line when there is room —
+   without a basis it takes max-content and pushes them onto their own row
+   even on a desktop width, which the single-button month notice does not do */
+.notice-txt{ flex:1 1 240px; }
 .notice-txt .ui-lbl{ margin-bottom:5px; }
 .notice-txt p{ font-size:12.5px; line-height:1.5; color:var(--ink); }
+/* a notice may carry two buttons — they stay a pair when the row wraps at
+   narrow widths rather than splitting to opposite edges */
+.notice-acts{ display:flex; align-items:center; gap:8px; flex:none; margin-left:auto; }
 
 /* ── the floating pill nav, per the Flyleaf shell (mechanics only): a
    bottom-centred capsule that hugs its tabs. Tabs are icon-only at rest;
@@ -638,6 +645,12 @@ img{ max-width:100%; }
 .set-row > .btn{ white-space:nowrap; flex:none; }
 .set-row-txt p{ font-size:11px; line-height:1.55; color:var(--ink-soft); margin-top:4px; max-width:380px; }
 .set-row-txt .ui-lbl{ color:var(--ink); }
+/* stands in the button's place when a row has a state to report rather than
+   an action to offer — installed already, checked and current */
+.set-row-note{
+  font-family:var(--mono); font-size:10px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ink-soft); flex:none; white-space:nowrap;
+}
 
 /* a field that folds. The header is the label row itself, so the closed state
    costs one line and still shows what is currently picked. */

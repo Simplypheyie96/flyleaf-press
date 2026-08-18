@@ -22,9 +22,9 @@ export function Onboarding({ settings, onDone }: { settings: Settings; onDone: (
         <div className="onb-mark" dangerouslySetInnerHTML={{ __html: mark(44) }} />
         <h1>Flyleaf Press</h1>
         <p className="onb-sub">
-          Write book reviews of any length and share them whole, as printed pages.
-          Long reviews split to a second page at a paragraph — never truncated,
-          never reformatted.
+          Write book reviews of any length and share them whole, as printed cards —
+          a long one runs onto another page at a paragraph, never cut. Every month
+          becomes a collage of what you finished.
         </p>
 
         <div className="field">

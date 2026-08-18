@@ -10,6 +10,7 @@ import { ChoiceSheet } from '../components/ChoiceSheet'
 import { printLibraryPdf } from '../share/export'
 import { bury, exportLibrary, mergeLibrary } from '../sync/backup'
 import { SyncPanel } from '../components/SyncPanel'
+import { useInstall, promptInstall, checkForUpdate } from '../pwa'
 
 const THEMES: { id: ThemeChoice; label: string }[] = [
   { id: 'system', label: 'System' },
@@ -26,6 +27,9 @@ export function SettingsPage({ settings }: { settings: Settings }) {
      things with it, so neither assumes JSON on the user's behalf */
   const [choosing, setChoosing] = useState<'export' | 'import' | null>(null)
   const [facesOpen, setFacesOpen] = useState(false)
+  const install = useInstall()
+  const [checking, setChecking] = useState(false)
+  const [updateMsg, setUpdateMsg] = useState('')
   const importRef = useRef<HTMLInputElement>(null)
 
   const put = (patch: Partial<Settings>) => db.settings.put({ ...settings, ...patch })
@@ -75,6 +79,23 @@ export function SettingsPage({ settings }: { settings: Settings }) {
     const { seedIfEmpty } = await import('../seed')
     await seedIfEmpty()
     setMsg('Demo library loaded.')
+  }
+
+  /* The worker updates on its own when the app is reopened, so this is not
+     how updates arrive — it is how you find out whether one is waiting
+     without closing the app and coming back. If one is, it claims the page
+     and reloads within moments, which is why the "updating" branch says so
+     rather than pretending the work is finished. */
+  const runUpdateCheck = async () => {
+    setChecking(true)
+    setUpdateMsg('')
+    const result = await checkForUpdate()
+    setChecking(false)
+    setUpdateMsg(
+      result === 'updating' ? 'A newer version is downloading — the app will reload itself in a moment.'
+      : result === 'current' ? `You’re on the latest version (${__APP_VERSION__}).`
+      : 'Updates need the installed app or a normal page load — this copy is running without a service worker.',
+    )
   }
 
   const clearAll = async () => {
@@ -151,6 +172,44 @@ export function SettingsPage({ settings }: { settings: Settings }) {
         </div>
 
         <SyncPanel />
+
+        {/* The app itself — putting it on the home screen, and asking whether
+            there is a newer one. Both are about this device rather than about
+            the library, so they sit apart from the housekeeping below. */}
+        <div className="panel">
+          <div className="set-row">
+            <div className="set-row-txt">
+              <div className="ui-lbl">Install the app</div>
+              <p>
+                {install.installed
+                  ? 'Running from your home screen. Reviews, covers and collages are all on this device, so it works with no connection.'
+                  : install.canPrompt
+                  ? 'Adds Flyleaf Press to your home screen. It opens full screen, works offline, and keeps the same library it has now.'
+                  : install.manualOnly
+                  ? 'On iPhone and iPad this is Safari’s job: tap Share, then Add to Home Screen. It then opens full screen and works offline.'
+                  : 'Your browser hasn’t offered an install for this app yet. In Chrome and Edge it appears in the address bar or the ⋮ menu once the app has been opened a couple of times.'}
+              </p>
+            </div>
+            {install.installed ? (
+              <span className="set-row-note">Installed</span>
+            ) : install.canPrompt ? (
+              <button className="btn btn--ghost btn--sm" onClick={() => promptInstall()}>Install</button>
+            ) : null}
+          </div>
+          <div className="set-row">
+            <div className="set-row-txt">
+              <div className="ui-lbl">Check for updates</div>
+              <p>
+                New versions install themselves the next time the app is opened. This goes and
+                looks now — useful when the app has been left open for days.
+              </p>
+              {updateMsg && <p role="status">{updateMsg}</p>}
+            </div>
+            <button className="btn btn--ghost btn--sm" disabled={checking} onClick={runUpdateCheck}>
+              {checking ? 'Checking…' : 'Check'}
+            </button>
+          </div>
+        </div>
 
         <div className="panel">
           <div className="set-row">

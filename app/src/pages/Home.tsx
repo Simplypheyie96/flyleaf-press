@@ -4,6 +4,7 @@ import { db } from '../db'
 import type { Settings } from '../types'
 import { STYLE_GROUNDS } from '../types'
 import { Face } from '../components/Face'
+import { InstallNotice } from '../components/InstallNotice'
 import { fmtRating, monthKey, monthName, currentMonthKey } from '../format'
 
 /* Home is the reader's, not the library's: a greeting with their face on it,
@@ -59,6 +60,8 @@ export function Home({ settings }: { settings: Settings }) {
             </div>
           </div>
         )}
+
+        <InstallNotice />
 
         {thisMonth.length > 0 && (
           <div className="notice">

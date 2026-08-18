@@ -5,6 +5,7 @@ import './cards/cards.css'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { startAutoSync } from './sync/sync'
+import { initServiceWorker } from './pwa'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -19,6 +20,11 @@ createRoot(document.getElementById('root')!).render(
    that a write happened with nowhere to send it, which is what lets a later
    connection know the two libraries have genuinely diverged. */
 startAutoSync()
+
+/* Importing ./pwa is itself load-bearing: the beforeinstallprompt listener
+   goes on at module scope, and that event fires once, early. Register the
+   worker from here too, so Settings has a registration to check. */
+initServiceWorker()
 
 /* Drop the launch screen once there is something behind it. It waits on the
    web fonts so the first thing seen isn't the page in a fallback face, but

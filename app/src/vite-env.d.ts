@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 
 /** package.json's version, stamped in at build time — the About card prints it
     so a bug report can say which build it came from. */
