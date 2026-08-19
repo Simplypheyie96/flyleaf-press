@@ -265,9 +265,10 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             to. Every month becomes a collage of what you finished.
           </p>
           <p>
-            Your library lives on this device, in this browser. No account, no server of ours, and
-            no review, cover or date ever leaves it — the host counts page views and nothing else.
-            Export library above writes it all to one file; Import library reads it back.
+            Your library lives on this device, in this browser. No account and no server of ours —
+            the host counts page views and nothing else. Nothing else leaves unless you send it:
+            Export library writes the whole shelf to one file, and Google Drive backup, if you turn
+            it on, keeps a copy in a hidden folder of your own Drive.
           </p>
           {/* the check sits beside the number it checks, at the very bottom
               of the page. "Local-first PWA" gave up the slot: the header and
