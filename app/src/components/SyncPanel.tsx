@@ -34,6 +34,11 @@ import {
    that happened TO somebody. Every sync after that is silent, because a merge
    is a union and cannot take anything away. */
 
+/** What `silentToken` throws when Google will not renew access unasked. The
+    panel shows that state as a row with a button in it, so the same words
+    arriving as an error are a duplicate rather than news. */
+const STALE = 'Sign in to Google again to keep backing up.'
+
 function ago(at: number): string {
   const s = Math.max(0, Math.round((Date.now() - at) / 1000))
   if (s < 90) return 'just now'
@@ -51,6 +56,13 @@ export function SyncPanel() {
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
+  /* Held in state, not read at render. `refresh` is what the sync event
+     calls, and setting three states to the values they already hold makes
+     React bail out of the render entirely — so a background sync that shut
+     the quiet path announced it to a panel that never redrew, and somebody
+     sitting on this page watched a backup stop with the screen still saying
+     it was running. */
+  const [stale, setStale] = useState(needsSignIn())
   const [asking, setAsking] = useState<{ device: string; at: number } | null>(null)
   const [dropping, setDropping] = useState(false)
 
@@ -58,6 +70,7 @@ export function SyncPanel() {
     setOn(optedIn())
     setWho(account())
     setAt(lastSync())
+    setStale(needsSignIn())
   }, [])
 
   useEffect(() => {
@@ -137,6 +150,28 @@ export function SyncPanel() {
     }
   }
 
+  /* THE WAY BACK. Without this the panel is a dead end: `silentToken` shuts
+     the quiet path for six hours after Google refuses to renew access without
+     being asked, and Sync now goes through that same path — so it throws
+     before a window can open, and the only escape was to disconnect and
+     connect again. This is the same press as Connect, minus the merge
+     question, which was answered when this device first joined. */
+  const resume = async () => {
+    setBusy('signin')
+    setErr('')
+    setMsg('')
+    try {
+      await signIn()
+      const r = await syncNow()
+      refresh()
+      say(r.unchanged ? 'Signed in. Everything was already up to date.' : `Signed in and synced — ${r.gained} came down, ${r.updated} updated.`)
+    } catch (e) {
+      fail(e)
+    } finally {
+      setBusy('')
+    }
+  }
+
   const disconnect = async () => {
     setBusy('off')
     try {
@@ -167,8 +202,6 @@ export function SyncPanel() {
     }
   }
 
-  const stale = needsSignIn()
-
   return (
     <div className="panel">
       {/* stacked: the off-state copy is a paragraph, and a Connect button
@@ -179,10 +212,16 @@ export function SyncPanel() {
           <p>
             {on ? (
               <>
-                Backing up to {who || 'your Google account'}
+                {/* "Backing up to…" stops being true the moment it is paused,
+                    and printing it beside "sign in again" made the row argue
+                    with itself. Both facts still appear — the account and the
+                    last sync are what somebody is checking for — but in the
+                    order that says what is happening now. */}
+                {stale ? 'Signed in as ' : 'Backing up to '}
+                {who || 'your Google account'}
                 {' · '}
                 {at ? `last synced ${ago(at)}` : 'not synced yet'}.
-                {stale && ' Google needs you to sign in again before it can carry on.'}
+                {stale && ' Syncing is paused until you sign in again.'}
               </>
             ) : (
               <>
@@ -206,15 +245,33 @@ export function SyncPanel() {
 
       {on && (
         <>
-          <div className="set-row">
-            <div className="set-row-txt">
-              <div className="ui-lbl">Sync now</div>
-              <p>Syncing happens by itself. This is only for when you don't want to wait.</p>
+          {/* Sync now is precisely the button that CANNOT work while the
+              quiet path is shut — it takes the same silent route and throws
+              before anything opens. So while that is the case the row is the
+              one press that does work, and it is primary rather than ghost,
+              because it is the only thing on this card standing between the
+              reader and a backup that has quietly stopped. */}
+          {stale ? (
+            <div className="set-row set-row--stack">
+              <div className="set-row-txt">
+                <div className="ui-lbl">Sign in again</div>
+                <p>Google won’t renew this device’s access without being asked. Nothing has been lost — your library is here, and the copy in your Drive is where you left it.</p>
+              </div>
+              <button className="btn btn--sm" onClick={resume} disabled={!!busy}>
+                {busy === 'signin' ? 'Signing in…' : 'Sign in to Google'}
+              </button>
             </div>
-            <button className="btn btn--ghost btn--sm" onClick={now} disabled={!!busy}>
-              {busy === 'sync' ? 'Syncing…' : 'Sync now'}
-            </button>
-          </div>
+          ) : (
+            <div className="set-row">
+              <div className="set-row-txt">
+                <div className="ui-lbl">Sync now</div>
+                <p>Syncing happens by itself. This is only for when you don't want to wait.</p>
+              </div>
+              <button className="btn btn--ghost btn--sm" onClick={now} disabled={!!busy}>
+                {busy === 'sync' ? 'Syncing…' : 'Sync now'}
+              </button>
+            </div>
+          )}
           <div className="set-row set-row--stack">
             <div className="set-row-txt">
               <div className="ui-lbl">Remove the backup</div>
@@ -229,7 +286,11 @@ export function SyncPanel() {
         </>
       )}
 
-      {(msg || err) && (
+      {/* The stale sentence is now the row above's whole subject, and a
+          failed background sync hands back that same sentence — printed here
+          as well it appeared twice in one card, once beside a button and once
+          under it. */}
+      {(msg || err) && !(stale && err === STALE) && (
         <p className="field-hint" role="status" style={{ marginTop: 14 }}>
           {err || msg}
         </p>
