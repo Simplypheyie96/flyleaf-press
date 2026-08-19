@@ -407,31 +407,124 @@
    bottom border on this style, because two full-width rules 20px apart read
    as a printing fault rather than as two sections. */
 .mo-head--c5{ align-items:center; padding-bottom:11px; border-bottom:2.5px solid rgba(27,25,23,.55); }
-.c5 .mo-stats{ border-bottom:0; padding-bottom:0; margin-bottom:22px; }
 
-/* The month in numbers — a ruled strip under the head, shared by all five
-   styles and inheriting each ground's ink. Cells wrap rather than shrink, so
-   a month with every stat present still reads at 360px. */
-.mo-stats{
-  display:flex; flex-wrap:wrap; gap:18px 30px;
-  padding:14px 0 16px; margin-bottom:20px;
-  border-top:1px solid currentColor; border-bottom:1px solid currentColor;
-  border-color:rgba(27,25,23,.28);
-}
-.mo-stat{ min-width:0; }
-.mo-stat .lbl{
+/* ── The month in numbers ───────────────────────────────────────────────────
+   This used to be ONE ruled strip of label-over-value cells, rendered
+   identically on all five styles, which meant the densest band on the card
+   said the same thing in the same shape whichever style you picked — the
+   masthead problem, one section lower. There are five arrangements now, and
+   each is the thing that style's own object would actually carry.
+
+   Shared: the figures inherit each ground's ink through --tx/--meta, and no
+   arrangement hardcodes a count. Whatever survives the "never print a zero"
+   test is what gets laid out. */
+.mo-stats{ margin-bottom:20px; }
+.mo-stats .lbl{
   font-family:var(--mono); font-size:9px; font-weight:500;
   letter-spacing:.16em; text-transform:uppercase; color:var(--meta, var(--ink-soft));
 }
-.mo-stat-v{
-  font-family:var(--serif); font-weight:600; font-size:19px; line-height:1.2;
-  letter-spacing:-.01em; margin-top:5px; font-variant-numeric:tabular-nums;
-  max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  color:var(--tx, var(--ink));
+.mo-stats b{
+  font-family:var(--serif); font-weight:600; line-height:1.2; letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums; color:var(--tx, var(--ink));
 }
-.c1 .mo-stats{ border-color:rgba(244,242,237,.3); }
-.card-compact .mo-stats{ gap:14px 22px; }
-.card-compact .mo-stat-v{ font-size:16px; max-width:150px; }
+/* every arrangement holds one long value — "Best" is a book title — so they
+   all truncate on the same terms rather than each inventing its own */
+.mo-stats b{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+
+/* C1 · frame-edge strip. One running line of codes: figure, then the name of
+   the figure, separated by a sprocket dot. Baseline-aligned rather than
+   stacked, which is what keeps it to a single line on a card that wants its
+   height for frames. */
+.mo-stats--frame{
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 0;
+  padding:11px 0 12px;
+  border-top:1px solid rgba(244,242,237,.3);
+  border-bottom:1px solid rgba(244,242,237,.3);
+}
+.mo-fr{ display:inline-flex; align-items:baseline; gap:6px; min-width:0; }
+.mo-fr b{ font-size:15px; }
+.mo-fr + .mo-fr{ margin-left:14px; padding-left:14px; position:relative; }
+.mo-fr + .mo-fr::before{
+  content:""; position:absolute; left:-1.5px; top:50%; transform:translateY(-50%);
+  width:3px; height:3px; border-radius:50%; background:currentColor; opacity:.5;
+}
+
+/* C2 · shelf tail plate. Name, leader dots, figure hard right — two columns,
+   because a shelf is a wide object and six rows in one column would stand
+   taller than the rail beneath them. Drops to one column when the card is
+   compact and there is no width to give a second. */
+.mo-stats--plate{
+  display:grid; grid-template-columns:1fr 1fr; gap:2px 34px;
+  padding:12px 0 13px;
+  border-top:1px solid rgba(27,25,23,.28);
+  border-bottom:1px solid rgba(27,25,23,.28);
+}
+.mo-pl{ display:flex; align-items:baseline; gap:8px; min-width:0; padding:3px 0; }
+.mo-pl .lbl{ flex:none; }
+/* the leader. A border-bottom on a flexing spacer is the only way to get a
+   rule that ends exactly where the figure starts, at any figure width. */
+.mo-pl i{ flex:1 1 auto; min-width:10px; border-bottom:1px dotted currentColor; opacity:.4; transform:translateY(-3px); }
+.mo-pl b{ flex:0 1 auto; font-size:14.5px; }
+
+/* C3 · stub totals. A narrow boxed block pushed right, ruled like a receipt,
+   with the last figure below a doubled rule the way a total is. */
+.mo-stats--stub{ display:flex; justify-content:flex-end; }
+.mo-stub-box{
+  width:min(340px, 100%); padding:11px 14px 10px;
+  border:1px solid rgba(27,25,23,.3); border-radius:2px;
+}
+.mo-sr{ display:flex; align-items:baseline; gap:8px; padding:3.5px 0; min-width:0; }
+.mo-sr .lbl{ flex:none; }
+.mo-sr i{ flex:1 1 auto; min-width:8px; border-bottom:1px dotted currentColor; opacity:.4; transform:translateY(-3px); }
+.mo-sr b{ flex:0 1 auto; font-size:14px; }
+.mo-sr.is-total{
+  margin-top:6px; padding-top:8px;
+  border-top:3px double rgba(27,25,23,.45);
+}
+.mo-sr.is-total b{ font-size:16px; }
+
+/* C4 · tacked chits. A board has things pinned to it, not a band printed
+   across it — so each figure is its own slip at an alternating tilt. The
+   flex wrap is what makes it hold twenty books' worth of stats as easily as
+   three: chits fall to the next line, they never shrink. */
+.mo-stats--chits{ display:flex; flex-wrap:wrap; gap:10px 11px; padding:2px 0 6px; }
+.mo-chit{
+  transform:rotate(var(--cr,0deg));
+  padding:7px 11px 8px; min-width:0;
+  background:rgba(255,255,255,.62);
+  border:1px solid rgba(27,25,23,.18);
+  box-shadow:1px 1.5px 0 rgba(27,25,23,.1);
+}
+.mo-chit b{ display:block; font-size:16px; }
+.mo-chit .lbl{ display:block; margin-top:2px; font-size:8.5px; }
+
+/* C5 · register head. A true ruled table: column names across the top, the
+   figures aligned under them. The ledger owns exactly one heavy rule and it
+   belongs to moHead, so this carries none of its own — two full-width rules
+   20px apart read as a printing fault rather than as two sections.
+
+   grid-auto-columns:1fr rather than a template, because the number of columns
+   is the number of figures that survived, which is not known here. */
+.mo-stats--register{ display:grid; gap:3px; padding:2px 0 0; margin-bottom:22px; }
+.mo-reg-row{
+  display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr);
+  gap:14px; align-items:baseline;
+}
+.mo-reg-row.is-v{ padding-top:2px; border-top:1px solid rgba(27,25,23,.22); }
+.mo-reg-row.is-v b{ display:block; font-size:15px; padding-top:5px; }
+
+/* ── compact (350px) ── */
+.card-compact .mo-fr b{ font-size:13.5px; }
+.card-compact .mo-fr + .mo-fr{ margin-left:10px; padding-left:10px; }
+.card-compact .mo-stats--plate{ grid-template-columns:1fr; gap:0; }
+.card-compact .mo-pl b, .card-compact .mo-sr b{ font-size:13px; }
+.card-compact .mo-stub-box{ width:100%; }
+.card-compact .mo-chit b{ font-size:14px; }
+/* a register of six columns at 350px is 45px a column, which is narrower than
+   the word "Audiobook" — so it stops being a table and becomes two rows of
+   three, still ruled, still aligned */
+.card-compact .mo-reg-row{ grid-auto-flow:row; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px 10px; }
+.card-compact .mo-reg-row.is-v b{ font-size:13.5px; }
 
 .stars-s{ display:inline-flex; gap:2px; vertical-align:-2px; }
 .stars-s svg{ display:block; }
