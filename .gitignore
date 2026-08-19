@@ -9,3 +9,7 @@ dev-dist/
 .env.*.local
 .playwright-mcp/
 .impeccable/
+
+# stray Playwright captures
+.playwright-mcp/
+d?-*.png
