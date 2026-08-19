@@ -21,9 +21,16 @@ function patchC(size: number): string {
   return `<span class="patch" aria-hidden="true">${mark(size)}</span>`
 }
 
+/* Deliberately NOT loading="lazy". The covers ARE the collage — a month is at
+   most ~20 small pictures and there is nothing below them worth deferring for.
+   Worse, the card is first laid out inside `CollapsedCard`, which clamps it, so
+   every cover past the clamp starts life outside the viewport and the browser
+   simply never comes back for them: measured on a six-book month, ZERO requests
+   for /covers/ after expanding the card AND scrolling it, with every <img> still
+   at naturalWidth 0. The board rendered as a column of empty boxes. */
 function cov(b: Review, cls?: string): string {
   if (!b.cover) return `<div class="cov-miss ${cls || ''}">No cover</div>`
-  return `<img class="cov ${cls || ''}" alt="Cover of ${escapeHtml(b.title)}" loading="lazy" src="${b.cover}">`
+  return `<img class="cov ${cls || ''}" alt="Cover of ${escapeHtml(b.title)}" src="${b.cover}">`
 }
 
 /* Each style heads itself. One shared masthead across all five made the top
