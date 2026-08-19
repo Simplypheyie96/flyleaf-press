@@ -617,11 +617,15 @@
 .mo-pl i{ flex:1 1 auto; min-width:10px; border-bottom:1px dotted currentColor; opacity:.4; transform:translateY(-3px); }
 .mo-pl b{ flex:0 1 auto; font-size:14.5px; }
 
-/* C3 · stub totals. A narrow boxed block pushed right, ruled like a receipt,
-   with the last figure below a doubled rule the way a total is. */
-.mo-stats--stub{ display:flex; justify-content:flex-end; }
+/* C3 · stub totals. A receipt's totals block runs the full width of the
+   receipt — it was 340px pushed to the right, which left the left half of the
+   card as bare paper for no reason and read as a layout that had come apart
+   rather than as a stub. Full width also gives the dotted leader something to
+   do: a long run between the label and the figure is exactly what a printed
+   total looks like. */
+.mo-stats--stub{ display:block; }
 .mo-stub-box{
-  width:min(340px, 100%); padding:11px 14px 10px;
+  width:100%; padding:11px 14px 10px;
   border:1px solid rgba(27,25,23,.3); border-radius:2px;
 }
 .mo-sr{ display:flex; align-items:baseline; gap:8px; padding:3.5px 0; min-width:0; }
@@ -698,7 +702,6 @@
 .card-compact .mo-fr + .mo-fr{ margin-left:10px; padding-left:10px; }
 .card-compact .mo-stats--plate{ grid-template-columns:1fr; gap:0; }
 .card-compact .mo-pl b, .card-compact .mo-sr b{ font-size:13px; }
-.card-compact .mo-stub-box{ width:100%; }
 .card-compact .mo-chit b{ font-size:14px; }
 /* a register of six columns at 350px is 45px a column, which is narrower than
    the word "Audiobook" — so it stops being a table and becomes two rows of

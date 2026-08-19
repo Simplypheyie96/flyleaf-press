@@ -92,7 +92,7 @@ body{
   background:var(--paper);
   color:var(--ink);
   font-family:var(--sans);
-  font-size:13px;
+  font-size:13.5px;
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
@@ -150,7 +150,7 @@ body::before{
 /* neutral chrome: the rosette prints in ink here, not a colour */
 .app-head h1 svg{ display:block; color:var(--ink); }
 .app-head > span{
-  font-size:10.5px; font-weight:500; letter-spacing:.14em;
+  font-size:11.5px; font-weight:500; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-soft);
   /* Held to its own width where it fits, dropped to the next line where it
      does not. It used to be flex:none AND nowrap, which together mean "run off
@@ -167,7 +167,7 @@ body::before{
 .head-id h1{ overflow-wrap:anywhere; }
 
 .ui-lbl{
-  font-family:var(--sans); font-size:10.5px; font-weight:500; line-height:1.2;
+  font-family:var(--sans); font-size:11.5px; font-weight:500; line-height:1.2;
   letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft);
 }
 .ui-h{
@@ -181,7 +181,7 @@ body::before{
   border:0; cursor:pointer;
   height:40px; padding:0 20px; border-radius:999px;
   background:var(--ink); color:var(--accent-fg);
-  font-family:var(--sans); font-size:11px; font-weight:500;
+  font-family:var(--sans); font-size:11.5px; font-weight:500;
   letter-spacing:.1em; text-transform:uppercase;
   transition:transform 160ms var(--ease), opacity 160ms var(--ease);
   /* a <Link className="btn"> is still an anchor and was picking up the UA
@@ -194,7 +194,7 @@ body::before{
   background:var(--card-w); color:var(--ink);
   box-shadow:inset 0 0 0 1px var(--rule);
 }
-.btn--sm{ height:32px; padding:0 14px; font-size:10.5px; }
+.btn--sm{ height:32px; padding:0 14px; font-size:11px; }
 /* a ghost button that is also a state (e.g. "No cover") fills when chosen */
 .btn--ghost[aria-pressed="true"]{ background:var(--ink); color:var(--accent-fg); box-shadow:none; }
 /* Two strengths, because they do different jobs. The OUTLINE one only opens a
@@ -225,7 +225,7 @@ body::before{
    even on a desktop width, which the single-button month notice does not do */
 .notice-txt{ flex:1 1 240px; }
 .notice-txt .ui-lbl{ margin-bottom:5px; }
-.notice-txt p{ font-size:12.5px; line-height:1.5; color:var(--ink); }
+.notice-txt p{ font-size:13px; line-height:1.5; color:var(--ink); }
 /* a notice may carry two buttons — they stay a pair when the row wraps at
    narrow widths rather than splitting to opposite edges */
 .notice-acts{ display:flex; align-items:center; gap:8px; flex:none; margin-left:auto; }
@@ -261,7 +261,7 @@ body::before{
   min-width:44px; min-height:44px;
   padding:10px 12px; border-radius:999px;
   color:var(--ink-soft); text-decoration:none;
-  font-family:var(--sans); font-size:10.5px; font-weight:500;
+  font-family:var(--sans); font-size:11.5px; font-weight:500;
   letter-spacing:.1em; text-transform:uppercase; line-height:1;
   transition:color 180ms var(--ease), background 180ms var(--ease);
   -webkit-tap-highlight-color:transparent;
@@ -419,18 +419,18 @@ body::before{
   height:30px; padding:0 14px; cursor:pointer;
   background:var(--card-w); color:var(--ink-soft);
   border:1px solid var(--rule); border-radius:999px;
-  font-family:var(--sans); font-size:10px; font-weight:500;
+  font-family:var(--sans); font-size:11px; font-weight:500;
   letter-spacing:.1em; text-transform:uppercase;
   transition:color 160ms var(--ease), border-color 160ms var(--ease);
 }
 .canvas-expand:hover{ color:var(--ink); border-color:var(--ink); }
-.field-hint{ font-size:11px; line-height:1.5; color:var(--ink-soft); }
+.field-hint{ font-size:12px; line-height:1.5; color:var(--ink-soft); }
 
 /* ── shelf toolbar: search + sort + display ── */
 .shelf-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
 .shelf-tools input[type="search"]{
   border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
-  color:var(--ink); font-family:var(--sans); font-size:12.5px;
+  color:var(--ink); font-family:var(--sans); font-size:13px;
   height:40px; padding:0 12px; outline:none; width:100%;
   transition:border-color 160ms var(--ease);
 }
@@ -445,7 +445,7 @@ body::before{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   width:100%; height:40px; padding:0 14px; cursor:pointer;
   border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
-  color:var(--ink); font-family:var(--sans); font-size:12.5px; text-align:left;
+  color:var(--ink); font-family:var(--sans); font-size:13px; text-align:left;
   transition:border-color 160ms var(--ease);
 }
 .dd-btn:focus-visible, .dd-btn[aria-expanded="true"]{ border-color:var(--ink); outline:none; }
@@ -460,7 +460,7 @@ body::before{
 .dd-list li{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   padding:0 10px; border-radius:var(--r-sm); cursor:pointer; min-height:40px;
-  font-family:var(--sans); font-size:12px; color:var(--ink);
+  font-family:var(--sans); font-size:13px; color:var(--ink);
 }
 .dd-list li.is-active{ background:var(--paper); }
 .dd-list li svg{ flex:none; color:var(--ink); }
@@ -476,7 +476,7 @@ body::before{
 .shelf-sugg li{
   display:flex; align-items:center; gap:10px;
   padding:8px 9px; border-radius:var(--r-sm); cursor:pointer;
-  font-family:var(--sans); font-size:12px; min-height:44px;
+  font-family:var(--sans); font-size:13px; min-height:44px;
 }
 .shelf-sugg li.is-active, .shelf-sugg li:hover{ background:var(--paper); }
 .shelf-sugg img, .shelf-sugg-miss{
@@ -488,12 +488,12 @@ body::before{
 }
 .shelf-sugg-a{
   margin-left:auto; padding-left:10px; flex-shrink:0; color:var(--ink-soft);
-  font-size:10.5px; letter-spacing:.06em; text-transform:uppercase;
+  font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
   max-width:38%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .shelf-sugg-by{
   flex-shrink:0; width:22px; text-align:center; color:var(--ink-soft);
-  font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+  font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
 }
 
 /* format toggle — same inline mono line as the cards */
@@ -528,7 +528,7 @@ body::before{
   font-family:var(--serif); font-weight:600; font-size:22px; line-height:1;
   letter-spacing:-.01em; font-variant-numeric:tabular-nums; white-space:nowrap;
 }
-.rate-input-of{ font-family:var(--sans); font-size:11px; font-weight:400; color:var(--ink-soft); }
+.rate-input-of{ font-family:var(--sans); font-size:12px; font-weight:400; color:var(--ink-soft); }
 
 /* ── style picker (review styles + collage styles as themes) ── */
 .style-pick{ display:flex; flex-wrap:wrap; gap:8px; }
@@ -537,7 +537,7 @@ body::before{
   border:1px solid var(--rule); border-radius:999px; cursor:pointer;
   background:var(--card-w); color:var(--ink-soft);
   height:34px; padding:0 14px 0 9px;
-  font-size:10.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  font-size:11.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
   transition:color 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease);
 }
 .style-pick button[aria-pressed="true"]{
@@ -565,11 +565,11 @@ body::before{
 .lib-cover-miss{
   width:52px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:var(--r-img);
   display:flex; align-items:center; justify-content:center;
-  font-size:7px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+  font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
   text-align:center; padding:4px;
 }
 .lib-t{ font-family:var(--serif); font-weight:600; font-size:16px; line-height:1.25; letter-spacing:-.01em; }
-.lib-a{ font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
+.lib-a{ font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
 .lib-r{ text-align:right; }
 .lib-r .r-num{ font-family:var(--serif); font-weight:600; font-size:16px; font-variant-numeric:tabular-nums; }
 .lib-dot{ width:10px; height:10px; border-radius:50%; display:inline-block;
@@ -593,8 +593,8 @@ body::before{
 .res-row:hover{ border-color:var(--ink); }
 .res-row img{ width:44px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-img); background:var(--paper); }
 .res-t{ font-family:var(--serif); font-weight:600; font-size:14.5px; line-height:1.25; }
-.res-a{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:3px; }
-.res-src{ font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
+.res-a{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:3px; }
+.res-src{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
 
 /* current cover summary — one tile + a line of state + the Edit button;
    the full candidate grid lives in the modal so long lists never swallow the form */
@@ -610,7 +610,7 @@ body::before{
 .cov-cur .cov-none{
   width:64px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:var(--r-img);
   display:flex; align-items:center; justify-content:center; text-align:center;
-  font-size:8px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+  font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
   padding:6px; flex:none;
 }
 .cov-cur-txt{
@@ -627,7 +627,7 @@ body::before{
 .cov-pick .cov-none{
   width:68px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:var(--r-img);
   display:flex; align-items:center; justify-content:center; text-align:center;
-  font-size:8px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); padding:6px;
+  font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); padding:6px;
 }
 
 /* plates editor */
@@ -651,8 +651,8 @@ body::before{
 
    The other cure is maximum-scale=1 on the viewport, which fixes it by
    taking pinch-zoom away from everyone, sighted or not. This one costs a
-   little of the tuned type on phones only: the same fields keep 13px and
-   12.5px under a mouse, where nothing zooms. The two .hand textareas were
+   little of the tuned type on phones only: the same fields keep 13px under
+   a mouse, where nothing zooms. The two .hand textareas were
    already 16.5px, which is why writing a review never had the bug. */
 @media (pointer: coarse){
   .field input[type="text"], .field input[type="search"], .field input[type="date"],
@@ -668,15 +668,17 @@ body::before{
   .date-ph{ font-size:16px; }
 }
 
-/* Started and finished read as a pair, so they sit side by side — but only
-   where both can hold a full date. WebKit's date edit is three sub-fields with
-   its own gaps between them, and at 16px (which touch forces, below) that run
-   measures 102px before any padding: at 360px a two-up row leaves 105px of
-   content box, which fit by luck rather than by rule and clipped the year the
-   moment the glyph beside it was given room to breathe. Below 400px they
-   stack, and each one has the whole column. */
+/* Finished sits UNDER started, at every width. They read as a pair, which is
+   why they were two-up, but a date control is not a field that can be made
+   narrow: WebKit's date edit is three sub-fields with its own gaps between
+   them, and at 16px — which touch forces, below — that run measures 102px
+   before any padding, on top of a calendar glyph and its own gutter. The
+   400px breakpoint was measured against the VIEWPORT and the form is not the
+   viewport: inside a sectioned card, with the page gutters and the card's own
+   padding taken off, a 430px phone hands each half about 170px, and the label
+   and the digits overlap. One column costs a row of height and cannot
+   collide. */
 .date-row{ display:grid; grid-template-columns:1fr; gap:16px; }
-@media (min-width: 400px){ .date-row{ grid-template-columns:1fr 1fr; } }
 
 /* ── card display wrapper ── */
 .card-wrap{ width:100%; }
@@ -705,7 +707,7 @@ body::before{
    the only capture and then silently outranked `--screen` (0,2,0 beats 0,1,0),
    so switching shape changed the class and nothing else. */
 .share-preview-scale .share-page{ border:1px solid var(--rule); margin-bottom:20px; }
-.share-note{ font-size:11px; line-height:1.5; color:var(--ink-soft); margin-top:10px; }
+.share-note{ font-size:12px; line-height:1.5; color:var(--ink-soft); margin-top:10px; }
 /* Share and Download stand side by side — two different destinations, never
    one folding into the other, and never stacked either: a wrapping flex row put
    them on separate lines at 360px, which reads as one action above another.
@@ -742,14 +744,14 @@ body::before{
 }
 .size-pick button:hover{ border-color:var(--ink-soft); }
 .size-pick button[aria-pressed="true"]{ border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
-.size-pick-n{ font-family:var(--sans); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+.size-pick-n{ font-family:var(--sans); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; }
 /* the measurement is the reason this control exists — it is the only line under
    the name now that the "for a camera roll" prose is gone, since either shape
    sits in a camera roll and either one prints */
-.size-pick-px{ font-family:var(--sans); font-size:12px; color:var(--ink); }
+.size-pick-px{ font-family:var(--sans); font-size:12.5px; color:var(--ink); }
 /* the filename is data, not prose — set it in mono so it reads as the literal
    string that will appear in the downloads folder */
-.dl-name code{ font-family:var(--mono); font-size:10.5px; color:var(--ink); word-break:break-all; }
+.dl-name code{ font-family:var(--mono); font-size:11.5px; color:var(--ink); word-break:break-all; }
 
 .modal-sheet{
   width:100%; max-width:520px;
@@ -775,7 +777,7 @@ body::before{
   padding:22px; margin:auto 0;
 }
 .confirm-sheet p{
-  font-size:12.5px; line-height:1.65; color:var(--ink);
+  font-size:13px; line-height:1.65; color:var(--ink);
   margin:12px 0 20px;
 }
 .confirm-actions{ display:flex; gap:10px; flex-wrap:wrap; }
@@ -790,9 +792,9 @@ body::before{
 }
 .choice:hover:not(:disabled), .choice:focus-visible{ border-color:var(--ink); }
 .choice:disabled{ cursor:default; opacity:.55; }
-.choice-l{ font-family:var(--sans); font-size:11px; font-weight:500;
+.choice-l{ font-family:var(--sans); font-size:12px; font-weight:500;
   letter-spacing:.12em; text-transform:uppercase; }
-.choice-d{ font-size:12px; line-height:1.55; color:var(--ink-soft); }
+.choice-d{ font-size:12.5px; line-height:1.55; color:var(--ink-soft); }
 
 /* onboarding */
 .onb{ min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:32px var(--gutter); }
@@ -800,11 +802,14 @@ body::before{
 .onb-mark{ color:var(--ink); margin-bottom:18px; display:flex; justify-content:center; }
 .onb h1{ font-family:var(--serif); font-weight:600; font-size:34px; letter-spacing:-.015em; line-height:1.1; }
 /* The same treatment #splash gives the same two lines, so the launch screen
-   resolves into this one rather than cutting to a different-looking page. It
-   replaced a paragraph that explained pagination to someone who had not yet
-   written anything. */
+   resolves into this one rather than cutting to a different-looking page — and
+   #splash, index.html's inline style, and scripts/make-icons.mjs all have to
+   move together when this does. It is the chrome face now, not the mono: the
+   mono was the last of the developer-tool voice left in the app, and it was on
+   the first two screens anybody sees. It replaced a paragraph that explained
+   pagination to someone who had not yet written anything. */
 .onb-sub{
-  font:400 10px/1.6 var(--mono); letter-spacing:.14em; text-transform:uppercase;
+  font:500 12px/1.6 var(--sans); letter-spacing:.1em; text-transform:uppercase;
   color:var(--ink-soft); margin:14px 0 0;
 }
 .onb-sub + .onb-sub{ margin-top:3px; }
@@ -819,12 +824,12 @@ body::before{
    "Sync now" wrapped while every other button in the app stayed on one */
 .set-row > .btn{ white-space:nowrap; flex:none; }
 .set-row-txt{ min-width:0; }
-.set-row-txt p{ font-size:11px; line-height:1.55; color:var(--ink-soft); margin-top:4px; max-width:380px; }
+.set-row-txt p{ font-size:12px; line-height:1.55; color:var(--ink-soft); margin-top:4px; max-width:380px; }
 .set-row-txt .ui-lbl{ color:var(--ink); }
 /* stands in the button's place when a row has a state to report rather than
    an action to offer — installed already, checked and current */
 .set-row-note{
-  font-family:var(--sans); font-size:10px; letter-spacing:.09em; text-transform:uppercase;
+  font-family:var(--sans); font-size:11px; letter-spacing:.09em; text-transform:uppercase;
   color:var(--ink-soft); flex:none; white-space:nowrap;
 }
 
@@ -838,10 +843,10 @@ body::before{
 .disclose .ui-lbl{ color:var(--ink-soft); }
 .disclose-right{ display:flex; align-items:center; gap:10px; flex:none; }
 .disclose-val{
-  font-family:var(--sans); font-size:11px; letter-spacing:.06em;
+  font-family:var(--sans); font-size:12px; letter-spacing:.06em;
   text-transform:uppercase; color:var(--ink-soft);
 }
-.disclose-chev{ font-size:9px; line-height:1; color:var(--ink-soft); }
+.disclose-chev{ font-size:10px; line-height:1; color:var(--ink-soft); }
 /* the picker needs its own air once open — the label row is flush to it
    otherwise, and the grid reads as part of the header */
 .disclose[aria-expanded="true"]{ margin-bottom:4px; }
@@ -855,7 +860,7 @@ body::before{
 /* the one block of real prose in the chrome. Mono runs wide, so it caps at a
    readable measure — this is app furniture, not the review body, which is
    uncapped on purpose. */
-.about p{ font-size:12px; line-height:1.7; color:var(--ink-soft); max-width:430px; }
+.about p{ font-size:12.5px; line-height:1.7; color:var(--ink-soft); max-width:430px; }
 .about p + p{ margin-top:12px; }
 /* the footer now pairs a label with a button, so it centres them: stretched,
    the label's text sits at the top of a 32px box and reads 10px high of the
@@ -888,9 +893,9 @@ body::before{
 }
 .mo-row:hover{ transform:translateY(-1px); }
 .mo-row-t{ font-family:var(--serif); font-weight:600; font-size:19px; letter-spacing:-.01em; }
-.mo-row-s{ font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
+.mo-row-s{ font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
 .mo-open-tag{
-  font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+  font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
   border:1px solid var(--rule); border-radius:999px; padding:5px 10px; color:var(--ink-soft);
 }
 
@@ -900,23 +905,23 @@ body::before{
   border:1px dashed var(--rule); border-radius:var(--r-md);
 }
 .empty .ui-h{ color:var(--ink); font-size:22px; margin-bottom:10px; }
-.empty p{ font-size:12px; line-height:1.7; max-width:340px; margin:0 auto 22px; }
+.empty p{ font-size:13px; line-height:1.7; max-width:340px; margin:0 auto 22px; }
 
 /* busy overlay while rasterizing */
 .busy{
   position:fixed; inset:0; z-index:200; background:rgba(244,242,237,.8);
   display:flex; align-items:center; justify-content:center;
-  font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+  font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
 }
 
 /* ── Home — the personal masthead ── */
 .home-mast{ display:flex; align-items:center; gap:16px; margin-bottom:26px; }
-.home-hello{ font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
+.home-hello{ font-size:11.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
 .home-who{
   font-family:var(--serif); font-weight:600; font-size:30px; line-height:1.08;
   letter-spacing:-.015em; margin-top:4px;
 }
-.home-tally{ font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px; }
+.home-tally{ font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px; }
 
 /* the face on its paper disc — ring and ground belong to the chrome */
 .face{
@@ -937,12 +942,18 @@ body::before{
   background:var(--rule); border:1px solid var(--rule); border-radius:var(--r-md);
   overflow:hidden; margin-bottom:24px;
 }
-.home-stat{ background:var(--card-w); padding:14px 16px; }
+.home-stat{ background:var(--card-w); padding:14px 12px; }
 .home-stat-n{
   font-family:var(--serif); font-weight:600; font-size:24px; line-height:1;
   font-variant-numeric:tabular-nums;
 }
-.home-stat .ui-lbl{ margin-top:6px; font-size:9px; }
+/* The one label in the app that cannot take the .14em the rest carry: three
+   of these share a 360px row, which leaves 81px of content box, and "Avg
+   rating" at full tracking wrapped to two lines while "This year" did not —
+   so the strip's three captions sat at three different heights. Tighter
+   tracking buys the character it needs to stay on one line at a size that is
+   still readable. */
+.home-stat .ui-lbl{ margin-top:6px; font-size:11px; letter-spacing:.05em; }
 
 /* section head with a trailing link */
 .sec-h{ margin:26px 0 14px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
@@ -956,7 +967,7 @@ body::before{
 .seg button{
   border:0; cursor:pointer; border-radius:6px; height:32px; padding:0 16px;
   background:transparent; color:var(--ink-soft);
-  font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  font-size:11px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
   transition:background 160ms var(--ease), color 160ms var(--ease);
 }
 .seg button[aria-pressed="true"], .seg button[aria-checked="true"]{
@@ -972,11 +983,11 @@ body::before{
 }
 .shelf-cell .lib-cover-miss{ width:100%; aspect-ratio:2/3; }
 .shelf-cell-t{
-  font-family:var(--serif); font-weight:600; font-size:12px; line-height:1.3;
+  font-family:var(--serif); font-weight:600; font-size:13px; line-height:1.3;
   margin-top:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
 .shelf-cell-r{
-  font-size:10px; letter-spacing:.08em; color:var(--ink-soft); margin-top:3px;
+  font-size:11px; letter-spacing:.08em; color:var(--ink-soft); margin-top:3px;
   font-variant-numeric:tabular-nums;
 }
 

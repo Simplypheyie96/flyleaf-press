@@ -29,12 +29,14 @@ const INK = '#1B1917'
    renders identically on any host with no font engine in the picture.
 
    The faces are the real ones, read straight out of the fontsource packages so
-   they match what the app itself loads: Playfair Display at 500, which is the
-   weight #splash b uses, and IBM Plex Mono at 400. */
+   they match what the app itself loads: Playfair Display at 500 and Archivo at
+   500, which are the weights #splash b and #splash small use. The two lines
+   were IBM Plex Mono and are not any more — the launch image has to resolve
+   into the first screen, so when index.html's #splash moves, this moves. */
 const req = createRequire(import.meta.url)
 const face = (pkg, file) => fontkit.openSync(join(dirname(req.resolve(pkg + '/package.json')), 'files', file))
 const SERIF = face('@fontsource/playfair-display', 'playfair-display-latin-500-normal.woff2')
-const MONO = face('@fontsource/ibm-plex-mono', 'ibm-plex-mono-latin-400-normal.woff2')
+const SANS = face('@fontsource/archivo', 'archivo-latin-500-normal.woff2')
 
 /* One line of text as <path>s, centred on cx and sitting on baseline y.
    `track` is letter-spacing in user units, added between glyphs and — the part
@@ -77,8 +79,10 @@ function svg(w, h, frac, ground = PAPER, ink = INK, words = false) {
   const text = words
     ? [
         line(SERIF, 'Flyleaf Press', span * 0.29, 0, w / 2, base + span * 0.34, ink),
-        line(MONO, 'LONG BOOK REVIEWS, PRINTED', span * 0.115, span * 0.017, w / 2, base + span * 0.61, ink, 0.62),
-        line(MONO, 'AND EVERY MONTH AS A COLLAGE', span * 0.115, span * 0.017, w / 2, base + span * 0.775, ink, 0.62),
+        /* #splash draws the mark at 88px, so a CSS size here is that size over
+           88: 12px -> .136, and .1em of 12px -> .0136 of tracking. */
+        line(SANS, 'LONG BOOK REVIEWS, PRINTED', span * 0.136, span * 0.0136, w / 2, base + span * 0.61, ink, 0.62),
+        line(SANS, 'AND EVERY MONTH AS A COLLAGE', span * 0.136, span * 0.0136, w / 2, base + span * 0.775, ink, 0.62),
       ].join('\n  ')
     : ''
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">

@@ -91,10 +91,15 @@
          reviews and it makes the monthly collage, and a launch screen naming
          only the first describes half of it */
       #splash small + small{ margin-top:3px; opacity:.62; }
+      /* The chrome face, matching .onb-sub — the launch screen and the first
+         screen behind it are the same two lines and must be set the same way.
+         Archivo is named first for a warm start, where it is already in the
+         font cache; on a cold one this paints in the system grotesque, which
+         is the right fallback for a grotesque. */
       #splash small{
-        display:block; margin-top:12px; max-width:22em;
-        font:400 10px/1.6 "IBM Plex Mono",ui-monospace,monospace;
-        letter-spacing:.14em; text-transform:uppercase; opacity:.62;
+        display:block; margin-top:12px; max-width:24em;
+        font:500 12px/1.6 "Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+        letter-spacing:.1em; text-transform:uppercase; opacity:.62;
       }
       #splash.is-out{ opacity:0; pointer-events:none; }
       @media (prefers-color-scheme: dark){
