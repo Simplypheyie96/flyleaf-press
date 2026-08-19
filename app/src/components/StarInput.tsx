@@ -38,12 +38,31 @@ export function StarInput({ value, onChange }: { value: number; onChange: (v: nu
         aria-valuetext={value ? `${fmtRating(value)} of 5` : 'Not yet rated'}
         tabIndex={0}
         onPointerDown={(e) => {
-          dragging.current = true
-          e.currentTarget.setPointerCapture(e.pointerId)
+          /* THE RATING IS SET FIRST, and the capture is attempted after it.
+             It used to be the other way round, which made a tap on a phone do
+             nothing at all: setPointerCapture throws for a touch pointer the
+             browser has already claimed for its own gesture, and a throw here
+             aborts the rest of the handler — including the line that actually
+             reads the rating. Dragging is a nicety; landing the tap is the
+             whole control. */
           fromClientX(e.clientX)
+          dragging.current = true
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId)
+          } catch {
+            /* no capture: the drag simply ends when the finger leaves the row */
+          }
         }}
         onPointerMove={(e) => dragging.current && fromClientX(e.clientX)}
         onPointerUp={() => (dragging.current = false)}
+        /* Without this, a pointer the browser cancels mid-gesture leaves
+           `dragging` true for good, and the next mouse that merely passes over
+           the stars rewrites the rating. */
+        onPointerCancel={() => (dragging.current = false)}
+        /* The fallback for an engine that gives us a click but no usable
+           pointerdown. Harmless where pointerdown worked: it recomputes the
+           same fraction from the same x and sets the same value. */
+        onClick={(e) => fromClientX(e.clientX)}
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
             e.preventDefault()

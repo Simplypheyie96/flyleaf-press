@@ -14,10 +14,15 @@
      is how the hiding is done and Firefox prints a hint of its own anyway —
      without the guard it would stack two.
 
-   · a calendar glyph on the right, ours, with the native indicator made
-     transparent and stretched across it so the tap target is the picker's own
-     rather than something we have to wire up. It covers the glyph only, not
-     the whole control, so typing a date still works on a desktop keyboard. */
+   · a calendar glyph on the right — ours, and a real button that calls
+     showPicker(). It used to be the native indicator made transparent and
+     stretched over our glyph, which was the cheaper trick and stopped working
+     the moment the input took -webkit-appearance:none (needed so the control
+     keeps to its own box on WebKit): Chrome drops the indicator along with the
+     rest of the native appearance, and iOS never drew one in the first place.
+     One button, one code path, the same behaviour on every engine. It is not a
+     tab stop — the input beside it already is, and a keyboard user types the
+     date rather than opening a calendar to click around in. */
 
 const hint = (() => {
   const parts = new Intl.DateTimeFormat(undefined, {
@@ -49,10 +54,29 @@ export function DateField({
       <div className={'date-wrap' + (value ? '' : ' is-empty')}>
         <input id={id} type="date" value={value} onChange={(e) => onChange(e.target.value)} />
         <span className="date-ph" aria-hidden="true">{hint}</span>
-        <svg className="date-ico" viewBox="0 0 16 16" aria-hidden="true">
-          <rect x="1.5" y="3" width="13" height="11.5" rx="1.5" />
-          <path d="M1.5 6.5h13M5 1.5v3M11 1.5v3" />
-        </svg>
+        <button
+          type="button"
+          className="date-ico"
+          tabIndex={-1}
+          aria-hidden="true"
+          onClick={(e) => {
+            const input = e.currentTarget.parentElement?.querySelector('input')
+            if (!input) return
+            /* showPicker throws where the browser will not open a picker on
+               this gesture. Focusing is the honest fallback: on iOS that is
+               all it takes, since tapping the field is how its picker opens. */
+            try {
+              input.showPicker()
+            } catch {
+              input.focus()
+            }
+          }}
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="1.5" y="3" width="13" height="11.5" rx="1.5" />
+            <path d="M1.5 6.5h13M5 1.5v3M11 1.5v3" />
+          </svg>
+        </button>
       </div>
     </div>
   )

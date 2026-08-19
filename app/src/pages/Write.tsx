@@ -271,7 +271,7 @@ export function Write() {
           <div className="field">
             <span className="ui-lbl">Rating</span>
             <StarInput value={rating} onChange={setRating} />
-            <p className="field-hint">Quarter steps — drag, or use the arrow keys.</p>
+            <p className="field-hint">Quarter steps — tap or drag, or use the arrow keys.</p>
           </div>
         </section>
 

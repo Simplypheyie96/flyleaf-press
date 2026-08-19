@@ -351,29 +351,60 @@ body::before{
    Safari no visible way to open the picker either. The hint below is drawn
    over the control while it is empty, and our own calendar glyph sits on the
    right with the native picker button laid transparently over it. */
-.date-wrap{ position:relative; display:block; min-width:0; }
-/* tighter than the other fields on both sides: at 360px a two-up date row
-   gives each control 150px, and 16px digits plus WebKit's own gaps between
-   the three sub-fields need nearly all of it. The measured value is 106px of
-   content box against a 102px run — the earlier 12/40 clipped the year. */
-.date-wrap input[type="date"]{ padding-left:11px; padding-right:38px; }
+/* overflow:clip is the backstop. Everything below sizes the control properly,
+   but the thing being sized is a shadow tree we do not own and cannot measure
+   from script: WebKit lays ::-webkit-datetime-edit out at ITS intrinsic width
+   and has no obligation to fit our padding box. Where that happens the digits
+   run out past the card's rounded edge and there is no rule in this file that
+   would stop them. Clipping costs nothing when everything fits — which is what
+   it measures as in Chromium at 360px, 284px of content in a 284px box — and
+   turns the worst case from text spilling across the form into a value that is
+   merely cropped. */
+.date-wrap{ position:relative; display:block; min-width:0; overflow:clip; }
+/* -webkit-appearance:none, because the native appearance is what carries the
+   intrinsic sizing. With it on, the input reports a large min-content width
+   off the RENDERED date and declines to shrink below it; with it off, the box
+   is ours and width:100% means what it says. It does not take the picker away
+   — the control is still type=date and still opens the platform's own picker,
+   on iOS by tapping the field and elsewhere through the indicator styled
+   below. It also flattens iOS's inherited inner padding, which is why the
+   horizontal padding is restated here rather than left to the shared rule. */
+.date-wrap input[type="date"]{
+  -webkit-appearance:none; appearance:none;
+  /* tighter than the other fields on both sides: 16px digits plus WebKit's own
+     gaps between the three sub-fields want nearly all of a narrow control, and
+     the earlier 12/40 clipped the year. */
+  padding-left:11px; padding-right:38px;
+  max-width:100%;
+}
+/* the value itself may not push the box around either */
+.date-wrap input[type="date"]::-webkit-date-and-time-value{
+  text-align:left; min-width:0;
+}
 .date-ph{
   position:absolute; left:12px; top:50%; transform:translateY(-50%);
   font-family:var(--sans); font-size:13px; color:var(--ink-soft);
   pointer-events:none; opacity:0;
 }
+/* Our own button, sized to a thumb rather than to the 16px glyph inside it —
+   it sits over the control's right-hand padding, which is reserved for exactly
+   this and holds nothing else. */
 .date-ico{
-  position:absolute; right:12px; top:50%; transform:translateY(-50%);
-  width:16px; height:16px; pointer-events:none;
-  fill:none; stroke:var(--ink-soft); stroke-width:1.3; stroke-linecap:round;
+  position:absolute; right:0; top:0; height:100%; width:38px;
+  display:flex; align-items:center; justify-content:center;
+  padding:0; border:0; background:none; cursor:pointer;
+  color:var(--ink-soft);
 }
-/* the real button, invisible, over our glyph — so opening the picker is the
-   browser's own gesture and not something we have to fake. Left over the icon
-   only: covering the whole control would take typing away on a keyboard. */
-.date-wrap input[type="date"]::-webkit-calendar-picker-indicator{
-  position:absolute; right:0; top:0; width:34px; height:100%;
-  margin:0; padding:0; opacity:0; cursor:pointer;
+.date-ico svg{
+  width:16px; height:16px; display:block;
+  fill:none; stroke:currentColor; stroke-width:1.3; stroke-linecap:round;
 }
+.date-ico:hover{ color:var(--ink); }
+/* The native indicator is gone under -webkit-appearance:none in Chrome and
+   never existed on iOS, and where it does survive it would sit ON TOP of the
+   button above and swallow its clicks. Hidden outright, so there is one way in
+   and it behaves the same everywhere. */
+.date-wrap input[type="date"]::-webkit-calendar-picker-indicator{ display:none; }
 /* Firefox prints yyyy-mm-dd of its own accord and has no ::-webkit pseudo to
    hide, so the overlay is offered only where it is both needed and hideable. */
 @supports selector(::-webkit-datetime-edit){

@@ -81,5 +81,19 @@ if (splash) {
     document.fonts.ready,
     new Promise((r) => setTimeout(r, FONT_WAIT)),
   ])
-  Promise.all([held, fonts]).then(() => requestAnimationFrame(done))
+  /* A frame, or a beat — whichever comes first. requestAnimationFrame on its
+     own is not a safe thing to hang a full-screen overlay's removal on: a
+     hidden tab is never rendered, so the callback simply never runs, and the
+     launch screen stays pinned over the app at z-index 9999 with
+     pointer-events on — the whole interface unclickable, no error anywhere.
+     Measured: loaded in a background tab, the splash was still there at 8.5s
+     and rAF had not fired once. The frame is only wanted so the fade starts
+     against a painted app, which is worth about one frame of patience and
+     nothing more. */
+  Promise.all([held, fonts]).then(() =>
+    Promise.race([
+      new Promise((r) => requestAnimationFrame(() => r(null))),
+      new Promise((r) => setTimeout(() => r(null), 50)),
+    ]).then(done)
+  )
 }
