@@ -14,7 +14,7 @@ import {
 import { monthKey, monthName, currentMonthKey } from '../format'
 
 /* One month's collage — viewable and shareable on any day of the month,
-   open or closed. All five collage styles are live here and again at share. */
+   open or closed. All seven collage styles are live here and again at share. */
 export function MonthDetail({ settings }: { settings: Settings }) {
   const { key } = useParams()
   const [style, setStyle] = useState<CollageId>(settings.defaultCollage)

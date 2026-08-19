@@ -505,10 +505,12 @@ async function onePng(
   const c = document.createElement('canvas')
   c.width = Math.round(page.offsetWidth * k)
   c.height = Math.round(page.offsetHeight * k)
-  /* deliberately NOT willReadFrequently: that hint moves the canvas off the
-     GPU, and drawing a leaf-sized SVG onto a software canvas cost 1.4s of a
-     1.7s export — measured. The reads this path makes are a few hundred
-     pixels inside each picture's box, once. */
+  /* deliberately NOT willReadFrequently: the reads this path makes are a few
+     hundred pixels inside each picture's box, once, which is not the repeated
+     read-back the hint exists for — and the hint moves the canvas off the GPU
+     to pay for it. Measured either way it is a wash (2012/1839/1692ms without
+     against 1672/1705/1677ms with), so the default keeps the accelerated draw
+     and gives up nothing. */
   const g = c.getContext('2d')!
 
   const img = await svgImage(await leafSvg(page, toSvg, fontEmbedCSS))

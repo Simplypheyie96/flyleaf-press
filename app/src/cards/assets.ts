@@ -91,3 +91,27 @@ export const ART: Record<string, string> = {
     <path d="M62 24v84M32 66h60" stroke="#8F958C" stroke-width="4"/>
     <circle cx="86" cy="34" r="9" fill="#DCA94C"/>`,
 }
+
+/* ── The cancel — a postmark struck over a stamp. Drawn rather than imaged so
+      it inherits the card's ink through currentColor, which is a standard
+      property and therefore survives the clone that var() does not. The date
+      is split across two lines because a full "12 Aug 2026" will not sit
+      inside a 27px circle at a legible size. ── */
+export function cancel(date: string): string {
+  const p = date.split(' ')
+  const l1 = (p[0] && p[1] ? `${p[0]} ${p[1]}` : date).toUpperCase()
+  const l2 = p[2] || ''
+  return `<svg class="cancel" width="112" height="66" viewBox="0 0 112 66" aria-hidden="true">
+    <g fill="none" stroke="currentColor" stroke-width="1.6" opacity=".72">
+      <circle cx="33" cy="33" r="30"/>
+      <circle cx="33" cy="33" r="25"/>
+      ${[0, 1, 2, 3].map((i) =>
+        `<path d="M66 ${21 + i * 8} q9 -5 18 0 t18 0" stroke-width="2.4" stroke-linecap="round"/>`
+      ).join('')}
+    </g>
+    <text x="33" y="31" text-anchor="middle" fill="currentColor" opacity=".8"
+      font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing=".08em">${l1}</text>
+    <text x="33" y="44" text-anchor="middle" fill="currentColor" opacity=".8"
+      font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing=".08em">${l2}</text>
+  </svg>`
+}

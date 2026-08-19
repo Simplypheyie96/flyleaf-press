@@ -352,8 +352,136 @@
 .card-compact .s5-grid{ grid-template-columns:72px 1fr; gap:11px 12px; }
 .card-compact .s5-rate .rate-num{ font-size:30px; }
 
+/* ── S6 · Dust Jacket (coal) ────────────────────────────────────
+   A jacket is printed across the whole sheet, so the band bleeds to the card
+   edges — negative margins of exactly one --pad on three sides, which is why
+   it tracks the compact padding without a second rule. */
+.s6-band{
+  margin:calc(var(--pad) * -1) calc(var(--pad) * -1) 26px;
+  padding:22px var(--pad) 24px;
+  background:var(--mustard);
+  --tx:var(--ink); --meta:rgba(27,25,23,.7);
+  color:var(--ink);
+  border-radius:2px 2px 0 0;
+  position:relative; z-index:1;
+}
+.s6-kick{ display:flex; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.s6-title{ font-size:38px; }
+.s6-by{ display:block; margin-top:10px; }
+.s6-panel{ display:flex; gap:26px; align-items:flex-start; }
+.s6-front{ width:132px; flex:0 0 auto; transform:rotate(-1.2deg); }
+.s6-flap{ flex:1 1 0; min-width:0; }
+.s6-rate{ display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+.s6-rate .rate-num{ font-size:36px; }
+.s6-grid{
+  display:grid; grid-template-columns:84px 1fr; gap:12px 14px;
+  padding-top:16px; border-top:1px solid var(--hair);
+  align-items:start;
+}
+.s6-grid .lbl{ padding-top:3px; }
+.s6-grid .val{ min-width:0; overflow-wrap:anywhere; }
+.s6-grid .fmt{ flex-wrap:wrap; }
+/* the printed barcode on the back panel — bars, not an image, so it inherits
+   the ink and costs the export nothing */
+.s6-foot{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+.s6-foot .colo{ flex:1 1 200px; }
+.s6-bars{
+  flex:0 0 auto; width:98px; height:34px; margin-bottom:2px;
+  background:repeating-linear-gradient(90deg,
+    currentColor 0 2px, transparent 2px 4px,
+    currentColor 4px 5px, transparent 5px 9px,
+    currentColor 9px 12px, transparent 12px 14px);
+  opacity:.55;
+}
+.s6 .body{ margin-top:28px; }
+.s6 .patch{ right:-28px; bottom:-22px; opacity:.08; transform:rotate(-16deg); }
+.card-compact .s6-title{ font-size:29px; }
+/* at 350 the flap has ~180px to spend, and an 84px label column left "12 Aug
+   2026" wrapping onto two lines — a date is one line or it is not a date */
+.card-compact .s6-panel{ gap:16px; }
+.card-compact .s6-front{ width:88px; }
+.card-compact .s6-grid{ grid-template-columns:60px 1fr; gap:11px 12px; }
+.card-compact .s6-rate{ white-space:nowrap; }
+/* the bars wrap under the prose here, so they take the colophon's own clearance */
+.card-compact .s6-bars{ margin-top:22px; }
+.card-compact .s6-rate .rate-num{ font-size:30px; }
+
+/* ── S7 · Airmail (butter) ──────────────────────────────────────
+   The barred edge is four positioned strips, not a border-image: the card is
+   rasterized by inlining computed styles, and four plain repeating gradients
+   make that trip reliably where a border-image is a gamble. */
+.s7{ --air-r:#B3312A; --air-b:#2B4C8C; padding:calc(var(--pad) + 15px); }
+.s7-edge{ position:absolute; inset:0; pointer-events:none; border-radius:inherit; overflow:hidden; }
+.s7-edge i{ position:absolute; display:block; }
+.s7-edge .e-t, .s7-edge .e-b{
+  left:0; right:0; height:13px;
+  background:repeating-linear-gradient(45deg,
+    var(--air-r) 0 10px, transparent 10px 20px, var(--air-b) 20px 30px, transparent 30px 40px);
+}
+.s7-edge .e-t{ top:0; }
+.s7-edge .e-b{ bottom:0; }
+.s7-edge .e-l, .s7-edge .e-r{
+  top:0; bottom:0; width:13px;
+  background:repeating-linear-gradient(135deg,
+    var(--air-r) 0 10px, transparent 10px 20px, var(--air-b) 20px 30px, transparent 30px 40px);
+}
+.s7-edge .e-l{ left:0; }
+.s7-edge .e-r{ right:0; }
+.s7-top{ display:flex; gap:26px; align-items:flex-start; }
+.s7-from{ flex:1 1 0; min-width:0; }
+.s7-title{ font-size:31px; margin-top:12px; }
+.s7-from .by{ display:block; margin-top:8px; }
+.s7-addr{ display:grid; gap:9px; margin-top:22px; }
+.s7-addr > div{ display:flex; align-items:baseline; gap:12px; min-width:0; }
+.s7-addr .lbl{ flex:0 0 74px; }
+.s7-addr .val{ min-width:0; overflow-wrap:anywhere; }
+.s7-fmt{ margin-top:18px; }
+/* the stamp — a white margin round the cover with punched perforations,
+   struck through by the cancel. The holes are four repeating radial gradients
+   in the card's own ground rather than a mask: masks are the one thing in
+   here that the rasterizer inlines unreliably, and a stamp that quietly loses
+   its edge is a worse trade than four background layers. */
+.s7-stamp{
+  position:relative; flex:0 0 auto; width:124px;
+  padding:10px; background:var(--card-w);
+  transform:rotate(2.4deg);
+  box-shadow:var(--sh-plate);
+}
+.s7-perf{
+  position:absolute; inset:-3px; pointer-events:none;
+  background:
+    radial-gradient(circle at center, var(--butter) 2.6px, transparent 3.1px) left top / 10px 6px repeat-x,
+    radial-gradient(circle at center, var(--butter) 2.6px, transparent 3.1px) left bottom / 10px 6px repeat-x,
+    radial-gradient(circle at center, var(--butter) 2.6px, transparent 3.1px) left top / 6px 10px repeat-y,
+    radial-gradient(circle at center, var(--butter) 2.6px, transparent 3.1px) right top / 6px 10px repeat-y;
+}
+.s7-stamp .cover{ box-shadow:none; border-radius:0; }
+/* the cancel strikes leftward, off the stamp and onto the letter: struck to
+   the right it ran its wavy bars straight off the card's edge, and a postmark
+   that leaves the paper is a postmark drawn in the wrong place */
+.s7-stamp .cancel{ position:absolute; left:-54px; top:-14px; color:var(--air-b); }
+/* rating left, signature right — centred between the two it read as neither,
+   a figure floating in the middle of a line it does not belong to */
+.s7-sign{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+  margin-top:30px;
+}
+.s7-rate{ flex:0 0 auto; }
+.s7-rate .stars{ margin-top:8px; }
+.s7-rate .rate-num{ font-size:34px; }
+.s7-rule{ flex:0 1 210px; padding-top:6px; border-top:1px solid var(--hair); text-align:right; }
+.s7 .patch{ left:-30px; bottom:-24px; opacity:.09; transform:rotate(12deg); }
+.card-compact .s7{ padding:calc(var(--pad) + 12px); }
+.card-compact .s7-top{ flex-direction:column; gap:20px; }
+.card-compact .s7-title{ font-size:26px; }
+.card-compact .s7-stamp{ width:110px; align-self:flex-start; }
+/* compact stacks the stamp at the left margin, so the strike goes the other
+   way — leftward there would put the circle through the barred edge */
+.card-compact .s7-stamp .cancel{ left:auto; right:-46px; }
+.card-compact .s7-rate .rate-num{ font-size:29px; }
+
 /* ─────────────────────────────────────────────────────────────
-   Collage cards — the five monthly styles
+   Collage cards — the seven monthly styles
    ───────────────────────────────────────────────────────────── */
 /* The head is the one place the five styles announce that they ARE five
    styles, so each carries its own arrangement. Two faces and one rosette
@@ -407,6 +535,29 @@
    bottom border on this style, because two full-width rules 20px apart read
    as a printing fault rather than as two sections. */
 .mo-head--c5{ align-items:center; padding-bottom:11px; border-bottom:2.5px solid rgba(27,25,23,.55); }
+
+/* C6 · a customs slip — the airmail wording, a barred rule, then the month.
+   The bars are their own strip rather than a background behind the words: a
+   two-colour diagonal under 9px mono is unreadable, whatever the opacity. */
+.mo-head--c6{ display:block; }
+.mo-head--c6 .mo-air{ display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; }
+.mo-head--c6 .mo-bars{
+  display:block; height:7px; margin:8px 0 12px;
+  background:repeating-linear-gradient(45deg,
+    var(--air-r) 0 7px, transparent 7px 14px, var(--air-b) 14px 21px, transparent 21px 28px);
+}
+.mo-head--c6 .mo-sub{ margin-top:10px; padding-top:9px; border-top:1px solid rgba(27,25,23,.3); }
+
+/* C7 · a listings board is lit from its frame, so the head sits between two
+   runs of lamps and is the only centred head of the seven */
+.mo-head--c7{ display:block; text-align:center; }
+.mo-head--c7 .mo-lamps{
+  height:9px;
+  background:radial-gradient(circle at center, var(--mustard) 3px, transparent 3.4px) left center / 21px 9px repeat-x;
+  opacity:.9;
+}
+.mo-head--c7 .mo-title{ margin:12px 0 0; letter-spacing:.01em; }
+.mo-head--c7 .mo-sub{ justify-content:center; margin:8px 0 12px; }
 
 /* ── The month in numbers ───────────────────────────────────────────────────
    This used to be ONE ruled strip of label-over-value cells, rendered
@@ -513,6 +664,35 @@
 .mo-reg-row.is-v{ padding-top:2px; border-top:1px solid rgba(27,25,23,.22); }
 .mo-reg-row.is-v b{ display:block; font-size:15px; padding-top:5px; }
 
+/* C6 · customs declaration. A ruled form of cells: the rules are the grid's
+   own 1px gaps showing through, which is the only way they stay aligned when
+   the cell count changes and the last row is short. */
+.mo-stats--customs{ border:1.5px solid rgba(27,25,23,.45); }
+.mo-cn{
+  display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  padding:7px 11px; border-bottom:1.5px solid rgba(27,25,23,.45);
+}
+.mo-cells{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(118px, 1fr));
+  gap:1px; background:rgba(27,25,23,.35);
+}
+.mo-cell{ background:var(--mustard); padding:8px 11px 9px; min-width:0; }
+.mo-cell b{ display:block; margin-top:4px; font-size:15px; }
+
+/* C7 · the lit ticker. Figures large and centred over their names, framed the
+   way the board above it is framed. */
+.mo-stats--ticker{
+  padding:14px 0 15px;
+  border-top:1px solid rgba(244,242,237,.28);
+  border-bottom:1px solid rgba(244,242,237,.28);
+}
+.mo-tick-row{
+  display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr);
+  gap:12px; text-align:center;
+}
+.mo-tick b{ display:block; font-size:19px; color:var(--mustard); }
+.mo-tick .lbl{ display:block; margin-top:5px; }
+
 /* ── compact (350px) ── */
 .card-compact .mo-fr b{ font-size:13.5px; }
 .card-compact .mo-fr + .mo-fr{ margin-left:10px; padding-left:10px; }
@@ -525,6 +705,14 @@
    three, still ruled, still aligned */
 .card-compact .mo-reg-row{ grid-auto-flow:row; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px 10px; }
 .card-compact .mo-reg-row.is-v b{ font-size:13.5px; }
+.card-compact .mo-cells{ grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); }
+.card-compact .mo-cell b{ font-size:13.5px; }
+/* four figures in a three-column grid leaves a hole under the last one, and
+   the count is not fixed — so the narrow ticker wraps as a flex row and a
+   leftover figure widens to fill its line instead of sitting in a gap */
+.card-compact .mo-tick-row{ display:flex; flex-wrap:wrap; gap:12px 8px; }
+.card-compact .mo-tick{ flex:1 1 40%; }
+.card-compact .mo-tick b{ font-size:16px; }
 
 .stars-s{ display:inline-flex; gap:2px; vertical-align:-2px; }
 .stars-s svg{ display:block; }
@@ -652,6 +840,67 @@
 .card-compact .c5-name{ font-size:13.5px; }
 .c5 .lbl{ font-family:var(--mono); font-size:10.5px; font-weight:500;
   letter-spacing:.14em; text-transform:uppercase; color:var(--meta); }
+
+/* C6 · Postmark (manila) — every book franked and stuck to the sheet */
+.c6{ background:var(--mustard); --meta:rgba(27,25,23,.72); --air-r:#B3312A; --air-b:#2B4C8C; }
+.c6-sheet{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:28px 18px; }
+.c6-stamp{ transform:rotate(var(--sr,0deg)); min-width:0; }
+.c6-face{ position:relative; padding:8px; background:var(--card-w); box-shadow:var(--sh-plate); }
+.c6-face .cov{ border-radius:0; box-shadow:none; }
+/* the punched edge — four repeating radial gradients in the card's own ground.
+   A mask would say the same thing and is the one construction the rasterizer
+   inlines unreliably, so the holes are painted rather than cut. */
+.c6-perf{
+  position:absolute; inset:-3px; pointer-events:none;
+  background:
+    radial-gradient(circle at center, var(--mustard) 2.4px, transparent 2.9px) left top / 9px 6px repeat-x,
+    radial-gradient(circle at center, var(--mustard) 2.4px, transparent 2.9px) left bottom / 9px 6px repeat-x,
+    radial-gradient(circle at center, var(--mustard) 2.4px, transparent 2.9px) left top / 6px 9px repeat-y,
+    radial-gradient(circle at center, var(--mustard) 2.4px, transparent 2.9px) right top / 6px 9px repeat-y;
+}
+.c6-val{
+  position:absolute; right:11px; top:11px; z-index:2;
+  padding:2px 6px; background:var(--card-w); color:var(--ink);
+  font-family:var(--serif); font-weight:600; font-size:12.5px; line-height:1.2;
+  font-variant-numeric:tabular-nums;
+}
+.c6-cap{ margin-top:10px; min-width:0; }
+.c6-name{ font-family:var(--serif); font-weight:600; font-size:13.5px; line-height:1.25; letter-spacing:-.008em; }
+.c6-by{
+  font-family:var(--mono); font-size:8.5px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--meta); margin:4px 0 5px;
+}
+.c6 .patch{ right:-26px; bottom:-24px; opacity:.10; transform:rotate(-14deg); }
+.card-compact .c6-sheet{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:22px 13px; }
+.card-compact .c6-name{ font-size:12px; }
+.card-compact .c6-val{ right:9px; top:9px; font-size:11px; }
+
+/* C7 · Marquee (coal) — the month as a listings board, one line a feature */
+.c7{ background:var(--coal); --tx:var(--cream); --meta:rgba(244,242,237,.62); }
+.c7-board{ border-top:1px solid rgba(244,242,237,.28); }
+.c7-board.is-split{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:30px; }
+.card-compact .c7-board.is-split{ grid-template-columns:1fr; }
+.c7-line{
+  display:grid; grid-template-columns:24px 30px 1fr auto; gap:0 13px; align-items:center;
+  padding:11px 0; border-bottom:1px solid rgba(244,242,237,.18);
+}
+.c7-no{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--mustard); }
+.c7-cov{ width:30px; }
+.c7-name{
+  font-family:var(--serif); font-weight:600; font-size:15px; line-height:1.2;
+  letter-spacing:.02em; text-transform:uppercase; min-width:0;
+}
+.c7-by{
+  font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--meta); margin-top:4px;
+}
+.c7-rate{ text-align:right; }
+.c7-rate .r-num{ font-size:16px; color:var(--mustard); }
+.c7-rate .stars-s{ margin-top:2px; }
+.c7 .patch{ left:-30px; bottom:-26px; opacity:.09; transform:rotate(16deg); }
+.card-compact .c7-line{ grid-template-columns:20px 26px 1fr auto; gap:0 10px; }
+.card-compact .c7-cov{ width:26px; }
+.card-compact .c7-name{ font-size:13px; }
 
 /* ─────────────────────────────────────────────────────────────
    Share pages — fixed 720×1018 (1:√2) leaves the export rasterizes.

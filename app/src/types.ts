@@ -1,8 +1,8 @@
-export type StyleId = 'archive' | 'masthead' | 'catalogue' | 'scrapbook' | 'fieldnotes'
-export type CollageId = 'contact' | 'shelf' | 'tickets' | 'pinboard' | 'ledger'
+export type StyleId = 'archive' | 'masthead' | 'catalogue' | 'scrapbook' | 'fieldnotes' | 'jacket' | 'airmail'
+export type CollageId = 'contact' | 'shelf' | 'tickets' | 'pinboard' | 'ledger' | 'postmark' | 'marquee'
 
-export const STYLE_IDS: StyleId[] = ['archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes']
-export const COLLAGE_IDS: CollageId[] = ['contact', 'shelf', 'tickets', 'pinboard', 'ledger']
+export const STYLE_IDS: StyleId[] = ['archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes', 'jacket', 'airmail']
+export const COLLAGE_IDS: CollageId[] = ['contact', 'shelf', 'tickets', 'pinboard', 'ledger', 'postmark', 'marquee']
 
 export const STYLE_NAMES: Record<StyleId, string> = {
   archive: 'Archive',
@@ -10,6 +10,8 @@ export const STYLE_NAMES: Record<StyleId, string> = {
   catalogue: 'Catalogue',
   scrapbook: 'Scrapbook',
   fieldnotes: 'Field Notes',
+  jacket: 'Dust Jacket',
+  airmail: 'Airmail',
 }
 export const COLLAGE_NAMES: Record<CollageId, string> = {
   contact: 'Contact Sheet',
@@ -17,6 +19,8 @@ export const COLLAGE_NAMES: Record<CollageId, string> = {
   tickets: 'Tickets',
   pinboard: 'Pinboard',
   ledger: 'Ledger',
+  postmark: 'Postmark',
+  marquee: 'Marquee',
 }
 
 /* the ground each style sits on — used for the little pastel swatch dots */
@@ -26,6 +30,8 @@ export const STYLE_GROUNDS: Record<StyleId, string> = {
   catalogue: '#221E1B',
   scrapbook: '#F3D9DD',
   fieldnotes: '#DAE4EE',
+  jacket: '#221E1B',
+  airmail: '#F6EBD9',
 }
 export const COLLAGE_GROUNDS: Record<CollageId, string> = {
   contact: '#221E1B',
@@ -33,6 +39,8 @@ export const COLLAGE_GROUNDS: Record<CollageId, string> = {
   tickets: '#F3D9DD',
   pinboard: '#DAE4EE',
   ledger: '#DCA94C',
+  postmark: '#DCA94C',
+  marquee: '#221E1B',
 }
 
 export const FORMAT_NAMES = ['Ebook', 'Audiobook', 'Physical'] as const

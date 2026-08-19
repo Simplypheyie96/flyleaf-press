@@ -1,4 +1,4 @@
-/* The five review-card renderers — pure HTML-string generators, shared by the
+/* The seven review-card renderers — pure HTML-string generators, shared by the
    on-screen display and the share render so the saved image is exactly the
    card the user saw. Ported from the prototype with the confirmed fixes:
    plates live in a row at the bottom (a review without images simply has no
@@ -7,7 +7,7 @@
 import type { Plate, Review, StyleId } from '../types'
 import { FORMAT_NAMES } from '../types'
 import { escapeHtml, fmtRating, paragraphs, prettyDate } from '../format'
-import { ART, mark, patch, pclip, staple, starSvg } from './assets'
+import { ART, cancel, mark, patch, pclip, staple, starSvg } from './assets'
 
 function starRow(r: number, size: number): string {
   let out = ''
@@ -243,12 +243,88 @@ function fieldnotes(rec: Review): string {
   </article>`
 }
 
+/* ── S6 · Dust Jacket — the review as the book's own jacket (coal) ──
+   The band bleeds to the card edges on purpose: a jacket is printed across
+   the whole sheet and folded in, so a band with the card's padding around it
+   would read as a box drawn on paper rather than as the thing itself. */
+function jacket(rec: Review): string {
+  return `<article class="card card--coal s6" style="--rot:.6deg">
+    ${patch(150)}
+    <div class="s6-band">
+      <div class="s6-kick">
+        <span class="lbl">Flyleaf Press</span>
+        <span class="lbl">Nº ${rec.no}</span>
+      </div>
+      <h2 class="title s6-title">${escapeHtml(rec.title)}</h2>
+      <div class="by s6-by">${escapeHtml(rec.author)}</div>
+    </div>
+    <div class="s6-panel">
+      <div class="s6-front">${cover(rec)}</div>
+      <div class="s6-flap">
+        <div class="s6-rate">${ratingBlock(rec.rating, 22)}</div>
+        <div class="s6-grid">
+          <span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span>
+          <span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span>
+          ${rec.pages ? `<span class="lbl">Extent</span><span class="val">${rec.pages} pp</span>` : ''}
+          ${rec.series ? `<span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span>` : ''}
+          <span class="lbl" style="padding-top:1px">Format</span>${fmtLine(rec)}
+        </div>
+      </div>
+    </div>
+    ${body(rec, 28)}
+    ${plateRow(rec)}
+    <div class="s6-foot">
+      <span class="s6-bars" aria-hidden="true"></span>
+      ${colophon(rec)}
+    </div>
+  </article>`
+}
+
+/* ── S7 · Airmail — the review as a letter sent home (butter) ──
+   The barred edge is four positioned strips rather than a border-image: the
+   card is rasterized by inlining computed styles, and four plain repeating
+   gradients survive that trip where a border-image is a gamble. */
+function airmail(rec: Review): string {
+  return `<article class="card s7" style="--rot:-.7deg">
+    <span class="s7-edge" aria-hidden="true"><i class="e-t"></i><i class="e-r"></i><i class="e-b"></i><i class="e-l"></i></span>
+    ${patch(130)}
+    <div class="s7-top">
+      <div class="s7-from">
+        <span class="lbl">Par avion · By air mail</span>
+        <h2 class="title s7-title">${escapeHtml(rec.title)}</h2>
+        <div class="by">${escapeHtml(rec.author)}</div>
+        <div class="s7-addr">
+          <div><span class="lbl">Posted</span><span class="val">${prettyDate(rec.started)}</span></div>
+          <div><span class="lbl">Delivered</span><span class="val">${prettyDate(rec.finished)}</span></div>
+          ${rec.pages ? `<div><span class="lbl">Weight</span><span class="val">${rec.pages} pp</span></div>` : ''}
+          ${rec.series ? `<div><span class="lbl">Route</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
+        </div>
+        <div class="s7-fmt">${fmtLine(rec)}</div>
+      </div>
+      <div class="s7-stamp">
+        ${cover(rec)}
+        <span class="s7-perf" aria-hidden="true"></span>
+        ${cancel(prettyDate(rec.finished))}
+      </div>
+    </div>
+    ${body(rec, 26)}
+    ${plateRow(rec)}
+    <div class="s7-sign">
+      <div class="s7-rate">${ratingBlock(rec.rating, 22)}</div>
+      <div class="s7-rule"><span class="lbl">Signed</span></div>
+    </div>
+    ${colophon(rec)}
+  </article>`
+}
+
 export const REVIEW_RENDERERS: Record<StyleId, (rec: Review) => string> = {
   archive,
   masthead,
   catalogue,
   scrapbook,
   fieldnotes,
+  jacket,
+  airmail,
 }
 
 export function renderReviewCard(rec: Review, style?: StyleId): string {

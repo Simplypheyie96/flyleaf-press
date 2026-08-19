@@ -1,4 +1,4 @@
-/* The five monthly-collage renderers — pure HTML-string generators over the
+/* The seven monthly-collage renderers — pure HTML-string generators over the
    month's finished reviews. Flexible to any month size; a month can be viewed
    (and shared) at any point, not only at its end. */
 
@@ -33,7 +33,7 @@ function cov(b: Review, cls?: string): string {
    rosette; what differs is the arrangement, the rule under it, and what the
    count is called, because a contact sheet counts frames and a ledger counts
    entries. */
-type HeadId = 'c1' | 'c2' | 'c3' | 'c4' | 'c5'
+type HeadId = 'c1' | 'c2' | 'c3' | 'c4' | 'c5' | 'c6' | 'c7'
 
 function moHead(m: MonthData, id: HeadId): string {
   const n = m.books.length
@@ -77,6 +77,27 @@ function moHead(m: MonthData, id: HeadId): string {
         <div class="mo-title">${t}</div>
         <div class="mo-sub">${mark(12)}<span class="lbl">${n} pinned</span></div>
       </div>
+    </div>`
+
+  /* C6 · a customs slip: the airmail label to the left of the month, and the
+     count in stamps, because that is what is stuck to the sheet below */
+  if (id === 'c6')
+    return `<div class="mo-head mo-head--c6">
+      <div class="mo-air"><span class="lbl">Par avion</span><span class="lbl">By air mail</span></div>
+      <span class="mo-bars" aria-hidden="true"></span>
+      <div class="mo-line">${mark(14)}<div class="mo-title">${t}</div></div>
+      <div class="mo-sub"><span class="lbl">${n} stamp${n === 1 ? '' : 's'} affixed</span></div>
+    </div>`
+
+  /* C7 · a listings board is lit from its own frame, so the head sits between
+     two runs of lamps and is centred under them — nothing else here centres */
+  if (id === 'c7')
+    return `<div class="mo-head mo-head--c7">
+      <div class="mo-lamps" aria-hidden="true"></div>
+      <div class="mo-kick">Now showing · Flyleaf Press</div>
+      <div class="mo-title">${t}</div>
+      <div class="mo-sub">${mark(13)}<span class="lbl">${n} feature${n === 1 ? '' : 's'}</span></div>
+      <div class="mo-lamps" aria-hidden="true"></div>
     </div>`
 
   /* C5 · a register head: month left, the range of entries right, one heavy
@@ -180,6 +201,26 @@ function moStats(m: MonthData, id: HeadId): string {
   if (id === 'c4')
     return `<div class="mo-stats mo-stats--chits">
       ${st.map((x, i) => `<div class="mo-chit" style="--cr:${(i % 2 ? 1 : -1) * (1 + (i % 3) * 0.5)}deg"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
+    </div>`
+
+  /* C6 · a customs declaration: a boxed form of ruled cells, each with its
+     name printed small in the corner and the figure written into the cell.
+     The grid is what makes it a form rather than a list. */
+  if (id === 'c6')
+    return `<div class="mo-stats mo-stats--customs">
+      <div class="mo-cn"><span class="lbl">Declaration</span><span class="lbl">Flyleaf Press · CN22</span></div>
+      <div class="mo-cells">
+        ${st.map((x) => `<div class="mo-cell"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
+      </div>
+    </div>`
+
+  /* C7 · the lit ticker under a listings board: figures large and centred in
+     their own columns, names beneath them, a run of lamps top and bottom. */
+  if (id === 'c7')
+    return `<div class="mo-stats mo-stats--ticker">
+      <div class="mo-tick-row">
+        ${st.map((x) => `<div class="mo-tick"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
+      </div>
     </div>`
 
   /* C5 · a register head: column names ruled across the top, figures aligned
@@ -338,12 +379,64 @@ function ledger(m: MonthData): string {
   </article>`
 }
 
+/* C6 · Postmark (manila) — each book franked and stuck down */
+function postmark(m: MonthData): string {
+  return `<article class="card c6" style="--rot:.6deg">
+    ${patchC(140)}
+    ${moHead(m, 'c6')}
+    ${moStats(m, 'c6')}
+    <div class="c6-sheet" style="--cols:${gridCols(m.books.length)}">
+      ${m.books.map((b, i) => `
+        <div class="c6-stamp" style="--sr:${leans[i % leans.length]}deg">
+          <div class="c6-face">
+            ${cov(b)}
+            <span class="c6-perf" aria-hidden="true"></span>
+            <span class="c6-val">${fmtRating(b.rating)}</span>
+          </div>
+          <div class="c6-cap">
+            <div class="c6-name">${escapeHtml(b.title)}</div>
+            <div class="c6-by">${escapeHtml(b.author)}</div>
+            ${starsS(b.rating, 10, 'var(--ink)', 'rgba(27,25,23,.5)')}
+          </div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C7 · Marquee (coal) — the month as a listings board, one line a film */
+function marquee(m: MonthData): string {
+  const cols = listCols(m.books.length)
+  const ink = 'var(--mustard)', line = 'rgba(244,242,237,.5)'
+  return `<article class="card c7" style="--rot:-.4deg">
+    ${patchC(150)}
+    ${moHead(m, 'c7')}
+    ${moStats(m, 'c7')}
+    <div class="c7-board ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
+      ${m.books.map((b, i) => `
+        <div class="c7-line">
+          <span class="c7-no">${String(i + 1).padStart(2, '0')}</span>
+          ${cov(b, 'c7-cov')}
+          <div class="c7-mid">
+            <div class="c7-name">${escapeHtml(b.title)}</div>
+            <div class="c7-by">${escapeHtml(b.author)} · ${fmts(b)}</div>
+          </div>
+          <div class="c7-rate">
+            <span class="r-num">${fmtRating(b.rating)}</span>
+            <div>${starsS(b.rating, 10, ink, line)}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
 export const COLLAGE_RENDERERS: Record<CollageId, (m: MonthData) => string> = {
   contact,
   shelf,
   tickets,
   pinboard,
   ledger,
+  postmark,
+  marquee,
 }
 
 export function renderCollage(m: MonthData, style: CollageId): string {
