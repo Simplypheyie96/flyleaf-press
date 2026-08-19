@@ -24,13 +24,16 @@ import serif400 from '@fontsource/playfair-display/files/playfair-display-latin-
 import serif400i from '@fontsource/playfair-display/files/playfair-display-latin-400-italic.woff2?url'
 import serif500 from '@fontsource/playfair-display/files/playfair-display-latin-500-normal.woff2?url'
 import serif600 from '@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff2?url'
+import sans400 from '@fontsource/archivo/files/archivo-latin-400-normal.woff2?url'
+import sans500 from '@fontsource/archivo/files/archivo-latin-500-normal.woff2?url'
+import sans600 from '@fontsource/archivo/files/archivo-latin-600-normal.woff2?url'
 
 type Face = { family: string; weight: number; style: 'normal' | 'italic'; url: string }
 
-/* Every face the app or a card actually asks for. Nothing here is optional:
-   a weight missing from this list is a weight the browser synthesises on
-   screen and the export draws differently. */
-const FACES: Face[] = [
+/* Every face a CARD asks for. Nothing here is optional: a weight missing from
+   this list is a weight the browser synthesises on screen and the export draws
+   differently — and this is also, exactly, the list handed to the rasterizer. */
+const CARD_FACES: Face[] = [
   { family: 'Kalam', weight: 400, style: 'normal', url: kalam400 },
   { family: 'Kalam', weight: 700, style: 'normal', url: kalam700 },
   { family: 'IBM Plex Mono', weight: 400, style: 'normal', url: mono400 },
@@ -40,6 +43,20 @@ const FACES: Face[] = [
   { family: 'Playfair Display', weight: 500, style: 'normal', url: serif500 },
   { family: 'Playfair Display', weight: 600, style: 'normal', url: serif600 },
 ]
+
+/* The chrome face, and the reason it is a separate list. The app around the
+   cards is set in Archivo; a card never is. Chrome is also never rasterized —
+   only cards go through html-to-image — so embedding these in every PNG would
+   add three woff2 files of base64 to an image that cannot use them. They are
+   installed like any other face and precached like any other asset; they just
+   do not travel inside a share. */
+const CHROME_FACES: Face[] = [
+  { family: 'Archivo', weight: 400, style: 'normal', url: sans400 },
+  { family: 'Archivo', weight: 500, style: 'normal', url: sans500 },
+  { family: 'Archivo', weight: 600, style: 'normal', url: sans600 },
+]
+
+const FACES: Face[] = [...CARD_FACES, ...CHROME_FACES]
 
 const rule = (f: Face, src: string) =>
   `@font-face{font-family:"${f.family}";font-style:${f.style};font-weight:${f.weight};` +
@@ -62,7 +79,7 @@ let embedded: Promise<string> | null = null
 export function fontEmbedCss(): Promise<string> {
   if (!embedded)
     embedded = Promise.all(
-      FACES.map(async (f) => {
+      CARD_FACES.map(async (f) => {
         try {
           const res = await fetch(f.url)
           if (!res.ok) return ''

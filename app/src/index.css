@@ -29,6 +29,21 @@
   --serif:"Playfair Display",Georgia,serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
   --hand:"Kalam",cursive;
+  /* The chrome face. The cards keep the mono — they are printed objects and
+     their micro-labels are set the way a printed label is — but the app around
+     them is not a terminal, and setting every button and field in a monospace
+     was most of what made it read as a developer tool rather than a thing you
+     write in. Archivo is a grotesque drawn off wood-type proportions, so it
+     sits with Playfair without arguing with it. */
+  --sans:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+
+  /* Corner radii, one scale. --r-img stays tight on purpose: a 22×31 cover
+     thumbnail rounded to the same 11px as a panel loses its corners entirely
+     and stops reading as a book. */
+  --r-img:4px;
+  --r-sm:8px;
+  --r-md:11px;
+  --r-lg:16px;
 
   /* shadows retired by request — elevation is drawn with hairline rules instead */
   --sh-card:0 0 rgba(0,0,0,0);
@@ -76,13 +91,43 @@ html,body,figure,figcaption,h1,h2,h3,p{ margin:0; }
 body{
   background:var(--paper);
   color:var(--ink);
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:13px;
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
-button{ font-family:var(--mono); }
+button{ font-family:var(--sans); }
 img{ max-width:100%; }
+
+/* ── paper grain ───────────────────────────────────────────────────────────
+   The ground was a flat fill, and a flat fill is what reads as "a web app"
+   rather than as paper. This is one fixed layer of fractal noise over the
+   whole viewport, inline as a data URI so it is precached with the stylesheet
+   and works offline like everything else.
+
+   It sits at z-index:-1: a background painted on <body> propagates to the
+   canvas, so a negative layer lands ABOVE that fill and BELOW every element,
+   which means no stacking-context argument with the nav or a sheet, and
+   nothing to remember when adding a page.
+
+   It cannot reach a card. The export host serializes the leaf element, not the
+   document, and this is attached to body — so a shared PNG is as clean as it
+   ever was. Deliberate: the grain is the app's paper, and a card is a
+   different, stiffer paper that carries its own.
+
+   Kept very low. Grain you can see is a texture effect; grain you can only
+   miss when it is gone is a surface. */
+body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.36'/%3E%3C/svg%3E");
+  mix-blend-mode:multiply;
+}
+/* on a near-black ground multiply has nothing to darken, so the grain has to
+   add light instead — same layer, opposite blend, and pulled well down
+   because noise on black is far more visible than noise on paper */
+:root[data-theme="dark"] body::before{ mix-blend-mode:screen; opacity:.14; }
+
 
 /* ── page scaffold ── */
 .page{
@@ -122,7 +167,7 @@ img{ max-width:100%; }
 .head-id h1{ overflow-wrap:anywhere; }
 
 .ui-lbl{
-  font-family:var(--mono); font-size:10.5px; font-weight:500; line-height:1.2;
+  font-family:var(--sans); font-size:10.5px; font-weight:500; line-height:1.2;
   letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft);
 }
 .ui-h{
@@ -136,7 +181,7 @@ img{ max-width:100%; }
   border:0; cursor:pointer;
   height:40px; padding:0 20px; border-radius:999px;
   background:var(--ink); color:var(--accent-fg);
-  font-family:var(--mono); font-size:11px; font-weight:500;
+  font-family:var(--sans); font-size:11px; font-weight:500;
   letter-spacing:.1em; text-transform:uppercase;
   transition:transform 160ms var(--ease), opacity 160ms var(--ease);
   /* a <Link className="btn"> is still an anchor and was picking up the UA
@@ -163,7 +208,7 @@ img{ max-width:100%; }
 
 /* ── white panels ── */
 .panel{
-  background:var(--card-w); border-radius:3px; border:1px solid var(--rule);
+  background:var(--card-w); border-radius:var(--r-md); border:1px solid var(--rule);
   padding:22px;
 }
 .panel + .panel{ margin-top:16px; }
@@ -172,7 +217,7 @@ img{ max-width:100%; }
 .notice{
   display:flex; align-items:center; justify-content:space-between;
   gap:14px 18px; flex-wrap:wrap;
-  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:var(--r-md);
   padding:16px 18px; margin-bottom:24px;
 }
 /* the text shrinks so the buttons keep the same line when there is room —
@@ -216,7 +261,7 @@ img{ max-width:100%; }
   min-width:44px; min-height:44px;
   padding:10px 12px; border-radius:999px;
   color:var(--ink-soft); text-decoration:none;
-  font-family:var(--mono); font-size:10.5px; font-weight:500;
+  font-family:var(--sans); font-size:10.5px; font-weight:500;
   letter-spacing:.1em; text-transform:uppercase; line-height:1;
   transition:color 180ms var(--ease), background 180ms var(--ease);
   -webkit-tap-highlight-color:transparent;
@@ -250,27 +295,52 @@ img{ max-width:100%; }
 }
 
 /* ── forms ── */
-/* the editor reads as a stack of titled sections — a rule above each heading
-   marks the seam, the way a printed form rules off its parts */
-.form-sec{ margin-bottom:36px; }
+/* The editor is a stack of titled sections, and each one is now its own card.
+   It used to be a hairline above each heading, which is the cheapest possible
+   separator and reads as one long form with rules in it: the eye has nothing
+   telling it where "The reading" stops and "The format" starts, which is most
+   of why the format section kept being missed. A card has two edges, so a
+   section has a visible end as well as a beginning.
+
+   The heading sits ON the card's top edge rather than inside it — half a line
+   height up, on the card's own ground — so it labels the box the way a tab
+   labels a folder, and the card's padding is not spent twice. */
+.form-sec{
+  position:relative;
+  margin-bottom:26px; padding:26px 22px 24px;
+  background:var(--card-w);
+  border:1px solid var(--rule); border-radius:var(--r-lg);
+}
 .form-sec-h{
-  padding-top:14px; margin-bottom:18px;
-  border-top:1px solid var(--rule);
+  position:absolute; top:0; left:22px; transform:translateY(-50%);
+  padding:0 8px; margin-left:-8px;
+  /* It straddles the card's top edge — translateY(-50%) puts its vertical
+     centre exactly on the border — so a single flat background is wrong for
+     one of its two halves: paper above the edge, card below it. The hard
+     50% gradient stop lands on that same border and gives each half the
+     ground it is actually sitting on. Subtle in light mode, where the two
+     are a shade apart; plainly visible in dark, where they are not. */
+  background:linear-gradient(var(--paper) 50%, var(--card-w) 50%);
   color:var(--ink);
 }
-/* the page header already rules off below itself — a second rule right under
-   it would read as an empty section */
-.form-sec:first-of-type .form-sec-h{ border-top:0; padding-top:0; }
+@media (max-width:640px){
+  .form-sec{ padding:24px 16px 22px; }
+  .form-sec-h{ left:16px; }
+}
 /* min-width:0, because a date input carries a large intrinsic width — iOS and
    Chrome both size it off the rendered date, not off its box — and a grid or
    flex child defaults to min-width:auto, which refuses to shrink past that.
    The two-up date row then overruns the gutter instead of splitting the
    width. It fit by luck at 13px and stopped fitting at 16. */
 .field{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; min-width:0; }
-.form-sec .field:last-child{ margin-bottom:0; }
+/* A DIRECT child. As a descendant selector this also matched the last .field
+   inside .date-row, so the rating label sat hard against the date input — a
+   measured 0px where every other pair in the form has 20px. */
+.form-sec > .field:last-child{ margin-bottom:0; }
+.form-sec > *:last-child{ margin-bottom:0; }
 .field input[type="text"], .field input[type="search"], .field input[type="date"], .field input[type="number"], .field textarea, .field select{
-  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
-  color:var(--ink); font-family:var(--mono); font-size:13px;
+  border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
+  color:var(--ink); font-family:var(--sans); font-size:13px;
   padding:11px 12px; outline:none; width:100%; min-width:0;
   transition:border-color 160ms var(--ease);
 }
@@ -289,7 +359,7 @@ img{ max-width:100%; }
 .date-wrap input[type="date"]{ padding-left:11px; padding-right:38px; }
 .date-ph{
   position:absolute; left:12px; top:50%; transform:translateY(-50%);
-  font-family:var(--mono); font-size:13px; color:var(--ink-soft);
+  font-family:var(--sans); font-size:13px; color:var(--ink-soft);
   pointer-events:none; opacity:0;
 }
 .date-ico{
@@ -338,7 +408,7 @@ img{ max-width:100%; }
 .write-focus-head .write-focus-done{ position:static; right:auto; bottom:auto; flex:none; }
 .write-focus textarea.hand{
   flex:1; width:100%; min-height:0; resize:none; outline:none;
-  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
+  border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
   color:var(--ink); font-family:var(--hand); font-size:16.5px; line-height:1.74;
   padding:16px 18px;
   transition:border-color 160ms var(--ease);
@@ -349,7 +419,7 @@ img{ max-width:100%; }
   height:30px; padding:0 14px; cursor:pointer;
   background:var(--card-w); color:var(--ink-soft);
   border:1px solid var(--rule); border-radius:999px;
-  font-family:var(--mono); font-size:10px; font-weight:500;
+  font-family:var(--sans); font-size:10px; font-weight:500;
   letter-spacing:.1em; text-transform:uppercase;
   transition:color 160ms var(--ease), border-color 160ms var(--ease);
 }
@@ -359,8 +429,8 @@ img{ max-width:100%; }
 /* ── shelf toolbar: search + sort + display ── */
 .shelf-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
 .shelf-tools input[type="search"]{
-  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
-  color:var(--ink); font-family:var(--mono); font-size:12.5px;
+  border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
+  color:var(--ink); font-family:var(--sans); font-size:12.5px;
   height:40px; padding:0 12px; outline:none; width:100%;
   transition:border-color 160ms var(--ease);
 }
@@ -374,8 +444,8 @@ img{ max-width:100%; }
 .dd-btn{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   width:100%; height:40px; padding:0 14px; cursor:pointer;
-  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
-  color:var(--ink); font-family:var(--mono); font-size:12.5px; text-align:left;
+  border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
+  color:var(--ink); font-family:var(--sans); font-size:12.5px; text-align:left;
   transition:border-color 160ms var(--ease);
 }
 .dd-btn:focus-visible, .dd-btn[aria-expanded="true"]{ border-color:var(--ink); outline:none; }
@@ -384,13 +454,13 @@ img{ max-width:100%; }
 .dd-list{
   position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:30;
   margin:0; padding:4px; list-style:none;
-  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:var(--r-md);
   max-height:290px; overflow-y:auto;
 }
 .dd-list li{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:0 10px; border-radius:2px; cursor:pointer; min-height:40px;
-  font-family:var(--mono); font-size:12px; color:var(--ink);
+  padding:0 10px; border-radius:var(--r-sm); cursor:pointer; min-height:40px;
+  font-family:var(--sans); font-size:12px; color:var(--ink);
 }
 .dd-list li.is-active{ background:var(--paper); }
 .dd-list li svg{ flex:none; color:var(--ink); }
@@ -400,17 +470,17 @@ img{ max-width:100%; }
 .shelf-sugg{
   position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:30;
   margin:0; padding:4px; list-style:none;
-  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:var(--r-md);
   box-shadow:var(--sh-card); max-height:290px; overflow-y:auto;
 }
 .shelf-sugg li{
   display:flex; align-items:center; gap:10px;
-  padding:8px 9px; border-radius:2px; cursor:pointer;
-  font-family:var(--mono); font-size:12px; min-height:44px;
+  padding:8px 9px; border-radius:var(--r-sm); cursor:pointer;
+  font-family:var(--sans); font-size:12px; min-height:44px;
 }
 .shelf-sugg li.is-active, .shelf-sugg li:hover{ background:var(--paper); }
 .shelf-sugg img, .shelf-sugg-miss{
-  width:22px; height:31px; object-fit:cover; border-radius:1.5px;
+  width:22px; height:31px; object-fit:cover; border-radius:var(--r-img);
   border:1px solid var(--rule); flex-shrink:0; background:var(--paper);
 }
 .shelf-sugg-t{
@@ -435,7 +505,7 @@ img{ max-width:100%; }
 .fmt-pick button{
   padding:9px 14px; min-height:38px; cursor:pointer;
   border:1px solid var(--rule); border-radius:999px; background:var(--card-w);
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:11.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
   color:var(--ink-soft);
   transition:color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
@@ -447,7 +517,7 @@ img{ max-width:100%; }
 /* interactive stars (write flow) */
 .stars-input{
   display:flex; gap:4px; cursor:ew-resize; touch-action:none;
-  padding:6px 0; border-radius:3px; width:max-content;
+  padding:6px 0; border-radius:var(--r-md); width:max-content;
 }
 .stars-input:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
 .stars-input svg{ display:block; }
@@ -458,7 +528,7 @@ img{ max-width:100%; }
   font-family:var(--serif); font-weight:600; font-size:22px; line-height:1;
   letter-spacing:-.01em; font-variant-numeric:tabular-nums; white-space:nowrap;
 }
-.rate-input-of{ font-family:var(--mono); font-size:11px; font-weight:400; color:var(--ink-soft); }
+.rate-input-of{ font-family:var(--sans); font-size:11px; font-weight:400; color:var(--ink-soft); }
 
 /* ── style picker (review styles + collage styles as themes) ── */
 .style-pick{ display:flex; flex-wrap:wrap; gap:8px; }
@@ -484,16 +554,16 @@ img{ max-width:100%; }
 .lib{ display:flex; flex-direction:column; gap:12px; }
 .lib-row{
   display:grid; grid-template-columns:52px 1fr auto; gap:0 16px; align-items:center;
-  background:var(--card-w); border-radius:3px; border:1px solid var(--rule);
+  background:var(--card-w); border-radius:var(--r-md); border:1px solid var(--rule);
   padding:12px 16px 12px 12px;
   text-decoration:none; color:var(--ink);
   transition:transform 160ms var(--ease);
 }
 .lib-row:hover{ transform:translateY(-1px); }
-.lib-cover{ width:52px; aspect-ratio:2/3; object-fit:cover; border-radius:2px;
+.lib-cover{ width:52px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-img);
   box-shadow:var(--sh-plate); background:var(--paper); display:block; }
 .lib-cover-miss{
-  width:52px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:2px;
+  width:52px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:var(--r-img);
   display:flex; align-items:center; justify-content:center;
   font-size:7px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
   text-align:center; padding:4px;
@@ -511,7 +581,7 @@ img{ max-width:100%; }
 .res{ display:flex; flex-direction:column; gap:10px; margin-top:18px; }
 .res-row{
   display:grid; grid-template-columns:44px 1fr auto; gap:0 14px; align-items:center;
-  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:var(--r-md);
   padding:10px 14px 10px 10px; cursor:pointer; text-align:left;
   transition:border-color 160ms var(--ease);
   /* a <button> does NOT inherit colour — without this the row falls back to the
@@ -521,7 +591,7 @@ img{ max-width:100%; }
   color:var(--ink);
 }
 .res-row:hover{ border-color:var(--ink); }
-.res-row img{ width:44px; aspect-ratio:2/3; object-fit:cover; border-radius:2px; background:var(--paper); }
+.res-row img{ width:44px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-img); background:var(--paper); }
 .res-t{ font-family:var(--serif); font-weight:600; font-size:14.5px; line-height:1.25; }
 .res-a{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:3px; }
 .res-src{ font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
@@ -530,15 +600,15 @@ img{ max-width:100%; }
    the full candidate grid lives in the modal so long lists never swallow the form */
 .cov-cur{
   display:flex; align-items:center; gap:16px;
-  background:var(--card-w); border:1px solid var(--rule); border-radius:3px;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:var(--r-md);
   padding:12px;
 }
 .cov-cur > img{
-  width:64px; aspect-ratio:2/3; object-fit:cover; border-radius:2px;
+  width:64px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-img);
   background:var(--paper); flex:none; display:block;
 }
 .cov-cur .cov-none{
-  width:64px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:2px;
+  width:64px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:var(--r-img);
   display:flex; align-items:center; justify-content:center; text-align:center;
   font-size:8px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
   padding:6px; flex:none;
@@ -550,12 +620,12 @@ img{ max-width:100%; }
 /* cover candidate picker */
 .cov-pick{ display:flex; gap:10px; flex-wrap:wrap; }
 .cov-pick button{
-  border:2px solid transparent; border-radius:3px; padding:2px; background:transparent; cursor:pointer;
+  border:2px solid transparent; border-radius:var(--r-md); padding:2px; background:transparent; cursor:pointer;
 }
 .cov-pick button[aria-pressed="true"]{ border-color:var(--ink); }
-.cov-pick img{ width:68px; aspect-ratio:2/3; object-fit:cover; border-radius:2px; display:block; background:var(--paper); }
+.cov-pick img{ width:68px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-img); display:block; background:var(--paper); }
 .cov-pick .cov-none{
-  width:68px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:2px;
+  width:68px; aspect-ratio:2/3; border:1px dashed var(--rule); border-radius:var(--r-img);
   display:flex; align-items:center; justify-content:center; text-align:center;
   font-size:8px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); padding:6px;
 }
@@ -564,9 +634,9 @@ img{ max-width:100%; }
 .plate-edit{ display:flex; flex-direction:column; gap:12px; }
 .plate-edit-row{
   display:grid; grid-template-columns:64px 1fr auto; gap:0 14px; align-items:center;
-  background:var(--card-w); border:1px solid var(--rule); border-radius:3px; padding:10px;
+  background:var(--card-w); border:1px solid var(--rule); border-radius:var(--r-md); padding:10px;
 }
-.plate-edit-row img{ width:64px; aspect-ratio:1; object-fit:cover; border-radius:2px; background:var(--paper); display:block; }
+.plate-edit-row img{ width:64px; aspect-ratio:1; object-fit:cover; border-radius:var(--r-img); background:var(--paper); display:block; }
 .plate-edit-row input{
   border:0; border-bottom:1px solid var(--rule); background:transparent;
   font-family:var(--hand); font-size:15px; color:var(--ink); padding:6px 2px; width:100%; outline:none;
@@ -622,7 +692,7 @@ img{ max-width:100%; }
 @keyframes fade{ from{ opacity:0 } to{ opacity:1 } }
 .share-sheet{
   width:100%; max-width:760px;
-  background:var(--paper); border-radius:4px; border:1px solid var(--rule);
+  background:var(--paper); border-radius:var(--r-lg); border:1px solid var(--rule);
   padding:22px; margin:auto 0;
 }
 .share-sheet-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
@@ -667,23 +737,23 @@ img{ max-width:100%; }
 .size-pick button{
   display:flex; flex-direction:column; gap:5px; align-items:flex-start;
   padding:12px 14px; background:var(--card-w); color:var(--ink);
-  border:1px solid var(--rule); border-radius:3px; cursor:pointer; text-align:left;
+  border:1px solid var(--rule); border-radius:var(--r-md); cursor:pointer; text-align:left;
   transition:border-color 160ms var(--ease);
 }
 .size-pick button:hover{ border-color:var(--ink-soft); }
 .size-pick button[aria-pressed="true"]{ border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
-.size-pick-n{ font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+.size-pick-n{ font-family:var(--sans); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
 /* the measurement is the reason this control exists — it is the only line under
    the name now that the "for a camera roll" prose is gone, since either shape
    sits in a camera roll and either one prints */
-.size-pick-px{ font-family:var(--mono); font-size:12px; color:var(--ink); }
+.size-pick-px{ font-family:var(--sans); font-size:12px; color:var(--ink); }
 /* the filename is data, not prose — set it in mono so it reads as the literal
    string that will appear in the downloads folder */
 .dl-name code{ font-family:var(--mono); font-size:10.5px; color:var(--ink); word-break:break-all; }
 
 .modal-sheet{
   width:100%; max-width:520px;
-  background:var(--paper); border-radius:4px; border:1px solid var(--rule);
+  background:var(--paper); border-radius:var(--r-lg); border:1px solid var(--rule);
   padding:22px; margin:auto 0;
 }
 .modal-top{
@@ -701,7 +771,7 @@ img{ max-width:100%; }
    webviews, so destructive actions ask on paper instead ── */
 .confirm-sheet{
   width:100%; max-width:400px;
-  background:var(--paper); border-radius:4px; border:1px solid var(--rule);
+  background:var(--paper); border-radius:var(--r-lg); border:1px solid var(--rule);
   padding:22px; margin:auto 0;
 }
 .confirm-sheet p{
@@ -714,13 +784,13 @@ img{ max-width:100%; }
 .choice-list{ display:flex; flex-direction:column; gap:10px; margin:16px 0 20px; }
 .choice{
   display:flex; flex-direction:column; gap:5px; text-align:left; width:100%;
-  border:1px solid var(--rule); border-radius:3px; background:var(--card-w);
+  border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
   padding:14px 16px; cursor:pointer; color:var(--ink);
   transition:border-color 160ms var(--ease);
 }
 .choice:hover:not(:disabled), .choice:focus-visible{ border-color:var(--ink); }
 .choice:disabled{ cursor:default; opacity:.55; }
-.choice-l{ font-family:var(--mono); font-size:11px; font-weight:500;
+.choice-l{ font-family:var(--sans); font-size:11px; font-weight:500;
   letter-spacing:.12em; text-transform:uppercase; }
 .choice-d{ font-size:12px; line-height:1.55; color:var(--ink-soft); }
 
@@ -754,7 +824,7 @@ img{ max-width:100%; }
 /* stands in the button's place when a row has a state to report rather than
    an action to offer — installed already, checked and current */
 .set-row-note{
-  font-family:var(--mono); font-size:10px; letter-spacing:.09em; text-transform:uppercase;
+  font-family:var(--sans); font-size:10px; letter-spacing:.09em; text-transform:uppercase;
   color:var(--ink-soft); flex:none; white-space:nowrap;
 }
 
@@ -768,7 +838,7 @@ img{ max-width:100%; }
 .disclose .ui-lbl{ color:var(--ink-soft); }
 .disclose-right{ display:flex; align-items:center; gap:10px; flex:none; }
 .disclose-val{
-  font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+  font-family:var(--sans); font-size:11px; letter-spacing:.06em;
   text-transform:uppercase; color:var(--ink-soft);
 }
 .disclose-chev{ font-size:9px; line-height:1; color:var(--ink-soft); }
@@ -812,7 +882,7 @@ img{ max-width:100%; }
 .mo-list{ display:flex; flex-direction:column; gap:12px; }
 .mo-row{
   display:flex; align-items:center; justify-content:space-between; gap:14px;
-  background:var(--card-w); border-radius:3px; border:1px solid var(--rule);
+  background:var(--card-w); border-radius:var(--r-md); border:1px solid var(--rule);
   padding:18px 20px; text-decoration:none; color:var(--ink);
   transition:transform 160ms var(--ease);
 }
@@ -827,7 +897,7 @@ img{ max-width:100%; }
 /* empty states */
 .empty{
   text-align:center; padding:60px 20px; color:var(--ink-soft);
-  border:1px dashed var(--rule); border-radius:3px;
+  border:1px dashed var(--rule); border-radius:var(--r-md);
 }
 .empty .ui-h{ color:var(--ink); font-size:22px; margin-bottom:10px; }
 .empty p{ font-size:12px; line-height:1.7; max-width:340px; margin:0 auto 22px; }
@@ -864,7 +934,7 @@ img{ max-width:100%; }
 /* home stat strip */
 .home-stats{
   display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
-  background:var(--rule); border:1px solid var(--rule); border-radius:3px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:var(--r-md);
   overflow:hidden; margin-bottom:24px;
 }
 .home-stat{ background:var(--card-w); padding:14px 16px; }
@@ -897,7 +967,7 @@ img{ max-width:100%; }
 .shelf-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:18px 14px; }
 .shelf-cell{ text-decoration:none; color:var(--ink); display:block; }
 .shelf-cell img{
-  width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:2px; display:block;
+  width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-img); display:block;
   box-shadow:var(--sh-plate); background:var(--card-w);
 }
 .shelf-cell .lib-cover-miss{ width:100%; aspect-ratio:2/3; }
