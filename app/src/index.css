@@ -229,6 +229,12 @@ body::before{
 /* a notice may carry two buttons — they stay a pair when the row wraps at
    narrow widths rather than splitting to opposite edges */
 .notice-acts{ display:flex; align-items:center; gap:8px; flex:none; margin-left:auto; }
+/* the same rule as .set-row--stack, for the same reason: a notice whose copy
+   is a sentence and a half puts its action on the line below, starting at the
+   text's own left edge, rather than beside a block it cannot line up with */
+.notice--stack{ display:block; text-align:left; }
+.notice--stack .notice-acts{ margin:12px 0 0; }
+.notice--stack .field-hint{ margin-top:10px; }
 
 /* ── the floating pill nav, per the Flyleaf shell (mechanics only): a
    bottom-centred capsule that hugs its tabs. Tabs are icon-only at rest;
@@ -854,6 +860,20 @@ body::before{
 /* the action never breaks across two lines — at 360px a two-word label like
    "Sync now" wrapped while every other button in the app stayed on one */
 .set-row > .btn{ white-space:nowrap; flex:none; }
+/* A row whose copy is a paragraph rather than a line puts its button
+   UNDERNEATH. Beside is right for "Adds a Save as PDF button…" — one line, and
+   the button sits level with it. It is wrong the moment the text wraps three
+   or four times: the button floats at the vertical middle of a block it has no
+   relationship to, level with nothing, and the row reads as two things that
+   failed to line up rather than one control with its explanation. Stacked, the
+   button starts at the same left edge as the label above it, and the paragraph
+   gets the full width instead of being squeezed into whatever the button left
+   over. */
+.set-row--stack{ display:block; }
+.set-row--stack .set-row-txt p{ max-width:56ch; }
+.set-row--stack > .btn,
+.set-row--stack > .set-row-note{ margin-top:12px; }
+.set-row--stack > .set-row-note{ display:block; }
 .set-row-txt{ min-width:0; }
 .set-row-txt p{ font-size:12px; line-height:1.55; color:var(--ink-soft); margin-top:4px; max-width:380px; }
 .set-row-txt .ui-lbl{ color:var(--ink); }
@@ -937,6 +957,12 @@ body::before{
 }
 .empty .ui-h{ color:var(--ink); font-size:22px; margin-bottom:10px; }
 .empty p{ font-size:13px; line-height:1.7; max-width:340px; margin:0 auto 22px; }
+/* the second answer to an empty shelf — a new DEVICE rather than a new
+   reader. Below a hairline and in the ghost button, so it reads as the
+   alternative to "Write the first review" rather than a rival to it. */
+.empty-alt{ margin-top:30px; padding-top:24px; border-top:1px solid var(--rule); }
+.empty-alt p{ margin-bottom:12px; }
+.empty-alt-err{ margin:12px auto 0; color:var(--danger); }
 
 /* busy overlay while rasterizing */
 .busy{

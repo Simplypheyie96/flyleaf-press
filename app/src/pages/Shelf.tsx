@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { RestoreNotice } from '../components/RestoreNotice'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
@@ -214,6 +215,9 @@ export function Shelf({ settings }: { settings: Settings }) {
             <div className="ui-h">Nothing on the shelf yet</div>
             <p>Finish a book, search it, and write as much as you want.</p>
             <Link className="btn" to="/add">Write the first review</Link>
+            {/* an empty shelf might be a new reader or a new device — the app
+                cannot tell, so it asks rather than assuming the first */}
+            <RestoreNotice />
           </div>
         )}
 

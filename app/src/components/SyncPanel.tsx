@@ -171,7 +171,9 @@ export function SyncPanel() {
 
   return (
     <div className="panel">
-      <div className="set-row">
+      {/* stacked: the off-state copy is a paragraph, and a Connect button
+          hovering level with the middle of it lines up with nothing */}
+      <div className="set-row set-row--stack">
         <div className="set-row-txt">
           <div className="ui-lbl">Google Drive backup</div>
           <p>
@@ -213,7 +215,7 @@ export function SyncPanel() {
               {busy === 'sync' ? 'Syncing…' : 'Sync now'}
             </button>
           </div>
-          <div className="set-row">
+          <div className="set-row set-row--stack">
             <div className="set-row-txt">
               <div className="ui-lbl">Remove the backup</div>
               {/* worth saying where it can be done: the hidden folder has no row
