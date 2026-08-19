@@ -193,20 +193,64 @@ function remember(on: boolean) {
   announce()
 }
 
+/* A SCRIPT THAT NEVER ARRIVES ALSO NEVER ERRORS, and that is the failure this
+   timeout exists for. `onerror` fires when the request is REFUSED — offline,
+   DNS gone, a 404. It does not fire when the request simply hangs, which is
+   what a captive portal, a corporate proxy, a blocking extension, or a network
+   that drops the connection mid-flight all produce. Nothing settles, so
+   `ensureClient` awaits forever and `requestToken` never reaches the watchdog
+   below it — that watchdog is armed AFTER this call, so it cannot cover the leg
+   that hangs. The button reads "Connecting…" until the page is reloaded, which
+   is precisely the symptom the watchdog was written to abolish.
+
+   Observed, not theorised: in a browser with no route to accounts.google.com,
+   opening Settings hung for the full 60s of two separate attempts, and the same
+   page loaded instantly with the client ID unset and no script requested. The
+   timeout's own control flow is covered by a bench test of the four outcomes —
+   load, refusal, hang, and the retry after a hang — rather than by a second run
+   in that browser.
+
+   Twenty seconds is well past any real load of a 60KB script and well short of
+   somebody deciding the app is broken. `loading` is cleared on both failures so
+   a later press genuinely retries rather than joining a promise that is already
+   dead, and the tag comes out with it — a hung request left in the document
+   keeps the connection open and can resolve later into a client nobody is
+   waiting for. */
+const SCRIPT_PATIENCE = 20_000
+
 function loadScript(): Promise<void> {
   if (window.google?.accounts?.oauth2) return Promise.resolve()
   if (loading) return loading
 
   loading = new Promise<void>((resolve, reject) => {
     const tag = document.createElement('script')
+    let timer: ReturnType<typeof setTimeout> | null = null
+
+    const done = (error?: Error) => {
+      if (timer !== null) {
+        clearTimeout(timer)
+        timer = null
+      }
+      if (!error) {
+        resolve()
+        return
+      }
+      loading = null
+      tag.remove()
+      reject(error)
+    }
+
+    timer = setTimeout(
+      () => done(new Error('Google took too long to answer. Check your connection and try again.')),
+      SCRIPT_PATIENCE,
+    )
+
     tag.src = GIS_SRC
     tag.async = true
     tag.defer = true
-    tag.onload = () => resolve()
-    tag.onerror = () => {
-      loading = null
-      reject(new Error('Could not reach Google. Check your connection and try again.'))
-    }
+    tag.onload = () => done()
+    tag.onerror = () =>
+      done(new Error('Could not reach Google. Check your connection and try again.'))
     document.head.append(tag)
   })
   return loading
