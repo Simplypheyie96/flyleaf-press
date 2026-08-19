@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react'
 import { db } from '../db'
-import type { Settings, StyleId, CollageId, ThemeChoice } from '../types'
-import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, COLLAGE_IDS, COLLAGE_NAMES, COLLAGE_GROUNDS } from '../types'
-import { StylePicker } from '../components/StylePicker'
+import type { Settings, ThemeChoice } from '../types'
 import { Face, FacePicker } from '../components/Face'
 import { Mark } from '../components/Mark'
 import { Confirm } from '../components/Confirm'
@@ -148,7 +146,16 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               </>
             )}
           </div>
-          <div className="field">
+          {/* No default-style pickers here. Fourteen swatches was the tallest
+              thing on the page after the face picker, and it bought nothing: a
+              style is picked on the review page and in its share sheet, and on
+              the collage page above the card — where you can see what you are
+              choosing. Setting one blind, on a page with no card on it, is the
+              worse version of a decision the app already offers in the right
+              place. `defaultStyle` / `defaultCollage` stay in Settings as the
+              seed those pickers open on; they are simply no longer editable
+              from here. */}
+          <div className="field" style={{ marginBottom: 0 }}>
             <span className="ui-lbl">Appearance</span>
             <div className="seg" role="radiogroup" aria-label="Appearance">
               {THEMES.map((t) => (
@@ -159,16 +166,6 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               ))}
             </div>
             <p className="field-hint">Cards stay paper-light in both themes.</p>
-          </div>
-          <div className="field">
-            <span className="ui-lbl">Default review style</span>
-            <StylePicker ids={STYLE_IDS} names={STYLE_NAMES} grounds={STYLE_GROUNDS}
-              value={settings.defaultStyle} onChange={(defaultStyle: StyleId) => put({ defaultStyle })} />
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <span className="ui-lbl">Default collage style</span>
-            <StylePicker ids={COLLAGE_IDS} names={COLLAGE_NAMES} grounds={COLLAGE_GROUNDS}
-              value={settings.defaultCollage} onChange={(defaultCollage: CollageId) => put({ defaultCollage })} />
           </div>
         </div>
 
