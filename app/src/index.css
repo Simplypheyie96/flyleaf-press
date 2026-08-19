@@ -963,6 +963,10 @@ body::before{
 .empty-alt{ margin-top:30px; padding-top:24px; border-top:1px solid var(--rule); }
 .empty-alt p{ margin-bottom:12px; }
 .empty-alt-err{ margin:12px auto 0; color:var(--danger); }
+.empty-alt-note{ margin:12px auto 0; color:var(--ink-soft); }
+/* on the first-run screen the same block is the last thing on a centred
+   column, so it takes the column's alignment rather than fighting it */
+.onb .empty-alt{ text-align:center; }
 
 /* busy overlay while rasterizing */
 .busy{

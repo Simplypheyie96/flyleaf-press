@@ -16,13 +16,19 @@ import { db } from '../db'
 import type { Grave, Review } from '../types'
 
 export const FORMAT = 'flyleaf-press'
-export const VERSION = 2
+export const VERSION = 3
 
 export interface LibraryFile {
   app: string
   version: number
   reviews: Review[]
   graves?: Grave[]
+  /* Who was writing these — the name and the drawn face, nothing else. A
+     library restored onto a new phone that came back as an anonymous shelf
+     would have restored the books and lost the reader; the name is printed on
+     the cards. Optional, because a version-2 file predates it, and absent is
+     read as "don't know", never as "blank". */
+  profile?: { name: string; face: string }
 }
 
 /** What makes two rows the same book. Case and surrounding space are noise —
@@ -40,8 +46,13 @@ export function stampOf(r: Review): number {
 }
 
 export async function exportLibrary(): Promise<LibraryFile> {
-  const [reviews, graves] = await Promise.all([db.reviews.toArray(), db.graves.toArray()])
-  return { app: FORMAT, version: VERSION, reviews, graves }
+  const [reviews, graves, settings] = await Promise.all([
+    db.reviews.toArray(),
+    db.graves.toArray(),
+    db.settings.get(1),
+  ])
+  const profile = settings ? { name: settings.name, face: settings.face } : undefined
+  return { app: FORMAT, version: VERSION, reviews, graves, profile }
 }
 
 export async function exportBlob(): Promise<Blob> {
@@ -141,6 +152,19 @@ export async function mergeLibrary(text: string): Promise<MergeResult> {
      about the deletion too. */
   if (graves.size) {
     await db.graves.bulkPut([...graves].map(([key, at]) => ({ key, at })))
+  }
+
+  /* The name and face come across ONLY onto a device that has none of its
+     own. A merge may not overwrite a choice somebody made here — two devices
+     can legitimately carry different names, and the fold rule everywhere else
+     in this file is "never replace something with less than itself". Blank is
+     less than a name. In practice this fires exactly once: on the device that
+     has just been installed and has not been through onboarding. */
+  if (data.profile) {
+    const settings = await db.settings.get(1)
+    if (settings && !settings.name && !settings.face) {
+      await db.settings.update(1, { name: data.profile.name, face: data.profile.face })
+    }
   }
 
   return result
