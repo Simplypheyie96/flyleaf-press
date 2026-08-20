@@ -253,8 +253,15 @@ export function SyncPanel() {
               the case this row is the press that does work, and it is primary
               rather than ghost, because it is the only thing standing between
               the reader and a backup that has quietly stopped. */}
+          {/* BOTH STACKED, and it is the same row slot in either state — so an
+              inline one here would move its button from the middle of the row
+              to its left edge on a state change the reader did not ask for,
+              and would be the only un-stacked row among the four. Beside is
+              also wrong on its own terms at 360px: this column is 274px, a
+              button takes 100–155 of it, and both sentences then wrap three or
+              four times in what is left, level with none of it. */}
           {stale ? (
-            <div className="set-row">
+            <div className="set-row set-row--stack">
               <div className="set-row-txt">
                 <div className="ui-lbl">Sign in again</div>
                 <p>Starts backing up again. Nothing else changes.</p>
@@ -264,7 +271,7 @@ export function SyncPanel() {
               </button>
             </div>
           ) : (
-            <div className="set-row">
+            <div className="set-row set-row--stack">
               <div className="set-row-txt">
                 <div className="ui-lbl">Sync now</div>
                 <p>Syncing happens by itself. This is only for when you don't want to wait.</p>

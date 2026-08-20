@@ -115,9 +115,14 @@
   content:""; width:11px; height:11px; flex:0 0 auto;
   border:1.5px solid currentColor; border-radius:2px;
 }
+/* The filled tick, drawn by clipping the fill to the content box — 2px of
+   padding leaves the paper showing between border and fill, which is what the
+   inset shadow used to fake, and it no longer has to be told which ground it
+   is sitting on. */
 .fmt--stack .fmt-t[data-on="true"]::before{
   background:currentColor;
-  box-shadow:inset 0 0 0 2px var(--fmt-well, var(--mustard));
+  background-clip:content-box;
+  padding:2px;
 }
 
 /* S2 · Masthead — a newspaper deck line: the chosen set in heavier ink,
@@ -134,9 +139,9 @@
    and the ones that apply are filled in. */
 .s3 .fmt{ column-gap:6px; row-gap:7px; }
 .s3 .fmt-sep{ display:none; }
-.s3 .fmt-t{ padding:4px 8px 3px; box-shadow:inset 0 0 0 1px var(--hair); border-radius:1px; }
+.s3 .fmt-t{ padding:3px 7px 2px; border:1px solid var(--hair); border-radius:1px; }
 .s3 .fmt-t[data-on="true"]{
-  box-shadow:inset 0 0 0 1px currentColor;
+  border-color:currentColor;
   background:rgba(244,242,237,.09);
 }
 
@@ -156,8 +161,8 @@
    round the ones that apply, nothing round the rest. */
 .s5 .fmt{ column-gap:8px; row-gap:8px; }
 .s5 .fmt-sep{ display:none; }
-.s5 .fmt-t{ padding:3px 8px 2px; }
-.s5 .fmt-t[data-on="true"]{ box-shadow:inset 0 0 0 1.3px currentColor; border-radius:999px; }
+.s5 .fmt-t{ padding:2px 7px 1px; border:1.3px solid transparent; border-radius:999px; }
+.s5 .fmt-t[data-on="true"]{ border-color:currentColor; }
 
 /* S6 · Dust Jacket — the edition line, set reversed out of the ink the
    way a jacket band is printed. */
@@ -173,10 +178,21 @@
    painted in the card's own ground, so it is a real gap in the file too. */
 .s7 .fmt{ column-gap:14px; row-gap:13px; }
 .s7 .fmt-sep{ display:none; }
-.s7 .fmt-t{ padding:4px 8px 3px; opacity:.42; }
+.s7 .fmt-t{ position:relative; padding:3px 7px 2px; opacity:.42; border:1px solid transparent; }
+/* The doubled rule is two real borders on two real boxes: the chip's own, and
+   an outer frame 2.5px clear of it. It was one three-ring box-shadow, and a
+   multi-value shadow list is the one thing in these marks that a rasterizer
+   other than the screen's got wrong — the rings came back out of the file
+   drawn at their own offsets, so a downloaded stamp was two frames beside the
+   word instead of one around it. A border cannot land anywhere but on its own
+   box. */
 .s7 .fmt-t[data-on="true"]{
   opacity:1; letter-spacing:.17em; transform:rotate(-1.7deg);
-  box-shadow:0 0 0 1px currentColor, 0 0 0 2.5px var(--butter), 0 0 0 3.5px currentColor;
+  border-color:currentColor;
+}
+.s7 .fmt-t[data-on="true"]::before{
+  content:""; position:absolute; inset:-3.5px;
+  border:1px solid currentColor;
 }
 
 /* Rating — numeral AND geometrically-filled stars, 0.25 steps */
