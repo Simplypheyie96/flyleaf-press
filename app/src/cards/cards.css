@@ -80,22 +80,37 @@
 .card-compact .card .title{ font-size:27px; line-height:1.15; }
 .card-compact .card .body{ font-size:16.5px; line-height:1.74; }
 
-/* Format — an inline mono line, never boxes. */
+/* Format — every style marks the chosen ones in its OWN clothing.
+   Never an underline. The underline was the one element that looked
+   identical on all seven cards, and on a printed object it reads as a
+   web link rather than as a mark against a list. Each style below picks
+   a mark its own metaphor already owns: a ticked box, a heavier deck
+   line, a ruled register cell, a highlighter swipe, a pencilled ring, a
+   reversed edition chip, a rubber stamp.
+   No pseudo-element carries a mark except the archive box, and nothing
+   uses a negative z-index: the card is rasterized by inlining computed
+   styles, and a mark painted behind its own parent's background is a
+   mark that survives on screen and vanishes in the file. */
 .fmt{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:4px; row-gap:6px; }
 .fmt-t{
-  padding:0 1px 3px;
   font-family:var(--mono); font-size:11.5px; font-weight:500;
   letter-spacing:.1em; text-transform:uppercase;
   color:var(--meta); opacity:.62;
-  border-bottom:2px solid transparent;
 }
-.fmt-t[data-on="true"]{ color:var(--tx); opacity:1; border-bottom-color:currentColor; }
+.fmt-t[data-on="true"]{ color:var(--tx); opacity:1; }
 .fmt-sep{ color:var(--meta); opacity:.45; font-size:11.5px; }
 
-/* Archive rail keeps a stacked checklist — same facts, ledger clothing */
+/* The "Format" label sits on the line with the chips in S3/S5/S6. A chip is
+   taller than bare text, so the label has to drop to the chip's optical
+   centre — measured, per style, since each pads its chips differently. */
+.s3-row .lbl.lbl--fmt{ padding-top:5px; }
+.s5-grid .lbl.lbl--fmt{ padding-top:4.5px; }
+.s6-grid .lbl.lbl--fmt{ padding-top:6px; }
+
+/* S1 · Archive — the filing checklist. A ticked box in the rail. */
 .fmt--stack{ flex-direction:column; align-items:flex-start; gap:7px; }
 .fmt--stack .fmt-sep{ display:none; }
-.fmt--stack .fmt-t{ display:flex; align-items:center; gap:7px; border-bottom:0; }
+.fmt--stack .fmt-t{ display:flex; align-items:center; gap:7px; }
 .fmt--stack .fmt-t::before{
   content:""; width:11px; height:11px; flex:0 0 auto;
   border:1.5px solid currentColor; border-radius:2px;
@@ -103,6 +118,65 @@
 .fmt--stack .fmt-t[data-on="true"]::before{
   background:currentColor;
   box-shadow:inset 0 0 0 2px var(--fmt-well, var(--mustard));
+}
+
+/* S2 · Masthead — a newspaper deck line: the chosen set in heavier ink,
+   the middots replaced by the thin vertical rules a masthead uses. */
+.s2 .fmt{ column-gap:10px; align-items:center; }
+.s2 .fmt-sep{
+  width:1px; height:11px; background:var(--hair);
+  font-size:0; line-height:0; opacity:1; align-self:center;
+}
+.s2 .fmt-t{ opacity:.4; }
+.s2 .fmt-t[data-on="true"]{ font-weight:700; letter-spacing:.13em; opacity:1; }
+
+/* S3 · Catalogue — the accession register: every format is a ruled cell,
+   and the ones that apply are filled in. */
+.s3 .fmt{ column-gap:6px; row-gap:7px; }
+.s3 .fmt-sep{ display:none; }
+.s3 .fmt-t{ padding:4px 8px 3px; box-shadow:inset 0 0 0 1px var(--hair); border-radius:1px; }
+.s3 .fmt-t[data-on="true"]{
+  box-shadow:inset 0 0 0 1px currentColor;
+  background:rgba(244,242,237,.09);
+}
+
+/* S4 · Scrapbook — run through with a highlighter, slightly off-square.
+   A background gradient, not a layer behind the text: one paint, and the
+   soft trailing edge is where the marker lifted. */
+.s4 .fmt{ column-gap:8px; row-gap:8px; }
+.s4 .fmt-sep{ display:none; }
+.s4 .fmt-t{ padding:3px 7px 2px; }
+.s4 .fmt-t[data-on="true"]{
+  background:linear-gradient(99deg, rgba(214,164,60,.85) 0 90%, rgba(214,164,60,.3) 100%);
+  border-radius:3px 8px 4px 7px;
+  transform:rotate(-.9deg);
+}
+
+/* S5 · Field Notes — the annotation you make on a gridded sheet: a ring
+   round the ones that apply, nothing round the rest. */
+.s5 .fmt{ column-gap:8px; row-gap:8px; }
+.s5 .fmt-sep{ display:none; }
+.s5 .fmt-t{ padding:3px 8px 2px; }
+.s5 .fmt-t[data-on="true"]{ box-shadow:inset 0 0 0 1.3px currentColor; border-radius:999px; }
+
+/* S6 · Dust Jacket — the edition line, set reversed out of the ink the
+   way a jacket band is printed. */
+.s6 .fmt{ column-gap:6px; row-gap:7px; }
+.s6 .fmt-sep{ display:none; }
+.s6 .fmt-t{ padding:3px 8px 2px; opacity:.36; }
+.s6 .fmt-t[data-on="true"]{
+  background:var(--cream); color:var(--coal); opacity:1; border-radius:1px;
+}
+
+/* S7 · Airmail — struck with a rubber stamp: a doubled hairline frame,
+   off the square, letters opened out. The gap between the two rules is
+   painted in the card's own ground, so it is a real gap in the file too. */
+.s7 .fmt{ column-gap:14px; row-gap:13px; }
+.s7 .fmt-sep{ display:none; }
+.s7 .fmt-t{ padding:4px 8px 3px; opacity:.42; }
+.s7 .fmt-t[data-on="true"]{
+  opacity:1; letter-spacing:.17em; transform:rotate(-1.7deg);
+  box-shadow:0 0 0 1px currentColor, 0 0 0 2.5px var(--butter), 0 0 0 3.5px currentColor;
 }
 
 /* Rating — numeral AND geometrically-filled stars, 0.25 steps */

@@ -169,7 +169,7 @@ function catalogue(rec: Review): string {
       <div class="s3-row"><span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span></div>
       ${rec.pages ? `<div class="s3-row"><span class="lbl">Pages</span><span class="val">${rec.pages}</span></div>` : ''}
       ${rec.series ? `<div class="s3-row"><span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
-      <div class="s3-row"><span class="lbl" style="padding-top:1px">Format</span>${fmtLine(rec)}</div>
+      <div class="s3-row"><span class="lbl lbl--fmt">Format</span>${fmtLine(rec)}</div>
     </div>
     ${body(rec, 24)}
     ${plateRow(rec)}
@@ -232,7 +232,7 @@ function fieldnotes(rec: Review): string {
           <span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span>
           <span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span>
           ${rec.pages ? `<span class="lbl">Pages</span><span class="val">${rec.pages}</span>` : ''}
-          <span class="lbl" style="padding-top:1px">Format</span>${fmtLine(rec)}
+          <span class="lbl lbl--fmt">Format</span>${fmtLine(rec)}
         </div>
         <div class="s5-rate">${ratingBlock(rec.rating, 22)}</div>
       </div>
@@ -265,9 +265,9 @@ function jacket(rec: Review): string {
         <div class="s6-grid">
           <span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span>
           <span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span>
-          ${rec.pages ? `<span class="lbl">Extent</span><span class="val">${rec.pages} pp</span>` : ''}
+          ${rec.pages ? `<span class="lbl">Pages</span><span class="val">${rec.pages}</span>` : ''}
           ${rec.series ? `<span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span>` : ''}
-          <span class="lbl" style="padding-top:1px">Format</span>${fmtLine(rec)}
+          <span class="lbl lbl--fmt">Format</span>${fmtLine(rec)}
         </div>
       </div>
     </div>
@@ -281,6 +281,12 @@ function jacket(rec: Review): string {
 }
 
 /* ── S7 · Airmail — the review as a letter sent home (butter) ──
+   Plain labels: Started, Finished, Pages, Series. "Posted / Delivered /
+   Weight / Route" renamed the facts to keep the metaphor going, and the
+   metaphor did not need the help — the barred edge, the par-avion line, the
+   stamp and the cancellation carry it. What it cost was legibility: "Posted"
+   beside a date reads as when the REVIEW went out, which is not what the
+   date is, and "Weight" for a page count is a small lie about the unit.
    The barred edge is four positioned strips rather than a border-image: the
    card is rasterized by inlining computed styles, and four plain repeating
    gradients survive that trip where a border-image is a gamble. */
@@ -294,10 +300,10 @@ function airmail(rec: Review): string {
         <h2 class="title s7-title">${escapeHtml(rec.title)}</h2>
         <div class="by">${escapeHtml(rec.author)}</div>
         <div class="s7-addr">
-          <div><span class="lbl">Posted</span><span class="val">${prettyDate(rec.started)}</span></div>
-          <div><span class="lbl">Delivered</span><span class="val">${prettyDate(rec.finished)}</span></div>
-          ${rec.pages ? `<div><span class="lbl">Weight</span><span class="val">${rec.pages} pp</span></div>` : ''}
-          ${rec.series ? `<div><span class="lbl">Route</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
+          <div><span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span></div>
+          <div><span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span></div>
+          ${rec.pages ? `<div><span class="lbl">Pages</span><span class="val">${rec.pages}</span></div>` : ''}
+          ${rec.series ? `<div><span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
         </div>
         <div class="s7-fmt">${fmtLine(rec)}</div>
       </div>

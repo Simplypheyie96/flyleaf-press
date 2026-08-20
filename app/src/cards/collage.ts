@@ -140,7 +140,7 @@ function monthStats(m: MonthData): Stat[] {
        carried a count; on the card it read as a fraction rather than a caveat,
        so the figure is now plainly the pages we know about. */
     out.push({ label: 'Pages', value: total.toLocaleString() })
-    out.push({ label: 'Longest', value: `${Math.max(...withPages.map((b) => b.pages || 0)).toLocaleString()} pp` })
+    out.push({ label: 'Longest', value: `${Math.max(...withPages.map((b) => b.pages || 0)).toLocaleString()} pages` })
   }
 
   const avg = books.reduce((s, b) => s + b.rating, 0) / books.length
@@ -369,7 +369,7 @@ function ledger(m: MonthData): string {
           ${cov(b)}
           <div style="min-width:0">
             <div class="c5-name">${escapeHtml(b.title)}</div>
-            <div class="c5-fmt">${escapeHtml(b.author)} · ${fmts(b)}${b.pages ? ` · ${b.pages} pp` : ''}</div>
+            <div class="c5-fmt">${escapeHtml(b.author)} · ${fmts(b)}${b.pages ? ` · ${b.pages} pages` : ''}</div>
           </div>
           <div class="c5-rate">
             <span class="r-num">${fmtRating(b.rating)}</span>
