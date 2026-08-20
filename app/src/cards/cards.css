@@ -121,6 +121,7 @@
    is sitting on. */
 .fmt--stack .fmt-t[data-on="true"]::before{
   background:currentColor;
+  -webkit-background-clip:content-box;
   background-clip:content-box;
   padding:2px;
 }
