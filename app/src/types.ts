@@ -148,7 +148,11 @@ export const MAT = 16
    both sides. A phone at 390 gives its card 350 after the app's 20px gutters, so
    that is the width the phone shape must reproduce: setting the LEAF to 390
    instead squeezed the card to 288, narrower than any handset ever shows it. */
-export const SHAPE_CARD_W: Record<ExportShape, number> = { wide: 620, phone: 350 }
+/* Wide is sized so the file comes out 1440px across at EXPORT_SCALE = 2:
+   688 card + 16 mat each side = a 720px leaf. A long review runs very tall,
+   and the wider column is what keeps its height in proportion. Phone stays
+   the width a 390px handset actually gives the card. */
+export const SHAPE_CARD_W: Record<ExportShape, number> = { wide: 688, phone: 350 }
 export const SHAPE_W: Record<ExportShape, number> = {
   wide: SHAPE_CARD_W.wide + MAT * 2,
   phone: SHAPE_CARD_W.phone + MAT * 2,
