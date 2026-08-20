@@ -204,39 +204,41 @@ export function SyncPanel() {
 
   return (
     <div className="panel">
-      {/* stacked: the off-state copy is a paragraph, and a Connect button
-          hovering level with the middle of it lines up with nothing */}
+      {/* THE STATUS ROW CARRIES NO BUTTON. It used to hold Disconnect, which
+          put the way OUT beside the sentence saying how things stand — so the
+          row that answers "am I backed up?" was also the row offering to stop,
+          and it competed with Sync now for the same question. State first,
+          then one action for the state you are in, then the ways out. Each
+          state opens with a single word, so the answer is the first thing
+          read: Off / On / Paused. */}
       <div className="set-row set-row--stack">
         <div className="set-row-txt">
           <div className="ui-lbl">Google Drive backup</div>
           <p>
-            {on ? (
-              <>
-                {/* "Backing up to…" stops being true the moment it is paused,
-                    and printing it beside "sign in again" made the row argue
-                    with itself. Both facts still appear — the account and the
-                    last sync are what somebody is checking for — but in the
-                    order that says what is happening now. */}
-                {stale ? 'Signed in as ' : 'Backing up to '}
-                {who || 'your Google account'}
-                {' · '}
-                {at ? `last synced ${ago(at)}` : 'not synced yet'}.
-                {stale && ' Syncing is paused until you sign in again.'}
-              </>
-            ) : (
+            {!on ? (
               <>
                 Off. Your library lives on this device only. Turn this on and a copy is kept in a
                 hidden folder of your own Google Drive — one this app can see and no other app can,
                 so the same shelf appears on your other devices. Nothing is ever sent to us.
               </>
+            ) : stale ? (
+              <>
+                {/* "Backing up to…" stops being true the moment it is paused. */}
+                Paused. Signed in as {who || 'your Google account'}
+                {at ? `, last synced ${ago(at)}` : ', not synced yet'}. Google won’t renew this
+                device’s access without being asked, so nothing has synced since. Nothing is lost —
+                your library is here, and the copy in your Drive is where you left it.
+              </>
+            ) : (
+              <>
+                On, backing up to {who || 'your Google account'}
+                {' · '}
+                {at ? `last synced ${ago(at)}` : 'not synced yet'}.
+              </>
             )}
           </p>
         </div>
-        {on ? (
-          <button className="btn btn--ghost btn--sm" onClick={disconnect} disabled={!!busy}>
-            {busy === 'off' ? 'Disconnecting…' : 'Disconnect'}
-          </button>
-        ) : (
+        {!on && (
           <button className="btn btn--sm" onClick={connect} disabled={!!busy}>
             {busy === 'connect' ? 'Connecting…' : 'Connect'}
           </button>
@@ -245,17 +247,17 @@ export function SyncPanel() {
 
       {on && (
         <>
-          {/* Sync now is precisely the button that CANNOT work while the
-              quiet path is shut — it takes the same silent route and throws
-              before anything opens. So while that is the case the row is the
-              one press that does work, and it is primary rather than ghost,
-              because it is the only thing on this card standing between the
-              reader and a backup that has quietly stopped. */}
+          {/* ONE ACTION FOR THE STATE. Sync now is precisely the button that
+              CANNOT work while the quiet path is shut — it takes the same
+              silent route and throws before anything opens — so while that is
+              the case this row is the press that does work, and it is primary
+              rather than ghost, because it is the only thing standing between
+              the reader and a backup that has quietly stopped. */}
           {stale ? (
-            <div className="set-row set-row--stack">
+            <div className="set-row">
               <div className="set-row-txt">
                 <div className="ui-lbl">Sign in again</div>
-                <p>Google won’t renew this device’s access without being asked. Nothing has been lost — your library is here, and the copy in your Drive is where you left it.</p>
+                <p>Starts backing up again. Nothing else changes.</p>
               </div>
               <button className="btn btn--sm" onClick={resume} disabled={!!busy}>
                 {busy === 'signin' ? 'Signing in…' : 'Sign in to Google'}
@@ -272,6 +274,18 @@ export function SyncPanel() {
               </button>
             </div>
           )}
+          {/* The two ways out, adjacent, because the only thing that
+              distinguishes them is whether the copy in Drive survives. Apart,
+              Disconnect sat up beside the status and read as the answer to it. */}
+          <div className="set-row set-row--stack">
+            <div className="set-row-txt">
+              <div className="ui-lbl">Stop backing up</div>
+              <p>Ends the backup on this device. The copy already in your Drive is left where it is, so connecting again picks it back up.</p>
+            </div>
+            <button className="btn btn--ghost btn--sm" onClick={disconnect} disabled={!!busy}>
+              {busy === 'off' ? 'Disconnecting…' : 'Disconnect'}
+            </button>
+          </div>
           <div className="set-row set-row--stack">
             <div className="set-row-txt">
               <div className="ui-lbl">Remove the backup</div>
@@ -286,10 +300,9 @@ export function SyncPanel() {
         </>
       )}
 
-      {/* The stale sentence is now the row above's whole subject, and a
-          failed background sync hands back that same sentence — printed here
-          as well it appeared twice in one card, once beside a button and once
-          under it. */}
+      {/* The paused sentence is the status row's whole subject, and a failed
+          background sync hands back that same sentence — printed here as well
+          it appeared twice in one card. */}
       {(msg || err) && !(stale && err === STALE) && (
         <p className="field-hint" role="status" style={{ marginTop: 14 }}>
           {err || msg}
