@@ -20,6 +20,27 @@ export function monthName(key: string): string {
   return `${MONTHS_LONG[m - 1]} ${y}`
 }
 
+/** '2026-07-29' → '2026'. A year key is four digits and a month key is seven,
+    which is the only thing distinguishing `/collage/2026` from
+    `/collage/2026-07` on the way in — one route, told apart by shape. */
+export function yearKey(iso: string): string {
+  return iso.slice(0, 4)
+}
+
+export function isYearKey(key: string): boolean {
+  return /^\d{4}$/.test(key)
+}
+
+/** '2026' → '2026'. A year needs no expansion the way a month does, but the
+    pair of functions is what lets the collage page treat both the same. */
+export function yearName(key: string): string {
+  return key
+}
+
+export function currentYearKey(): string {
+  return String(new Date().getFullYear())
+}
+
 export function currentMonthKey(): string {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`

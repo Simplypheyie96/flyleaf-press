@@ -551,13 +551,12 @@
    the right it ran its wavy bars straight off the card's edge, and a postmark
    that leaves the paper is a postmark drawn in the wrong place */
 .s7-stamp .cancel{ position:absolute; left:-54px; top:-14px; color:var(--air-b); }
-/* rating left, signature right — centred between the two it read as neither,
-   a figure floating in the middle of a line it does not belong to */
-.s7-sign{
-  display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
-  margin-top:30px;
-}
-.s7-rate{ flex:0 0 auto; }
+/* The rating lives in the address block, above the body — airmail was the one
+   style that filed it after the review, and on a long letter that put the
+   verdict pages below the book it belongs to. The sign-off rule stays as the
+   card's close. */
+.s7-sign{ display:flex; justify-content:flex-end; margin-top:30px; }
+.s7-rate{ margin-top:20px; }
 .s7-rate .stars{ margin-top:8px; }
 .s7-rate .rate-num{ font-size:34px; }
 .s7-rule{ flex:0 1 210px; padding-top:6px; border-top:1px solid var(--hair); text-align:right; }
@@ -1010,14 +1009,13 @@
 }
 .share-page--free{ height:auto; min-height:1018px; overflow:visible; }
 /* tight capture: the exported PNG hugs the card on a slim even mat instead of
-   rasterizing the whole leaf. The mat has to clear the TALLEST overhang, and
-   the rosette patches — not the paperclip — set that: measured against every
-   style, the worst reach past the card edge is 45px (Field Notes, top), then
-   44 (Masthead, left), 43 (Ledger), 40 (Scrapbook, bottom), 39 (Archive). The
-   earlier 26px was sized against the clip and washi alone and cropped a hard
-   edge through the faint rosette on nine of the ten styles. */
+   rasterizing the whole leaf. The mat has to clear the tallest VISIBLE
+   overhang, and with every rosette patch clipped to its card (review and
+   collage both) that is the catalogue paperclip at 30.1px past the top edge.
+   The earlier 50px was measured against unclipped patch geometry — rects the
+   layout reports but overflow:hidden never paints. */
 /* keep in step with MAT in types.ts — the leaf widths are computed from it */
-:root{ --mat:50px; }
+:root{ --mat:36px; }
 .share-page--tight{ height:auto; min-height:0; padding:var(--mat); overflow:visible; }
 .share-page--tight .share-page-no{ position:static; margin-top:18px; }
 .share-page--tight .share-page-no:empty{ display:none; }

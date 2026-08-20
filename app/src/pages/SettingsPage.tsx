@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react'
+import { GoodreadsSheet } from '../components/GoodreadsSheet'
+import { FROM_YEAR } from '../import/goodreads'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import type { Settings, ThemeChoice } from '../types'
@@ -30,6 +32,8 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   const [checking, setChecking] = useState(false)
   const [updateMsg, setUpdateMsg] = useState('')
   const importRef = useRef<HTMLInputElement>(null)
+  const grRef = useRef<HTMLInputElement>(null)
+  const [grFile, setGrFile] = useState<File | null>(null)
   /* Live, because the row below is allowed to refuse. A button that offers to
      delete a library which does not exist, warns about consequences that
      cannot happen, and then reports success, is indistinguishable from a
@@ -226,6 +230,35 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             </div>
             <button className="btn btn--ghost btn--sm" onClick={() => setChoosing('export')}>Export</button>
           </div>
+          {/* Goodreads has had no API since December 2020 — no new keys were
+              issued, existing ones answer 403, and it sends no CORS headers,
+              so even the RSS feed is unreadable from a browser. The export the
+              site gives its own users is the only route in that doesn't need a
+              server of ours, which the whole app is arranged around not having.
+              It is also the better route: no account, no consent screen, no
+              quota, and it works offline.
+
+              A row whose copy runs to four lines puts its button underneath —
+              beside, the button floats level with nothing. */}
+          <div className="set-row set-row--stack">
+            <div className="set-row-txt">
+              <div className="ui-lbl">Import from Goodreads</div>
+              <p>
+                Books you finished in {FROM_YEAR} or later, from a Goodreads export — in
+                Goodreads, go to My Books, then Import and export, then Export Library.
+                Anything already on your shelf is left alone.
+              </p>
+            </div>
+            <button className="btn btn--ghost btn--sm" onClick={() => grRef.current?.click()}>
+              Choose file
+            </button>
+            <input ref={grRef} type="file" accept=".csv,text/csv" hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) setGrFile(f)
+                e.target.value = ''
+              }} />
+          </div>
           <div className="set-row">
             <div className="set-row-txt">
               <div className="ui-lbl">Import library</div>
@@ -350,6 +383,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           onCancel={() => setConfirming(null)}
         />
       )}
+      {grFile && <GoodreadsSheet file={grFile} onClose={() => setGrFile(null)} />}
       {confirming === 'clear' && (
         <Confirm
           title={`Delete ${allOfThem}?`}

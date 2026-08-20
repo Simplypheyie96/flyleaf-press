@@ -11,35 +11,52 @@ import { renderCollage, type MonthData } from '../cards/collage'
 import {
   shareCollageImage, buildCollagePage, collageBaseName, type ExportMode,
 } from '../share/export'
-import { monthKey, monthName, currentMonthKey } from '../format'
+import {
+  monthKey, monthName, currentMonthKey, yearKey, yearName, currentYearKey, isYearKey,
+} from '../format'
 
-/* One month's collage — viewable and shareable on any day of the month,
-   open or closed. All seven collage styles are live here and again at share. */
+/* One span's collage — viewable and shareable at any point, open or closed.
+   All seven collage styles are live here and again at share.
+
+   ONE PAGE SERVES THE MONTH AND THE YEAR. A year key is four digits and a
+   month key is seven, so `/collage/2026` and `/collage/2026-07` are told apart
+   by shape on the way in — no second route, no second page, and no chance of
+   the two drifting apart as the collage gains features. The only things the
+   span decides are which reviews are gathered, what the heading says, and
+   which arithmetic the stats strip runs. */
 export function MonthDetail({ settings }: { settings: Settings }) {
   const { key } = useParams()
+  const isYear = !!key && isYearKey(key)
+  /* one function of the key, used for gathering, for the heading, and for the
+     "still open" test — so a month and a year cannot disagree about which
+     books belong to them */
+  const keyOf = isYear ? yearKey : monthKey
+  const nameOf = isYear ? yearName : monthName
   const [style, setStyle] = useState<CollageId>(settings.defaultCollage)
   /* one way out — the sheet shows the collage, its shape, and both
      destinations */
   const [sharing, setSharing] = useState(false)
 
   const books = useLiveQuery(
-    () => db.reviews.orderBy('finished').toArray((all) => all.filter((r) => monthKey(r.finished) === key)),
-    [key]
+    () => db.reviews.orderBy('finished').toArray((all) => all.filter((r) => keyOf(r.finished) === key)),
+    [key, isYear]
   )
 
-  const month: MonthData | null = books && key ? { name: monthName(key), books } : null
+  const span = isYear ? ('year' as const) : ('month' as const)
+  const month: MonthData | null = books && key ? { name: nameOf(key), books, span } : null
 
   /* `month` is rebuilt on every render, so the preview keys off what actually
      changes its contents — the books and the chosen style. Depending on the
      object itself would make the sheet re-lay-out the collage on every tick. */
   const build = useCallback(
     (host: HTMLDivElement, shape: ExportShape) =>
-      books && key ? buildCollagePage({ name: monthName(key), books }, style, host, shape) : [],
-    [books, key, style]
+      books && key ? buildCollagePage({ name: nameOf(key), books, span }, style, host, shape) : [],
+    [books, key, style, span]
   )
 
   if (!month) return null
-  const open = key === currentMonthKey()
+  const open = key === (isYear ? currentYearKey() : currentMonthKey())
+  const unit = isYear ? 'year' : 'month'
 
   return (
     <div className="page">
@@ -54,7 +71,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
         {open && (
           <div className="notice">
             <div className="notice-txt">
-              <div className="ui-lbl">Month in progress</div>
+              <div className="ui-lbl">{isYear ? 'Year' : 'Month'} in progress</div>
               <p>
                 {month.books.length} book{month.books.length === 1 ? '' : 's'} so far. Each new
                 review joins on its own.
@@ -65,7 +82,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
 
         {month.books.length === 0 ? (
           <div className="empty">
-            <div className="ui-h">Nothing finished this month</div>
+            <div className="ui-h">Nothing finished this {unit}</div>
             <p>Finish a book and it starts here.</p>
             <Link className="btn" to="/add">Add a book</Link>
           </div>
@@ -76,8 +93,9 @@ export function MonthDetail({ settings }: { settings: Settings }) {
               <StylePicker ids={COLLAGE_IDS} names={COLLAGE_NAMES} grounds={COLLAGE_GROUNDS} value={style} onChange={setStyle} />
             </div>
 
-            {/* a twenty-book month is taller than any phone — same clamp the
-                review card uses, so the actions stay within reach */}
+            {/* a twenty-book month — let alone a hundred-book year — is taller
+                than any phone, so the same clamp the review card uses keeps the
+                actions within reach */}
             <CollapsedCard html={renderCollage(month, style)} />
 
             {/* the style picker and the card are already on this page, so the

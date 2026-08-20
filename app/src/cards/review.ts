@@ -306,6 +306,7 @@ function airmail(rec: Review): string {
           ${rec.series ? `<div><span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
         </div>
         <div class="s7-fmt">${fmtLine(rec)}</div>
+        <div class="s7-rate">${ratingBlock(rec.rating, 22)}</div>
       </div>
       <div class="s7-stamp">
         ${cover(rec)}
@@ -316,7 +317,6 @@ function airmail(rec: Review): string {
     ${body(rec, 26)}
     ${plateRow(rec)}
     <div class="s7-sign">
-      <div class="s7-rate">${ratingBlock(rec.rating, 22)}</div>
       <div class="s7-rule"><span class="lbl">Signed</span></div>
     </div>
     ${colophon(rec)}

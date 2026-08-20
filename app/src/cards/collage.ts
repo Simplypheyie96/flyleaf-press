@@ -3,12 +3,21 @@
    (and shared) at any point, not only at its end. */
 
 import type { CollageId, Review } from '../types'
-import { escapeHtml, fmtRating } from '../format'
+import { escapeHtml, fmtRating, monthKey, monthName } from '../format'
 import { mark, starSvg } from './assets'
 
 export interface MonthData {
   name: string
   books: Review[]
+  /* A year is rendered by these same seven styles, and deliberately so: they
+     are seven printed objects, not seven month-shaped ones, and a contact
+     sheet or a listings board holds a year as readily as it holds a March.
+     Seven more renderers would make twenty-one, triple the QA surface, and add
+     no idea. What genuinely differs over a year is the arithmetic — "Mostly ·
+     Physical" says almost nothing across a hundred books, while "Busiest ·
+     March" says something no month card can — so the span changes the STATS
+     and nothing else. */
+  span?: 'month' | 'year'
 }
 
 function starsS(r: number, size: number, fillCol: string, lineCol: string): string {
@@ -17,8 +26,11 @@ function starsS(r: number, size: number, fillCol: string, lineCol: string): stri
   return `<span class="stars-s" role="img" aria-label="${fmtRating(r)} out of 5">${out}</span>`
 }
 
+/* Same clipped patch as the review cards: the rosette is "clipped to the card
+   rectangle" by design, and letting the collage copies bleed past the edge was
+   an inconsistency — and the sole reason the export mat had to be 50px. */
 function patchC(size: number): string {
-  return `<span class="patch" aria-hidden="true">${mark(size)}</span>`
+  return `<span class="patch-wrap" aria-hidden="true"><span class="patch">${mark(size)}</span></span>`
 }
 
 /* Deliberately NOT loading="lazy". The covers ARE the collage — a month is at
@@ -130,6 +142,7 @@ type Stat = { label: string; value: string }
 function monthStats(m: MonthData): Stat[] {
   const books = m.books
   if (!books.length) return []
+  const isYear = m.span === 'year'
 
   const out: Stat[] = [{ label: 'Books', value: String(books.length) }]
 
@@ -148,6 +161,32 @@ function monthStats(m: MonthData): Stat[] {
 
   const best = books.reduce((a, b) => (b.rating > a.rating ? b : a))
   out.push({ label: 'Best', value: escapeHtml(best.title) })
+
+  /* The last figure is the one the span changes.
+
+     Over a month, the format it was mostly read in is a real characteristic of
+     those few weeks. Over a year it is very nearly always whichever format the
+     reader simply prefers, which the card's own owner already knows and a
+     stranger learns nothing from — the sort of statistic that makes a year look
+     like a long month. Which month carried the most books is the opposite: it
+     only exists at this span, and it is the shape of the reading year. */
+  if (isYear) {
+    const per = new Map<string, number>()
+    for (const b of books) {
+      const k = monthKey(b.finished)
+      per.set(k, (per.get(k) || 0) + 1)
+    }
+    const busiest = [...per.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]
+    /* Every book in a year collage has a finished date by construction, so
+       `busiest` is only ever missing when there are no books — and that case
+       returned above. The guard is for the type, not for a real state. */
+    if (busiest) {
+      /* the month alone, not "March 2026" — the card's title is already the
+         year, and repeating it inside a statistic reads as a mistake */
+      out.push({ label: 'Busiest', value: `${escapeHtml(monthName(busiest[0]).split(' ')[0])} · ${busiest[1]}` })
+    }
+    return out
+  }
 
   /* the format the month was mostly read in — a book counts once per format
      it carries, since a multi-format read genuinely happened in both */
