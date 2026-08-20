@@ -156,7 +156,7 @@ function catalogue(rec: Review): string {
   return `<article class="card card--coal s3" style="--rot:-.8deg">
     ${patch(120)}
     <div class="s3-cover-wrap">
-      ${pclip(16)}
+      ${pclip(16, -5)}
       ${cover(rec)}
     </div>
     <div class="s3-headroom">

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
@@ -30,38 +31,54 @@ function SpanRow({ s, open }: { s: Span; open: boolean }) {
       </span>
       {open && <span className="mo-open-tag">In progress</span>}
     </Link>
-  )
-}
+  )}
 
 /* Every month — and every year — with at least one finished book, newest
    first. The current one is just as viewable as a closed one: a collage isn't
    a month-end reward, it's a running tally you can share any day.
 
-   The year list comes first because it is the shorter one and it is the thing
-   a shelf of a hundred books is actually for. It uses the same seven styles
-   and the same page as a month; only the statistics differ. */
+   Months and years are two TABS, not two stacked sections. Stacked, the month
+   list grows without a ceiling — two years of reading is ~24 rows, five is 60,
+   all in one scroll with the year list riding on top of it. A tab shows one
+   kind of span at a time, and inside the Months tab the rows sit under year
+   headings once there is more than one year, so a long history reads as
+   chapters instead of a single column. The tabs only exist once a year
+   qualifies: before that they would be one live tab and one empty one, and the
+   page shows the plain month list it always did. */
 export function Months() {
   const reviews = useLiveQuery(() => db.reviews.orderBy('finished').reverse().toArray(), [])
+  const [tab, setTab] = useState<'months' | 'years'>('months')
   if (!reviews) return null
 
   const months = group(reviews, monthKey, monthName)
-  /* A year is only worth offering once it holds more than the one month
-     already listed below it — otherwise January's collage and 2026's collage
-     are the same set of books under two names, and the page reads as though it
-     is padding itself. */
+  /* A year is only worth offering once it holds more than one month —
+     otherwise January's collage and 2026's collage are the same set of books
+     under two names, and the page reads as though it is padding itself. */
   const years = group(reviews, yearKey, (k) => k)
     .filter((y) => months.filter((m) => m.key.startsWith(y.key)).length > 1)
-  const total = months.length + years.length
+  const tabbed = years.length > 0
+  const showing = tabbed && tab === 'years' ? years : months
+
+  /* Year headings inside the Months tab, newest first — and under a heading
+     that already says the year, the row says only the month. */
+  const monthYears = [...new Set(months.map((m) => m.key.slice(0, 4)))]
+  const grouped = monthYears.length > 1
 
   return (
     <div className="page">
       <div className="page-inner">
         <header className="app-head">
           <h1>Collage</h1>
-          <span>{total} collage{total === 1 ? '' : 's'}</span>
+          <span>
+            {tabbed
+              ? tab === 'years'
+                ? `${years.length} year${years.length === 1 ? '' : 's'}`
+                : `${months.length} month${months.length === 1 ? '' : 's'}`
+              : `${months.length} collage${months.length === 1 ? '' : 's'}`}
+          </span>
         </header>
 
-        {total === 0 && (
+        {months.length === 0 && (
           <div className="empty">
             <div className="ui-h">No months yet</div>
             <p>Finish a book and this month's collage starts.</p>
@@ -69,22 +86,40 @@ export function Months() {
           </div>
         )}
 
-        {years.length > 0 && (
+        {tabbed && (
+          <div className="seg mo-seg" role="group" aria-label="Collage span">
+            <button aria-pressed={tab === 'months'} onClick={() => setTab('months')}>Months</button>
+            <button aria-pressed={tab === 'years'} onClick={() => setTab('years')}>Years</button>
+          </div>
+        )}
+
+        {showing === years && years.length > 0 && (
           <div className="field">
-            <span className="ui-lbl">By year</span>
             <div className="mo-list">
               {years.map((y) => <SpanRow key={y.key} s={y} open={y.key === currentYearKey()} />)}
             </div>
           </div>
         )}
 
-        {months.length > 0 && (
-          <div className="field">
-            {years.length > 0 && <span className="ui-lbl">By month</span>}
-            <div className="mo-list">
-              {months.map((m) => <SpanRow key={m.key} s={m} open={m.key === currentMonthKey()} />)}
+        {showing === months && months.length > 0 && (
+          grouped ? (
+            monthYears.map((y) => (
+              <div className="field" key={y}>
+                <span className="ui-lbl">{y}</span>
+                <div className="mo-list">
+                  {months.filter((m) => m.key.startsWith(y)).map((m) => (
+                    <SpanRow key={m.key} s={{ ...m, label: m.label.replace(` ${y}`, '') }} open={m.key === currentMonthKey()} />
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="field">
+              <div className="mo-list">
+                {months.map((m) => <SpanRow key={m.key} s={m} open={m.key === currentMonthKey()} />)}
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
     </div>

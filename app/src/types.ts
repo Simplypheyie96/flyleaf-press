@@ -139,13 +139,11 @@ export const EXPORT_SHAPE_NAMES: Record<ExportShape, string> = {
 /* One quality for both. Resolution was never the interesting choice here —
    a 3× file is not "for desktop", it is just a bigger file of the same thing. */
 export const EXPORT_SCALE = 2
-/* The MAT is the same on both shapes. Its floor is the tallest thing that
-   VISIBLY overhangs a card — the rosette patches are clipped to the card
-   rectangle on review and collage cards alike, so the worst reach is the
-   catalogue paperclip at 30.1px past the top edge. 36 clears it with paper to
-   spare; the old 50 was measured against unclipped patch geometry that
-   getBoundingClientRect reports but overflow:hidden never paints. */
-export const MAT = 36
+/* The MAT is the same on both shapes. It is a slim even border, not a frame:
+   the card is the object, and every pixel of mat is a pixel the card does not
+   get in the file. Its floor is the tallest thing that VISIBLY overhangs a
+   card — the decorations are tuned so nothing reaches past ~14px. */
+export const MAT = 16
 /* The width each layout composes the CARD at — the leaf is this plus the mat on
    both sides. A phone at 390 gives its card 350 after the app's 20px gutters, so
    that is the width the phone shape must reproduce: setting the LEAF to 390

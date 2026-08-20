@@ -945,7 +945,7 @@ body::before{
 .set-row--stack > .set-row-note{ margin-top:12px; }
 .set-row--stack > .set-row-note{ display:block; }
 .set-row-txt{ min-width:0; }
-.set-row-txt p{ font-size:12px; line-height:1.55; color:var(--ink-soft); margin-top:4px; max-width:72ch; }
+.set-row-txt p{ font-size:12px; line-height:1.55; color:var(--ink-soft); margin-top:4px; }
 .set-row-txt .ui-lbl{ color:var(--ink); }
 /* stands in the button's place when a row has a state to report rather than
    an action to offer — installed already, checked and current */
@@ -981,7 +981,7 @@ body::before{
 /* the one block of real prose in the chrome. Mono runs wide, so it caps at a
    readable measure — this is app furniture, not the review body, which is
    uncapped on purpose. */
-.about p{ font-size:12.5px; line-height:1.7; color:var(--ink-soft); max-width:70ch; }
+.about p{ font-size:12.5px; line-height:1.7; color:var(--ink-soft); }
 .about p + p{ margin-top:12px; }
 /* the footer now pairs a label with a button, so it centres them: stretched,
    the label's text sits at the top of a 32px box and reads 10px high of the
@@ -1006,6 +1006,7 @@ body::before{
 
 /* months grid */
 .mo-list{ display:flex; flex-direction:column; gap:12px; }
+.mo-seg{ margin-bottom:18px; }
 .mo-row{
   display:flex; align-items:center; justify-content:space-between; gap:14px;
   background:var(--card-w); border-radius:var(--r-md); border:1px solid var(--rule);
