@@ -37,7 +37,19 @@ const SEARCH_GAP_MS = 1200
 /** After a catalogue turns us away. Its own cooldown is 60s; this outwaits it. */
 const LIMITED_WAIT_MS = 65_000
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+/* Abort-aware, because the longest sleep here is 65 seconds: a Stop pressed
+   during the rate-limit wait must end the wait, not be discovered after it. */
+const sleep = (ms: number, sig?: AbortSignal) =>
+  new Promise<void>((r) => {
+    if (sig?.aborted) return r()
+    const t = setTimeout(done, ms)
+    function done() {
+      sig?.removeEventListener('abort', done)
+      clearTimeout(t)
+      r()
+    }
+    sig?.addEventListener('abort', done)
+  })
 
 export interface Progress {
   done: number
@@ -54,6 +66,26 @@ export interface Progress {
     404 rather than a 1×1 grey placeholder saved as somebody's book. */
 function olCover(isbn: string): string {
   return `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-L.jpg?default=false`
+}
+
+/** The other form of the same number. Open Library indexes covers by whichever
+    ISBN an edition was catalogued under, so a 13 that misses can hit as a 10
+    and vice versa — one extra request off a static host, only ever spent on a
+    miss. Only 978-prefixed 13s convert; a 979 book has no 10-digit form. */
+function otherIsbn(isbn: string): string | undefined {
+  const s = isbn.replace(/[-\s]/g, '')
+  if (/^978\d{10}$/.test(s)) {
+    const core = s.slice(3, 12)
+    const sum = [...core].reduce((a, d, i) => a + Number(d) * (10 - i), 0)
+    const check = (11 - (sum % 11)) % 11
+    return core + (check === 10 ? 'X' : String(check))
+  }
+  if (/^\d{9}[\dX]$/i.test(s)) {
+    const core = `978${s.slice(0, 9)}`
+    const sum = [...core].reduce((a, d, i) => a + Number(d) * (i % 2 ? 3 : 1), 0)
+    return core + String((10 - (sum % 10)) % 10)
+  }
+  return undefined
 }
 
 /**
@@ -93,7 +125,7 @@ export async function backfillCovers(
     p.current = undefined
     onProgress({ ...p })
     if (signal?.aborted) break
-    await sleep(got?.viaSearch ? SEARCH_GAP_MS : CDN_GAP_MS)
+    await sleep(got?.viaSearch ? SEARCH_GAP_MS : CDN_GAP_MS, signal)
   }
 
   p.current = undefined
@@ -104,17 +136,25 @@ export async function backfillCovers(
     rec: Review,
     sig?: AbortSignal
   ): Promise<{ cover: string; covers?: string[]; viaSearch: boolean } | undefined> {
-    /* Cheapest first: the exact edition, by number, off a static host. */
+    /* Cheapest first: the exact edition, by number, off a static host —
+       under BOTH forms of the number, because Open Library indexes a cover
+       by whichever ISBN the edition was catalogued with. */
     if (rec.isbn) {
-      const url = olCover(rec.isbn)
-      const data = await coverToDataUrl(url)
-      /* The URL is kept alongside the bytes so the edit page's cover grid has
-         a candidate to show without going and searching again. */
-      if (data) return { cover: data, covers: [url], viaSearch: false }
+      const twin = otherIsbn(rec.isbn)
+      for (const num of twin ? [rec.isbn, twin] : [rec.isbn]) {
+        if (sig?.aborted) return undefined
+        const url = olCover(num)
+        const data = await coverToDataUrl(url)
+        /* The URL is kept alongside the bytes so the edit page's cover grid
+           has a candidate to show without going and searching again. */
+        if (data) return { cover: data, covers: [url], viaSearch: false }
+      }
     }
     if (sig?.aborted) return undefined
 
-    /* Then the metered path — and only once per book. */
+    /* Then the metered path — and only once per book (plus one retry with
+       the subtitle cut: a colon subtitle is the commonest reason a search
+       misses a book the catalogues actually hold). */
     const q = `${rec.title} ${rec.author}`.trim()
     if (!q) return undefined
     try {
@@ -122,7 +162,7 @@ export async function backfillCovers(
       if (res.limited > 0 && !res.candidates.length) {
         p.waiting = true
         onProgress({ ...p })
-        await sleep(LIMITED_WAIT_MS)
+        await sleep(LIMITED_WAIT_MS, sig)
         p.waiting = false
         onProgress({ ...p })
         /* One retry after the cooldown. A second failure is the catalogue
@@ -133,21 +173,38 @@ export async function backfillCovers(
         const again = await searchBooks(q)
         return await fromCandidates(again.candidates)
       }
-      return await fromCandidates(res.candidates)
+      const got = await fromCandidates(res.candidates)
+      if (got) return got
+      /* Nothing usable under the full title. If it carries a subtitle, try
+         once more without it — same author, so the risk of the wrong book is
+         small, and a wrong cover would still only be a CANDIDATE fetch that
+         has to match this title's search. */
+      const short = rec.title.split(':')[0].trim()
+      if (sig?.aborted || !short || short === rec.title.trim()) return undefined
+      await sleep(SEARCH_GAP_MS, sig)
+      if (sig?.aborted) return undefined
+      const retry = await searchBooks(`${short} ${rec.author}`.trim())
+      return await fromCandidates(retry.candidates)
     } catch {
       return undefined
     }
   }
 
-  /* The candidate list is URLs; the card needs bytes. At most three are
-     tried: a book whose first three covers are all dead links is not worth a
-     fourth request in a sweep of eighty, and it still keeps the whole list on
-     the row so the cover stays changeable by hand afterwards. */
+  /* The candidate list is URLs; the card needs bytes. Google's cover host
+     (`books.google.com/books/content`) sends no CORS headers, so a fetch of
+     it can NEVER become a data URL — measured, not assumed — which is why it
+     sorts to the back: a book whose first candidates are all Google's would
+     otherwise spend every attempt on requests that cannot succeed. Six
+     attempts, not unlimited: a book whose first six reachable covers are all
+     dead is not worth a seventh request in a sweep of eighty. The whole list
+     still lands on the row so the cover stays changeable by hand afterwards. */
   async function fromCandidates(
     cands: { covers: string[] }[]
   ): Promise<{ cover: string; covers: string[]; viaSearch: true } | undefined> {
     const urls = [...new Set(cands.flatMap((c) => c.covers).filter(Boolean))]
-    for (const u of urls.slice(0, 3)) {
+    const corsBlocked = (u: string) => u.includes('books.google.')
+    const tryable = [...urls.filter((u) => !corsBlocked(u)), ...urls.filter(corsBlocked)]
+    for (const u of tryable.slice(0, 6)) {
       const data = await coverToDataUrl(u)
       if (data) return { cover: data, covers: urls, viaSearch: true }
     }

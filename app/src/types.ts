@@ -95,6 +95,13 @@ export interface Review {
   plates: Plate[]
   /** the style this review is displayed in; sharing can pick any style */
   style: StyleId
+  /**
+   * Where the row came in from, when it wasn't written here by hand. Set by
+   * the Goodreads import so it can be undone as a group — Settings offers
+   * "Remove the Goodreads import" against exactly these rows. Absent on
+   * everything else, including shelf copies an import merely updated.
+   */
+  source?: 'goodreads'
   createdAt: number
   /**
    * When this row was last written. Sync needs it: two devices holding the

@@ -870,40 +870,6 @@ body::before{
 .gr-ask p{ margin:10px 0 14px; }
 .gr-ask .fmt-pick{ margin-top:2px; }
 
-/* The checklist. A file can hold a whole year, so the list scrolls inside
-   its own box rather than pushing the buttons off the sheet — 200 books is a
-   real number, not a worst case. */
-.gr-list{
-  margin:4px 0 0; padding:0; list-style:none;
-  max-height:280px; overflow-y:auto;
-}
-.gr-bulk{
-  display:flex; align-items:baseline; gap:14px;
-  margin:10px 0 4px; font-size:11.5px; color:var(--ink-soft);
-}
-.gr-bulk span{ margin-right:auto; font-variant-numeric:tabular-nums; }
-.gr-bulk button{
-  background:none; border:0; padding:0; cursor:pointer;
-  font-family:var(--sans); font-size:11.5px; letter-spacing:.06em;
-  text-transform:uppercase; color:var(--ink); text-decoration:underline;
-  text-underline-offset:3px;
-}
-.gr-list li{ border-bottom:1px solid var(--rule); }
-.gr-list li:last-child{ border-bottom:0; }
-.gr-item{
-  display:grid; grid-template-columns:auto 1fr; gap:10px;
-  align-items:start; padding:8px 0; cursor:pointer;
-}
-.gr-item input{
-  width:16px; height:16px; margin:1px 0 0;
-  accent-color:var(--ink);
-}
-.gr-item-t{ display:block; font-size:12.5px; line-height:1.45; }
-.gr-item-n{
-  display:block; font-size:11.5px; line-height:1.45;
-  color:var(--ink-soft); margin-top:2px;
-}
-
 .gr-bar{
   height:6px; border-radius:999px; background:var(--rule);
   overflow:hidden; margin:0 0 12px;

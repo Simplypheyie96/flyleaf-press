@@ -25,7 +25,7 @@ const THEMES: { id: ThemeChoice; label: string }[] = [
    as a toggle: sharing itself is always images. */
 export function SettingsPage({ settings }: { settings: Settings }) {
   const [msg, setMsg] = useState('')
-  const [confirming, setConfirming] = useState<'demo' | 'clear' | null>(null)
+  const [confirming, setConfirming] = useState<'demo' | 'clear' | 'goodreads' | null>(null)
   /* Export and Import both ask for a format first — the two do different
      things with it, so neither assumes JSON on the user's behalf */
   const [choosing, setChoosing] = useState<'export' | 'import' | null>(null)
@@ -52,6 +52,9 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   /* live for the same reason: the row below counts what it is about to look
      up, and refuses when there is nothing */
   const coverless = useLiveQuery(() => db.reviews.filter((r) => !r.cover).count(), [], -1)
+  /* rows the Goodreads import ADDED — its undo works on exactly these, so the
+     row below only exists while there is an import to remove */
+  const grCount = useLiveQuery(() => db.reviews.filter((r) => r.source === 'goodreads').count(), [], 0)
   const some = count > 0
   /* two forms, because "all 1 review" is not English: the plain count for the
      result line, and a phrase that reads on a button and in a question */
@@ -134,6 +137,17 @@ export function SettingsPage({ settings }: { settings: Settings }) {
     /* say what was destroyed. "Library cleared." is true of clearing fourteen
        and of clearing nothing, so it could not tell those two apart either. */
     setMsg(`${gone} deleted. The shelf is empty.`)
+  }
+
+  /* Undo for the Goodreads import: removes the rows the import ADDED — marked
+     `source: 'goodreads'` when they were built — and nothing else. Buried like
+     any other delete, or the next Drive sync would put them straight back. */
+  const removeGoodreads = async () => {
+    setConfirming(null)
+    const rows = (await db.reviews.toArray()).filter((r) => r.source === 'goodreads')
+    for (const r of rows) await bury(r)
+    await db.reviews.bulkDelete(rows.map((r) => r.id as number))
+    setMsg(`${rows.length} imported book${rows.length === 1 ? '' : 's'} removed.`)
   }
 
   const runCoverSweep = async () => {
@@ -261,45 +275,45 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             </div>
             <button className="btn btn--ghost btn--sm" onClick={() => setChoosing('export')}>Export</button>
           </div>
-          {/* Goodreads has had no API since December 2020 — no new keys were
-              issued, existing ones answer 403, and it sends no CORS headers,
-              so even the RSS feed is unreadable from a browser. The export the
-              site gives its own users is the only route in that doesn't need a
-              server of ours, which the whole app is arranged around not having.
-              It is also the better route: no account, no consent screen, no
-              quota, and it works offline.
-
-              A row whose copy runs to four lines puts its button underneath —
-              beside, the button floats level with nothing. */}
-          <div className="set-row set-row--stack">
-            <div className="set-row-txt">
-              <div className="ui-lbl">Import from Goodreads</div>
-              <p>
-                Books you finished in {FROM_YEAR} or later, from a Goodreads export — in
-                Goodreads, go to My Books, then Import and export, then Export Library.
-                Anything already on your shelf is left alone.
-              </p>
+          {/* The import's undo. Shown only while there is an import to remove —
+              unlike Delete everything, which is a permanent feature of the app,
+              this row on a shelf that never imported would claim an import
+              happened. It removes ONLY the rows the import added; books written
+              here by hand, and shelf copies an import merely updated, stay. */}
+          {grCount > 0 && (
+            <div className="set-row">
+              <div className="set-row-txt">
+                <div className="ui-lbl">Remove the Goodreads import</div>
+                <p>
+                  Takes the {grCount === 1 ? 'one book' : `${grCount} books`} the
+                  import added back off the shelf. Books you added yourself stay.
+                </p>
+              </div>
+              <button className="btn btn--danger btn--sm" onClick={() => setConfirming('goodreads')}>
+                Remove
+              </button>
             </div>
-            <button className="btn btn--ghost btn--sm" onClick={() => grRef.current?.click()}>
-              Choose file
-            </button>
-            <input ref={grRef} type="file" accept=".csv,text/csv" hidden
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) setGrFile(f)
-                e.target.value = ''
-              }} />
-          </div>
+          )}
+          {/* ONE door in. A backup and a Goodreads export are different files,
+              but "get reviews into the app" is one job, and two rows for it
+              made people ask which one they wanted — the sheet behind this
+              button is where that question is answered, file by file. */}
           <div className="set-row">
             <div className="set-row-txt">
               <div className="ui-lbl">Import library</div>
-              <p>Adds the reviews from an export file to what's already here.</p>
+              <p>Adds reviews to what's already here — from a backup file or a Goodreads export.</p>
             </div>
             <button className="btn btn--ghost btn--sm" onClick={() => setChoosing('import')}>Import</button>
             <input ref={importRef} type="file" accept="application/json" hidden
               onChange={(e) => {
                 const f = e.target.files?.[0]
                 if (f) importJson(f)
+                e.target.value = ''
+              }} />
+            <input ref={grRef} type="file" accept=".csv,text/csv" hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) setGrFile(f)
                 e.target.value = ''
               }} />
           </div>
@@ -425,14 +439,22 @@ export function SettingsPage({ settings }: { settings: Settings }) {
       {choosing === 'import' && (
         <ChoiceSheet
           title="Import from"
-          body="Imported reviews are added to the shelf — nothing already here is replaced."
+          body="Imported reviews are added to the shelf — nothing already here is replaced without asking."
           choices={[
             { id: 'json', label: 'JSON · backup', detail: 'A file exported from Flyleaf Press on this or another device.' },
+            /* Goodreads has had no API since December 2020 — no new keys were
+               issued, existing ones answer 403, and it sends no CORS headers,
+               so even the RSS feed is unreadable from a browser. The export
+               the site gives its own users is the only route in that doesn't
+               need a server of ours. It is also the better route: no account,
+               no consent screen, no quota, and it works offline. */
+            { id: 'goodreads', label: 'Goodreads · CSV', detail: `Books you finished in ${FROM_YEAR} or later. In Goodreads, go to My Books, then Import and export, then Export Library.` },
             { id: 'pdf', label: 'PDF · document', detail: '', unavailable: 'A PDF holds pictures of the cards, not the reviews themselves — there is nothing in it to read back. Export JSON if you want to move a library.' },
           ]}
           onPick={(id) => {
             setChoosing(null)
             if (id === 'json') importRef.current?.click()
+            if (id === 'goodreads') grRef.current?.click()
           }}
           onCancel={() => setChoosing(null)}
         />
@@ -448,6 +470,15 @@ export function SettingsPage({ settings }: { settings: Settings }) {
         />
       )}
       {grFile && <GoodreadsSheet file={grFile} onClose={() => setGrFile(null)} />}
+      {confirming === 'goodreads' && (
+        <Confirm
+          title={grCount === 1 ? 'Remove the imported book?' : `Remove all ${grCount} imported books?`}
+          body="Ratings, covers and anything you've edited on them since go too, here and in any Drive backup. There is no undo."
+          action={grCount === 1 ? 'Remove it' : `Remove ${grCount} books`}
+          onConfirm={removeGoodreads}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
       {confirming === 'clear' && (
         <Confirm
           title={`Delete ${allOfThem}?`}

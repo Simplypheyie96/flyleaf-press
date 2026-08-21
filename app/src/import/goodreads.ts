@@ -312,10 +312,11 @@ export function todayIso(): string {
  * and the fold assigns the real number — numbering is per-device and stays
  * that way, because the Nº is printed on cards that have already been handed
  * out. Gaps are filled here, and only here, so a book the reader checked in
- * always arrives complete: a missing format takes `format` (the sheet's one
- * question), a missing rating takes AUTO_RATING, a missing date takes today.
+ * always arrives complete: a missing format takes `formats` (the sheet's one
+ * question — and it is multi-select, because format is multi-select everywhere
+ * in this app), a missing rating takes AUTO_RATING, a missing date takes today.
  */
-export function toReviews(books: GrBook[], format: FormatName): Review[] {
+export function toReviews(books: GrBook[], formats: FormatName[]): Review[] {
   const now = Date.now()
   const today = todayIso()
   return books.map((b) => ({
@@ -325,7 +326,7 @@ export function toReviews(books: GrBook[], format: FormatName): Review[] {
     series: b.series,
     seriesNo: b.seriesNo,
     finished: b.finished || today,
-    formats: b.formats.length ? b.formats : [format],
+    formats: b.formats.length ? b.formats : formats,
     rating: b.rating || AUTO_RATING,
     pages: b.pages,
     isbn: b.isbn,
@@ -335,6 +336,10 @@ export function toReviews(books: GrBook[], format: FormatName): Review[] {
        all, and a generated placeholder is banned. `backfillCovers` goes and
        looks one up afterwards, by ISBN, at a pace the catalogues will tolerate. */
     style: 'archive' as const,
+    /* Marked, so the whole import can be undone as a group from Settings.
+       Only rows the import ADDS carry it — a shelf copy that Replace merely
+       updated was yours before the file arrived and stays through a removal. */
+    source: 'goodreads' as const,
     createdAt: now,
     editedAt: now,
   }))
@@ -344,4 +349,48 @@ export function toReviews(books: GrBook[], format: FormatName): Review[] {
     it actually did without re-deriving the mapping. */
 export function fingerprintsOf(rows: Review[]): string[] {
   return rows.map((r) => fingerprint(r))
+}
+
+/**
+ * Replace shelf copies with what the file carries — runs only when the reader
+ * chose Replace in the import sheet, never by default. Field by field, and
+ * only fields the file's row actually has: "never replace something with less
+ * than itself" is the same rule the merge fold runs on, so a blank rating, an
+ * empty review or a missing date in the file never erases what is here. The
+ * cover, plates, style, Nº and created date are this device's own — Goodreads
+ * carries none of them — and are never touched.
+ */
+export async function replaceDuplicates(dups: GrBook[]): Promise<number> {
+  const mine = await db.reviews.toArray()
+  const flat = (s: string) => (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+  let replaced = 0
+  for (const b of dups) {
+    /* The same loose match that named it a duplicate: title and author, within
+       the same year — or any year for a row the file left undated. */
+    const row = mine.find(
+      (m) =>
+        flat(m.title) === flat(b.title) &&
+        flat(m.author) === flat(b.author) &&
+        (!b.finished || m.finished.slice(0, 4) === b.finished.slice(0, 4))
+    )
+    if (!row || row.id == null) continue
+    const patch: Partial<Review> = {}
+    if (b.rating) patch.rating = b.rating
+    if (b.finished) patch.finished = b.finished
+    if (b.body) patch.body = b.body
+    if (b.formats.length) patch.formats = b.formats
+    if (b.pages) patch.pages = b.pages
+    if (b.series) {
+      patch.series = b.series
+      patch.seriesNo = b.seriesNo
+    }
+    /* An ISBN is an edition claim; the file's only fills a gap, never
+       overrules a row that already knows its edition. */
+    if (b.isbn && !row.isbn) patch.isbn = b.isbn
+    if (!Object.keys(patch).length) continue
+    patch.editedAt = Date.now()
+    await db.reviews.update(row.id, patch)
+    replaced++
+  }
+  return replaced
 }

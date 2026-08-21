@@ -3,71 +3,52 @@ import { FORMAT_NAMES, type FormatName } from '../types'
 import { FORMAT, VERSION, type LibraryFile } from '../sync/backup'
 import { mergeLibrary } from '../sync/backup'
 import {
-  scanGoodreads, toReviews, AUTO_RATING, FROM_YEAR,
+  scanGoodreads, toReviews, replaceDuplicates, AUTO_RATING, FROM_YEAR,
   type GrBook, type GrScan,
 } from '../import/goodreads'
 import { backfillCovers, type Progress } from '../import/covers'
 
 /* Reading in a Goodreads export.
 
-   THE SCAN WRITES NOTHING. It reads the file, lists what it found, and stops.
-   Every book that CAN come in is a row with a checkbox: the complete ones
-   arrive checked, and the ones with a gap — no rating, no date read — arrive
-   unchecked, each saying exactly what checking it will do. Nothing is filled
-   in silently: a checked unrated book comes in rated 3 (the middle of the
-   scale, there to be corrected), and a checked undated book is dated today.
-   Both say so on their own row, in so many words, before the button is
-   pressed.
+   THE SCAN WRITES NOTHING. It reads the file, reports what it found, and
+   stops. Every book that CAN come in, comes in when the button is pressed —
+   there is no per-row decision to make. A real export is a year of reading,
+   and forty checkboxes was homework, not an interface; the rows it existed to
+   flag (no rating, no date read) are instead counted out loud in the report,
+   with exactly what gets filled in: an unrated book comes in rated 3 (the
+   middle of the scale, there to be corrected on its own page), an undated one
+   is dated today. Nothing is filled in silently — it is simply said once, for
+   the group, rather than asked forty times.
 
    The one grouped question stays: Goodreads records an EDITION word
    (Paperback, Kindle Edition, Audio CD) rather than a medium, and sometimes
    records nothing at all. "What were these read on?" is answerable in one
    tap and covers every such row at once.
 
-   The one thing with NO checkbox is a book finished before the window opens.
-   The import takes 2026 onward — a hard wall, not a default — so those rows
-   are counted and left out, with the sentence saying why. */
+   What never comes in is a book finished before the window opens. The import
+   takes 2026 onward — a hard wall, not a default — so those rows are counted
+   and left out, with the sentence saying why. */
 
 type Stage = 'reading' | 'report' | 'importing' | 'done'
 
-interface Item {
-  b: GrBook
-  key: string
-  /** complete rows arrive checked; rows with a gap arrive unchecked */
-  sure: boolean
-  /** what checking this row fills in, or nothing for a complete one */
-  note?: string
-}
-
-function itemsOf(scan: GrScan): Item[] {
-  const mk = (b: GrBook, sure: boolean): Item => {
-    const gaps: string[] = []
-    if (!b.rating) gaps.push(`no rating — comes in rated ${AUTO_RATING}`)
-    if (!b.finished) gaps.push('no date read — comes in dated today')
-    if (!b.formats.length) gaps.push('format from the pick below')
-    return {
-      b,
-      key: `${b.title}|${b.author}|${b.finished}`,
-      sure,
-      note: gaps.join(' · ') || undefined,
-    }
-  }
-  return [
-    ...scan.ready.map((b) => mk(b, true)),
-    ...scan.needFormat.map((b) => mk(b, true)),
-    ...scan.unrated.map((b) => mk(b, false)),
-    ...scan.noDate.map((b) => mk(b, false)),
-  ]
+/** Everything the scan will import, in one list. */
+function importable(scan: GrScan): GrBook[] {
+  return [...scan.ready, ...scan.needFormat, ...scan.unrated, ...scan.noDate]
 }
 
 export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => void }) {
   const [stage, setStage] = useState<Stage>('reading')
   const [scan, setScan] = useState<GrScan | null>(null)
-  const [items, setItems] = useState<Item[]>([])
-  const [sel, setSel] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
-  const [fmt, setFmt] = useState<FormatName>('Physical')
+  /* Multi-select, like the format field everywhere else in the app — a book
+     read half on paper and finished on audio is both, and the import's one
+     answer should be able to say so. */
+  const [fmts, setFmts] = useState<FormatName[]>(['Physical'])
+  /** what to do with books already on the shelf — leaving them is the default,
+      because replacing is the choice that can change existing cards */
+  const [dupes, setDupes] = useState<'keep' | 'replace'>('keep')
   const [added, setAdded] = useState(0)
+  const [replaced, setReplaced] = useState(0)
   const [cov, setCov] = useState<Progress | null>(null)
   const abort = useRef<AbortController | null>(null)
 
@@ -77,11 +58,8 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
       .then((t) => scanGoodreads(t))
       .then((s) => {
         if (!live) return
-        const it = itemsOf(s)
         setScan(s)
-        setItems(it)
-        setSel(new Set(it.filter((i) => i.sure).map((i) => i.key)))
-        setFmt(s.commonFormat)
+        setFmts([s.commonFormat])
         setStage('report')
       })
       .catch((e) => { if (live) { setError(e instanceof Error ? e.message : String(e)); setStage('report') } })
@@ -103,47 +81,47 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
     onClose()
   }
 
-  function toggle(key: string) {
-    setSel((s) => {
-      const next = new Set(s)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
-
-  const picked = items.filter((i) => sel.has(i.key)).map((i) => i.b)
-  /* the format question is shown whenever any LISTED row lacks one, selected
-     or not — a question that appears and disappears as boxes are ticked would
-     jump the sheet around under the finger doing the ticking */
-  const asksFormat = items.some((i) => !i.b.formats.length)
+  const picked: GrBook[] = scan ? importable(scan) : []
+  const asksFormat = picked.some((b) => !b.formats.length)
+  const willAdd = picked.length
+  const willReplace = dupes === 'replace' ? (scan?.duplicates.length ?? 0) : 0
 
   async function run() {
-    if (!scan || !picked.length) return
+    if (!scan || (!picked.length && !willReplace)) return
     setStage('importing')
-    const reviews = toReviews(picked, fmt)
-    /* THE THIRD DOOR. This does not touch the database itself — it hands the
-       rows to the same fold a hand-carried backup and a Drive sync arrive
-       through, so the exact-fingerprint dedupe, the tombstone check that keeps
-       a deliberately deleted book from coming back, and the local Nº numbering
-       are all the behaviour that is already tested rather than a second
-       implementation of it. */
-    const lib: LibraryFile = { app: FORMAT, version: VERSION, reviews }
-    const res = await mergeLibrary(JSON.stringify(lib))
-    setAdded(res.added)
+
+    if (picked.length) {
+      const reviews = toReviews(picked, fmts)
+      /* THE THIRD DOOR. This does not touch the database itself — it hands the
+         rows to the same fold a hand-carried backup and a Drive sync arrive
+         through, so the exact-fingerprint dedupe, the tombstone check that keeps
+         a deliberately deleted book from coming back, and the local Nº numbering
+         are all the behaviour that is already tested rather than a second
+         implementation of it. */
+      const lib: LibraryFile = { app: FORMAT, version: VERSION, reviews }
+      const res = await mergeLibrary(JSON.stringify(lib))
+      setAdded(res.added)
+    }
+
+    /* The one write the fold cannot do: overwriting shelf copies with the
+       file's, because their fingerprints differ by date on purpose. Only when
+       the reader chose it. */
+    let redone = 0
+    if (willReplace) {
+      redone = await replaceDuplicates(scan.duplicates)
+      setReplaced(redone)
+    }
 
     /* Then go and find the artwork. A Goodreads export carries none at all, so
        without this every imported book is a blank card. It runs here rather
        than on a later visit because this is the moment somebody is watching
        and can see it happen. */
-    if (res.added > 0) {
+    if (picked.length > 0 || redone > 0) {
       abort.current = new AbortController()
       await backfillCovers(setCov, abort.current.signal)
     }
     setStage('done')
   }
-
-  const willAdd = sel.size
 
   return (
     <div
@@ -167,9 +145,8 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
               {' '}Nothing has been added yet.
             </p>
 
-            {(scan.duplicates.length > 0 || scan.beforeWindow > 0 || scan.otherShelves > 0) && (
+            {(scan.beforeWindow > 0 || scan.otherShelves > 0) && (
               <dl className="gr-tally">
-                {scan.duplicates.length > 0 && <Row n={scan.duplicates.length} what="already on your shelf" />}
                 {scan.beforeWindow > 0 && (
                   <Row n={scan.beforeWindow} what={`finished before ${FROM_YEAR} — the import takes ${FROM_YEAR} onward`} />
                 )}
@@ -177,47 +154,49 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
               </dl>
             )}
 
-            {items.length > 0 && (
+            {willAdd > 0 && (
               <div className="gr-ask">
                 <div className="ui-lbl">The books</div>
-                {/* a real export is a year of reading — checking forty boxes one
-                    at a time is not an interface, so past a handful the list
-                    carries its own bulk controls and a running count */}
-                {items.length > 6 && (
-                  <div className="gr-bulk">
-                    <span>{sel.size} of {items.length} checked</span>
-                    <button type="button" onClick={() => setSel(new Set(items.map((i) => i.key)))}>
-                      Check all
-                    </button>
-                    <button type="button" onClick={() => setSel(new Set())}>
-                      Uncheck all
-                    </button>
-                  </div>
-                )}
-                {items.some((i) => i.note) && (
-                  <p>
-                    Books with a gap arrive unchecked. Check one and the gap is
-                    filled the way its row says — a placeholder to correct on
-                    the book's own page, never left blank.
-                  </p>
-                )}
-                <ul className="gr-list">
-                  {items.map((i) => (
-                    <li key={i.key}>
-                      <label className="gr-item">
-                        <input
-                          type="checkbox"
-                          checked={sel.has(i.key)}
-                          onChange={() => toggle(i.key)}
-                        />
-                        <span>
-                          <span className="gr-item-t">{i.b.title} — {i.b.author}</span>
-                          {i.note && <span className="gr-item-n">{i.note}</span>}
-                        </span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
+                {/* No per-row decisions — everything importable comes in, and
+                    what gets filled where the file has a gap is said here, once
+                    for the group, so nothing is invented silently. */}
+                <p>
+                  {willAdd} book{willAdd === 1 ? '' : 's'} to import.
+                  {scan.unrated.length > 0 &&
+                    ` ${scan.unrated.length} carr${scan.unrated.length === 1 ? 'ies' : 'y'} no rating and come${scan.unrated.length === 1 ? 's' : ''} in rated ${AUTO_RATING} — the middle of the scale, there to be corrected on the book's own page.`}
+                  {scan.noDate.length > 0 &&
+                    ` ${scan.noDate.length} carr${scan.noDate.length === 1 ? 'ies' : 'y'} no date read and come${scan.noDate.length === 1 ? 's' : ''} in dated today.`}
+                </p>
+              </div>
+            )}
+
+            {scan.duplicates.length > 0 && (
+              <div className="gr-ask">
+                <div className="ui-lbl">Already on your shelf</div>
+                <p>
+                  {scan.duplicates.length === 1
+                    ? 'One of these books is already here.'
+                    : `${scan.duplicates.length} of these books are already here.`}
+                  {' '}Replacing takes only what the file carries — rating, dates,
+                  review, pages — and never touches a cover, plates, or anything
+                  the file left blank.
+                </p>
+                <div className="fmt-pick">
+                  <button
+                    type="button"
+                    aria-pressed={dupes === 'keep'}
+                    onClick={() => setDupes('keep')}
+                  >
+                    Leave them as they are
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={dupes === 'replace'}
+                    onClick={() => setDupes('replace')}
+                  >
+                    Replace with the file’s copy
+                  </button>
+                </div>
               </div>
             )}
 
@@ -227,15 +206,21 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
                 <p>
                   Goodreads records the edition rather than the medium, and said
                   nothing for some of these. The pick covers every book missing
-                  a format.
+                  a format, and more than one can be true.
                 </p>
                 <div className="fmt-pick">
                   {FORMAT_NAMES.map((f) => (
                     <button
                       key={f}
                       type="button"
-                      aria-pressed={fmt === f}
-                      onClick={() => setFmt(f)}
+                      aria-pressed={fmts.includes(f)}
+                      onClick={() =>
+                        setFmts((cur) =>
+                          cur.includes(f)
+                            ? cur.filter((x) => x !== f)
+                            : FORMAT_NAMES.filter((x) => x === f || cur.includes(x))
+                        )
+                      }
                     >
                       {f}
                     </button>
@@ -245,10 +230,17 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
             )}
 
             <div className="confirm-actions">
-              <button className="btn" onClick={run} disabled={willAdd === 0} autoFocus>
-                {willAdd === 0
+              <button
+                className="btn"
+                onClick={run}
+                disabled={willAdd + willReplace === 0 || (asksFormat && !fmts.length)}
+                autoFocus
+              >
+                {willAdd + willReplace === 0
                   ? 'Nothing to import'
-                  : `Import ${willAdd} book${willAdd === 1 ? '' : 's'}`}
+                  : willAdd > 0
+                    ? `Import ${willAdd} book${willAdd === 1 ? '' : 's'}`
+                    : `Replace ${willReplace} book${willReplace === 1 ? '' : 's'}`}
               </button>
               <button className="btn btn--ghost" onClick={close}>Cancel</button>
             </div>
@@ -283,11 +275,14 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
         {stage === 'done' && (
           <>
             <p>
-              {added === 0
+              {added === 0 && replaced === 0
                 ? 'Nothing new was added — every book in the file was already on your shelf.'
-                : `${added} book${added === 1 ? '' : 's'} added.`}
+                : [
+                    added > 0 && `${added} book${added === 1 ? '' : 's'} added.`,
+                    replaced > 0 && `${replaced} replaced with the file’s copy.`,
+                  ].filter(Boolean).join(' ')}
               {cov && cov.found > 0 && ` ${cov.found} cover${cov.found === 1 ? '' : 's'} found.`}
-              {cov && cov.done < cov.total && ` ${cov.total - cov.done} still without one — run the import again to keep looking.`}
+              {cov && cov.done < cov.total && ` ${cov.total - cov.done} still without a cover — run the import again to keep looking.`}
             </p>
             <div className="confirm-actions">
               <button className="btn" onClick={close} autoFocus>Done</button>
