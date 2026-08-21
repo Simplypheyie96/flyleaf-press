@@ -62,6 +62,15 @@ const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_BOOKS_KEY
 const COOLDOWN_MS = 60_000
 const coolUntil: Record<Source, number> = { openlibrary: 0, apple: 0, google: 0 }
 
+/** How long until EVERY catalogue is answering again — 0 when none is cooling.
+    The cover sweep reads it: a rate-limited book is deferred to the end of the
+    queue rather than waited on, and this is how long the retry pass at the end
+    actually has to wait. Max across sources, not min — the deferral exists so
+    the retry meets all three answering. */
+export function cooldownRemaining(): number {
+  return Math.max(0, ...Object.values(coolUntil).map((t) => t - Date.now()))
+}
+
 /** Turn a bad response into either a RateLimited (and a cooldown) or a plain
     error. Google reports an exhausted quota as 403 as often as 429, so both
     count; for the others only 429 does. */

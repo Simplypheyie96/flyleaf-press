@@ -1,9 +1,12 @@
 /* Share = images, always. A review renders onto paper pages, splitting at a
    paragraph boundary; each page becomes one PNG.
-   The pages build inside a hidden host in THIS document, at a width the CALLER
-   chooses — the card CSS has no viewport media queries (compact is a class),
-   so the host's width, not the phone's, decides which layout the card composes
-   in. That is exactly what the export shape selects. */
+   The pages build inside a hidden host in THIS document, at the COLUMN width
+   the chosen option composes on: Large lays the review on a 988px card
+   (1020px leaf → 2040px file), Small on the standard 688px card (720px leaf →
+   1440px file). Both export at exactly 2×, so text renders the same size in
+   both files — the large one is wider and correspondingly shorter, never a
+   scaled copy of the small one. The compact class is on-screen sizing and
+   never enters an export. */
 
 import type { Review, StyleId, CollageId, ExportShape } from '../types'
 import { SHAPE_FILE_W, SHAPE_W } from '../types'
@@ -38,24 +41,25 @@ export function makeHost(): HTMLDivElement {
   return host
 }
 
-/* Set the host to the shape's composition width and put it on the right side
-   of the card's compact threshold. Everything downstream — where the review
-   splits, how wide the leaf is, what the file measures — follows from this. */
+/* The host composes at the chosen option's column width — that width IS the
+   choice. The one thing it never does is apply .card-compact: the compact
+   phone layout (plates stacked in a narrow column) once served as "Small
+   card" and made the options different-looking objects rather than the same
+   card on two widths of paper. */
 function prepHost(host: HTMLDivElement, shape: ExportShape): void {
   host.style.width = `${SHAPE_W[shape]}px`
-  host.classList.toggle('card-compact', shape === 'phone')
+  host.classList.remove('card-compact')
 }
 
-/* Put a leaf into its shape: the shape's width, and the tight ground.
-   This has to happen the moment a page exists, BEFORE anything on it is
-   measured. Doing it at the end instead — which is what it used to do — meant
-   every page was composed at the base rule's 720px while the splitter decided
-   where to break, and only then narrowed: the phone shape picked its split
-   points against a 632px column and reflowed into a 350px one, so the leaf it
-   had just measured as full came out twice the height of its own page. */
+/* Put a leaf on the tight ground at its option's column width, and stamp it
+   with the FILE width that option chose. The stamp is what the scale is
+   derived from later (file ÷ leaf), so the choice travels with the page itself
+   and the rasterizer never has to guess which option built it. This has to
+   happen the moment a page exists, BEFORE anything on it is measured. */
 function ground(pages: HTMLElement[], shape: ExportShape): HTMLElement[] {
   for (const p of pages) {
     p.style.width = `${SHAPE_W[shape]}px`
+    p.dataset.fileW = String(SHAPE_FILE_W[shape])
     p.classList.add('share-page--tight')
   }
   return pages
@@ -304,7 +308,7 @@ function isFlat(g: CanvasRenderingContext2D, x: number, y: number, w: number, h:
    than it ever was. */
 async function bakeImages(pages: HTMLElement[]): Promise<void> {
   for (const page of pages) {
-  const scale = scaleOf(page.offsetWidth)
+  const scale = scaleOf(page)
   for (const img of page.querySelectorAll('img')) {
     try {
       if (!img.naturalWidth || !img.naturalHeight) continue
@@ -370,17 +374,15 @@ function fitsOneCanvas(w: number, h: number, k: number): boolean {
   return dw <= MAX_CANVAS_SIDE && dh <= MAX_CANVAS_SIDE && dw * dh <= MAX_CANVAS_PX
 }
 
-/* The export scale is the ratio that makes THIS leaf its shape's file width.
-   Every page is grounded at exactly SHAPE_W[shape] before it gets here, so the
-   leaf's own laid-out width says which shape it is — nearest wins, and the two
-   are 338px apart, so "nearest" is not a guess. Deriving the scale from the
-   width the file is divided by is also what makes the file width EXACT:
-   round(w × FILE_W/w) cannot land anywhere but FILE_W. */
-function shapeOfWidth(w: number): 'wide' | 'phone' {
-  return Math.abs(w - SHAPE_W.wide) <= Math.abs(w - SHAPE_W.phone) ? 'wide' : 'phone'
-}
-function scaleOf(w: number): number {
-  return w > 0 ? SHAPE_FILE_W[shapeOfWidth(w)] / w : 1
+/* The export scale is the ratio that makes THIS leaf the file width its
+   option asked for — read off the stamp `ground()` left on the page, divided
+   by the leaf's own laid-out width. Deriving it this way is what makes the
+   file width EXACT: round(w × FILE_W/w) cannot land anywhere but FILE_W.
+   A page with no stamp (the print path builds its own) is a wide file. */
+function scaleOf(page: HTMLElement): number {
+  const w = page.offsetWidth
+  if (!w) return 1
+  return (Number(page.dataset.fileW) || SHAPE_FILE_W.wide) / w
 }
 
 function gcd(a: number, b: number): number {
@@ -397,7 +399,7 @@ function exportScale(page: HTMLElement): number {
   const w = page.offsetWidth
   const h = page.offsetHeight
   if (!w || !h) return 1
-  const base = scaleOf(w)
+  const base = scaleOf(page)
   if (CAN_STREAM_PNG || fitsOneCanvas(w, h, base)) return base
   return Math.min(
     base,
@@ -554,12 +556,12 @@ async function onePng(
    down the leaf, which crops without re-cloning anything.
 
    The band boundaries are chosen in device rows, snapped to where the device
-   grid and the CSS grid realign: the scale is fractional (25/6 wide, 720/191
-   phone), so a band origin lands on an integer CSS pixel only every
-   dw / gcd(dw, w) device rows — 25 rows for the wide shape, 720 for the
-   phone. That is what keeps the joins invisible: a band whose origin landed
-   on a fractional CSS pixel would resample the text a hair differently from
-   its neighbour and draw a line across the review. */
+   grid and the CSS grid realign: a band origin lands on an integer CSS pixel
+   only every dw / gcd(dw, w) device rows — every second row now that both
+   options export at exactly 2× (the general rule survives any future scale).
+   That is what keeps the joins invisible: a band whose origin landed on a
+   fractional CSS pixel would resample the text a hair differently from its
+   neighbour and draw a line across the review. */
 async function tallPng(
   page: HTMLElement,
   toSvg: (n: HTMLElement, o: Record<string, unknown>) => Promise<string>,
@@ -567,7 +569,7 @@ async function tallPng(
 ): Promise<Blob> {
   const w = page.offsetWidth
   const h = page.offsetHeight
-  const k = scaleOf(w)
+  const k = scaleOf(page)
   const boxes = inkedBoxes(page)
   const inner = await leafSvg(page, toSvg, fontEmbedCSS)
 
@@ -626,7 +628,7 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
        review and every collage — that path is the faster one and it is the
        one this app spends nearly all its time on. The banded writer takes
        over only where the alternative used to be a soft image. */
-    if (CAN_STREAM_PNG && !fitsOneCanvas(page.offsetWidth, page.offsetHeight, scaleOf(page.offsetWidth))) {
+    if (CAN_STREAM_PNG && !fitsOneCanvas(page.offsetWidth, page.offsetHeight, scaleOf(page))) {
       blobs.push(await tallPng(page, toSvg, fontEmbedCSS))
       continue
     }
@@ -799,7 +801,9 @@ export function printReviewPdf(rec: Review, style: StyleId): void {
   const host = makeHost()
   host.style.cssText = 'position:fixed;left:0;top:0;width:720px;z-index:9999;background:#fff;'
   host.classList.add('print-host')
-  paginateReview(rec, style, host, 'wide')
+  /* print pages are portrait paper — the standard 720px leaf, never the broad
+     export column */
+  paginateReview(rec, style, host, 'phone')
   const cleanup = () => {
     host.remove()
     window.removeEventListener('afterprint', cleanup)
@@ -820,7 +824,7 @@ export function printLibraryPdf(reviews: Review[]): void {
   const stage = document.createElement('div')
   host.appendChild(stage)
   for (const rec of sorted) {
-    const pages = paginateReview(rec, rec.style, stage, 'wide')
+    const pages = paginateReview(rec, rec.style, stage, 'phone')
     for (const p of pages) host.insertBefore(p, stage)
   }
   stage.remove()

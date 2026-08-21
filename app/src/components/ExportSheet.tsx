@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { EXPORT_SHAPES, EXPORT_SHAPE_NAMES, SHAPE_W, type ExportShape } from '../types'
 import {
-  canShareFiles, fileName, makeHost, pixelSize, savesViaSystemSheet,
+  canShareFiles, fileName, pixelSize, savesViaSystemSheet,
   type ExportMode, type ExportResult,
 } from '../share/export'
 
 /* One sheet for both ways out. Share and Save used to be two buttons on the
    page with a preview behind only one of them, so sharing — the thing the app
    exists for — was the path that never showed you what you were about to hand
-   over, and never let you choose its shape. They are the same act up to the
-   last step now: look at the card, pick the shape, then either hand it to
+   over, and never let you choose its size. They are the same act up to the
+   last step now: look at the card, pick the size, then either hand it to
    another app or write it to the device.
    The style picker rides along when the caller has one (a review), because the
    preview is right here; a collage page already carries its picker above the
@@ -62,31 +62,24 @@ export function ExportSheet({
     !m ? '…' : m.n > 1 ? `${m.w} px wide · ${m.n} images` : `${m.w} × ${m.h} px`
 
   /* The preview is the real export pipeline at a smaller scale — same
-     composition width, same pagination, same card — so what is measured here is
-     what gets sent. It rebuilds on every shape change because the shape IS the
-     layout: the card composes differently at 450 than at 720. */
+     composition width, same pagination, same card — so what is measured here
+     is what gets sent. The two options are two COLUMN widths, so the
+     unselected figure has to come off its own layout: build it first, measure
+     it, then build the chosen one last so the preview shows the layout that
+     will actually go out. */
   useEffect(() => {
     const wrap = wrapRef.current
     const host = hostRef.current
     if (!wrap || !host) return
     const rebuild = () => {
+      const measured: Partial<Record<ExportShape, { w: number; h: number; n: number }>> = {}
+      for (const s of EXPORT_SHAPES.filter((s) => s !== shape)) {
+        measured[s] = pixelSize(build(host, s))
+      }
       const built = build(host, shape)
+      measured[shape] = pixelSize(built)
       setPages(built.length)
-      /* the unselected shape is measured in a throwaway host, so filling the
-         picker never disturbs what is on screen */
-      setPx(
-        Object.fromEntries(
-          EXPORT_SHAPES.map((s) => {
-            if (s === shape) return [s, pixelSize(built)]
-            const tmp = makeHost()
-            try {
-              return [s, pixelSize(build(tmp, s))]
-            } finally {
-              tmp.remove()
-            }
-          })
-        )
-      )
+      setPx(measured)
       const k = Math.min(1, wrap.clientWidth / SHAPE_W[shape])
       host.style.transform = `scale(${k})`
       let h = 0
@@ -147,7 +140,7 @@ export function ExportSheet({
         </div>
 
         <div className="field" style={{ marginTop: 18 }}>
-          <span className="ui-lbl">Shape</span>
+          <span className="ui-lbl">Size</span>
           {/* The name says which layout of the card is going out; the figure
               under it says how big the file is. */}
           <div className="size-pick">

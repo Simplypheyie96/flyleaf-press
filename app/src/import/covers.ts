@@ -18,8 +18,10 @@
 
    2. THE FALLBACK GOES ONE AT A TIME. `searchBooks` already carries a 60s
       per-source cooldown and a per-query cache, so the sweep's only job is to
-      not stampede: one book in flight, a pause between, and a long wait when a
-      catalogue says it has had enough.
+      not stampede: one book in flight, a pause between — and when a catalogue
+      says it has had enough, the book is deferred to the end of the queue and
+      the sweep moves on, waiting only once, at the end, for whatever cooldown
+      is still left.
 
    Resumability is a property of the query, not of saved progress: the sweep
    only ever looks at rows that have no cover, so stopping it and starting it
@@ -27,18 +29,17 @@
    and there is no half-finished state to get stale. */
 
 import { db } from '../db'
-import { amazonCover, coverToDataUrl, isbn10Of, otherIsbn, searchBooks } from '../catalog'
+import { amazonCover, cooldownRemaining, coverToDataUrl, isbn10Of, otherIsbn, searchBooks } from '../catalog'
 import type { Review } from '../types'
 
 /** Between two static cover fetches. Enough to be a queue rather than a burst. */
 const CDN_GAP_MS = 120
 /** Between two catalogue searches — the expensive path. */
 const SEARCH_GAP_MS = 1200
-/** After a catalogue turns us away. Its own cooldown is 60s; this outwaits it. */
-const LIMITED_WAIT_MS = 65_000
 
-/* Abort-aware, because the longest sleep here is 65 seconds: a Stop pressed
-   during the rate-limit wait must end the wait, not be discovered after it. */
+/* Abort-aware, because the longest sleep here is a rate-limit cooldown of up
+   to a minute: a Stop pressed during it must end the wait, not be discovered
+   after it. */
 const sleep = (ms: number, sig?: AbortSignal) =>
   new Promise<void>((r) => {
     if (sig?.aborted) return r()
@@ -57,8 +58,9 @@ export interface Progress {
   found: number
   /** the book being looked up right now, for the line under the bar */
   current?: string
-  /** true while waiting out a rate limit, so the pause can be explained
-      rather than looking like a stall */
+  /** true while waiting out a rate limit before retrying the deferred books —
+      only ever at the END of the sweep, so the pause can be explained rather
+      than looking like a stall */
   waiting?: boolean
 }
 
@@ -83,39 +85,75 @@ export async function backfillCovers(
   const p: Progress = { done: 0, total: todo.length, found: 0 }
   onProgress({ ...p })
 
-  for (const r of todo) {
-    if (signal?.aborted) break
-    p.current = r.title
-    onProgress({ ...p })
-
-    const got = await coverFor(r, signal)
-    if (got && r.id != null) {
-      /* `covers` too, not just `cover` — the edit page's cover grid reads the
-         candidate list, and a row with none gets a fresh catalogue search when
-         it opens. Storing what we already found saves that. */
-      await db.reviews.update(r.id, {
-        cover: got.cover,
-        covers: got.covers?.length ? got.covers : undefined,
-        editedAt: Date.now(),
-      })
-      p.found++
+  /* Two passes. A book whose search came back rate-limited is not waited on —
+     it is DEFERRED to the end and the sweep moves straight to the next book:
+     its static-host lookups and the catalogues still answering owe nothing to
+     the one that turned us away. Only when nothing else is left does the sweep
+     wait, and only for as long as the cooldown actually has left — not a flat
+     minute spent in front of a bar that looks stalled. */
+  const deferred: Review[] = []
+  await pass(todo, deferred)
+  if (deferred.length && !signal?.aborted) {
+    const wait = cooldownRemaining()
+    if (wait > 0) {
+      p.waiting = true
+      onProgress({ ...p })
+      await sleep(wait, signal)
+      p.waiting = false
+      onProgress({ ...p })
     }
-
-    p.done++
-    p.current = undefined
-    onProgress({ ...p })
-    if (signal?.aborted) break
-    await sleep(got?.viaSearch ? SEARCH_GAP_MS : CDN_GAP_MS, signal)
+    /* One retry pass. A book limited AGAIN here is the catalogue genuinely
+       unavailable — it stays coverless, which is the honest outcome and never
+       recorded as "has no cover", and the sweep can be run again later. */
+    if (!signal?.aborted) await pass(deferred, null)
   }
 
   p.current = undefined
   onProgress({ ...p })
   return p
 
+  /** One run down a list of books. `defer` is where a rate-limited book goes
+      to be retried later — or null on the retry pass itself, where a second
+      limit just counts the book done and coverless. */
+  async function pass(list: Review[], defer: Review[] | null) {
+    for (const r of list) {
+      if (signal?.aborted) return
+      p.current = r.title
+      onProgress({ ...p })
+
+      const got = await coverFor(r, signal)
+      if (got === 'limited' && defer) {
+        /* not done — it comes back at the end of the queue */
+        defer.push(r)
+        p.current = undefined
+        onProgress({ ...p })
+        continue
+      }
+      if (got && got !== 'limited' && r.id != null) {
+        /* `covers` too, not just `cover` — the edit page's cover grid reads the
+           candidate list, and a row with none gets a fresh catalogue search when
+           it opens. Storing what we already found saves that. */
+        await db.reviews.update(r.id, {
+          cover: got.cover,
+          covers: got.covers?.length ? got.covers : undefined,
+          editedAt: Date.now(),
+        })
+        p.found++
+      }
+
+      p.done++
+      p.current = undefined
+      onProgress({ ...p })
+      if (signal?.aborted) return
+      const searched = got === 'limited' || (got !== undefined && got.viaSearch)
+      await sleep(searched ? SEARCH_GAP_MS : CDN_GAP_MS, signal)
+    }
+  }
+
   async function coverFor(
     rec: Review,
     sig?: AbortSignal
-  ): Promise<{ cover: string; covers?: string[]; viaSearch: boolean } | undefined> {
+  ): Promise<{ cover: string; covers?: string[]; viaSearch: boolean } | 'limited' | undefined> {
     /* Cheapest first: the exact edition, by number, off a static host —
        under BOTH forms of the number, because Open Library indexes a cover
        by whichever ISBN the edition was catalogued with. */
@@ -146,20 +184,10 @@ export async function backfillCovers(
     if (!q) return undefined
     try {
       const res = await searchBooks(q)
-      if (res.limited > 0 && !res.candidates.length) {
-        p.waiting = true
-        onProgress({ ...p })
-        await sleep(LIMITED_WAIT_MS, sig)
-        p.waiting = false
-        onProgress({ ...p })
-        /* One retry after the cooldown. A second failure is the catalogue
-           genuinely being unavailable, and the sweep can be run again later —
-           this row simply stays coverless, which is the honest outcome and not
-           recorded as "has no cover". */
-        if (sig?.aborted) return undefined
-        const again = await searchBooks(q)
-        return await fromCandidates(again.candidates)
-      }
+      /* A rate-limited silence is not a miss — the book is handed back to the
+         caller to be deferred and retried once the cooldown has run out,
+         while the sweep gets on with the books it CAN still look up. */
+      if (res.limited > 0 && !res.candidates.length) return 'limited'
       const got = await fromCandidates(res.candidates)
       if (got) return got
       /* Nothing usable under the full title. If it carries a subtitle, try

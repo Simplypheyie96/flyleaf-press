@@ -252,7 +252,7 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
             <p>
               {cov
                 ? cov.waiting
-                  ? 'A catalogue is rate-limiting us. Waiting a minute, then carrying on.'
+                  ? 'A catalogue is rate-limiting us. Waiting it out, then retrying the skipped books.'
                   : `Looking up covers — ${cov.done} of ${cov.total}.`
                 : 'Adding the books…'}
             </p>

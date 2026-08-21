@@ -133,41 +133,41 @@ export interface Grave {
 export type ThemeChoice = 'system' | 'light' | 'dark'
 export type ShelfView = 'list' | 'covers'
 
-/* Which LAYOUT of the card gets saved — not what resolution, and not what
-   background it sits on. The card CSS carries no media queries; its mobile
-   sizing is the .card-compact class, chosen by whatever box the card is in.
-   So the export can lay the same card out either way:
-     wide  — the paper layout, cover beside the metadata
-     phone — the compact layout, the card at exactly the width a handset gives it
-   Both save as the card on its own mat; only the card's proportions differ.
-   Deliberately not "portrait"/"landscape" — both are taller than they are
-   wide, so that pair would describe neither one. */
+/* Which COLUMN the review is laid on, and therefore what shape the file is.
+   Text renders at the same size in both files (both export at exactly 2×);
+   what differs is the width of the paper. Large card composes on a 988px
+   column and saves 2040px wide — a long review runs SHORTER because each line
+   holds more words, not because anything shrinks. Small card is the standard
+   688px column saved 1440px wide, and runs taller. An earlier version made
+   the two the same composition merely scaled, which made "Large" a blown-up
+   copy of "Small" — same aspect, no reason to exist — and before that it
+   switched Small into the compact phone layout, which was a different-looking
+   object. Both were cut on report. The ids keep their old names because they
+   persist in settings; renaming them would orphan every saved pick. */
 export type ExportShape = 'wide' | 'phone'
 export const EXPORT_SHAPES: readonly ExportShape[] = ['wide', 'phone'] as const
 export const EXPORT_SHAPE_NAMES: Record<ExportShape, string> = {
   wide: 'Large card',
   phone: 'Small card',
 }
-/* How wide the FILE comes out, per shape — the one figure the choice buys,
-   asked for as round numbers (3000 and 1440). The export scale is DERIVED
-   (file ÷ leaf), so these stay exact while the leaf widths below stay what
-   they are: design facts about how the card composes, not about pixels.
-   The scales land fractional (25/6 and 720/191); the banded writer snaps its
-   seams to where the two grids realign — see tallPng in share/export.ts. */
-export const SHAPE_FILE_W: Record<ExportShape, number> = { wide: 3000, phone: 1440 }
+/* How wide the FILE comes out, per option — round numbers (2040 and 1440),
+   each exactly 2× its own leaf (1020 / 720). The export scale is still
+   DERIVED (file ÷ leaf) rather than hardcoded, so the width is exact by
+   construction — and because both scales are the integer 2, text rasterizes
+   at the same device size in both files and the banded writer's seams land
+   on every second row. See tallPng in share/export.ts. */
+export const SHAPE_FILE_W: Record<ExportShape, number> = { wide: 2040, phone: 1440 }
 /* The MAT is the same on both shapes. It is a slim even border, not a frame:
    the card is the object, and every pixel of mat is a pixel the card does not
    get in the file. Its floor is the tallest thing that VISIBLY overhangs a
    card — the decorations are tuned so nothing reaches past ~14px. */
 export const MAT = 16
-/* The width each layout composes the CARD at — the leaf is this plus the mat on
-   both sides. A phone at 390 gives its card 350 after the app's 20px gutters, so
-   that is the width the phone shape must reproduce: setting the LEAF to 390
-   instead squeezed the card to 288, narrower than any handset ever shows it. */
-/* Wide is 688 card + 16 mat each side = a 720px leaf. A long review runs very
-   tall, and the wider column is what keeps its height in proportion. Phone
-   stays the width a 390px handset actually gives the card. */
-export const SHAPE_CARD_W: Record<ExportShape, number> = { wide: 688, phone: 350 }
+/* The CARD widths — the leaf is this plus the mat on both sides. `wide` is
+   the broad column (988 + 16 mat each side = a 1020px leaf → 2040px file);
+   `phone` is the standard column every screen shows (688 → a 720px leaf →
+   1440px file). The on-screen compact sizing (`.card-compact`, ~350px) is a
+   display concern that lives in cards.css and never enters an export. */
+export const SHAPE_CARD_W: Record<ExportShape, number> = { wide: 988, phone: 688 }
 export const SHAPE_W: Record<ExportShape, number> = {
   wide: SHAPE_CARD_W.wide + MAT * 2,
   phone: SHAPE_CARD_W.phone + MAT * 2,

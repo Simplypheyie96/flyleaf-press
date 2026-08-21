@@ -43,36 +43,43 @@ export function starRowStatic(r: number, size: number, fillCol?: string, lineCol
   return `<div class="stars" role="img" aria-label="${+r.toFixed(2)} out of 5">${out}</div>`
 }
 
-/* ── The gem clip — thin wire, small, plain light silver, near vertical.
-      Rendered at 15×38 (of a 36×90 box) so the wire reads at under half a
-      pixel-millimetre: delicate, like the reference, not a drawn cartoon.
-      Straddles the top edge: the sheet edge lands around svg-y 30 → the
-      default top of -13px leaves ~25px of clip on the card. ── */
+/* ── The gem clip — thin wire, small, plain silver, near vertical.
+      Rendered at 15×38 (of a 36×90 box): delicate, like the reference, not a
+      drawn cartoon. Straddles the top edge: the sheet edge lands around
+      svg-y 30 → the default top of -13px leaves ~25px of clip on the card.
+      The silver must stay DARKER than every pale card ground — an earlier
+      take ran its highlight up to #E3E6E9, which is within a few RGB points
+      of the blue ground (#DAE4EE), so the middle of each loop vanished into
+      the paper and the clip read as a broken ghost. No filter: drop-shadow
+      is a rasterizer risk here (the airmail box-shadow precedent). ── */
 export function pclip(x: number, y?: number | null, rot?: number): string {
   const gid = 'pg' + ++uid
   return `<svg class="pclip" style="left:${x}px;top:${y != null ? y : -13}px;transform:rotate(${rot || 0}deg)"
     width="15" height="38" viewBox="0 0 36 90" aria-hidden="true">
     <defs>
       <linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#B3B8BE"/>
-        <stop offset=".5" stop-color="#E3E6E9"/>
-        <stop offset="1" stop-color="#BCC1C7"/>
+        <stop offset="0" stop-color="#7E858D"/>
+        <stop offset=".5" stop-color="#B7BCC2"/>
+        <stop offset="1" stop-color="#868D95"/>
       </linearGradient>
     </defs>
     <path d="M12.5 24 v40 a5.5 5.5 0 0 0 11 0 V15 a8.5 8.5 0 0 0 -17 0 v48 a11 11 0 0 0 22 0 V27"
-      fill="none" stroke="url(#${gid})" stroke-width="2.6" stroke-linecap="round"
-      style="filter:drop-shadow(0 .5px .5px rgba(27,25,23,.2))"/>
+      fill="none" stroke="url(#${gid})" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`
 }
 
+/* A staple seen from the FRONT of the sheet is just its crown — a short
+   solid metal bar. The earlier take drew the crown-and-legs wire outline,
+   and rotated to the corner that read as a snapped paperclip, not a staple:
+   the legs belong through the paper, not on it. One bar, cylinder-shaded. */
 export function staple(): string {
   const gid = 'st' + ++uid
-  return `<svg class="s5-staple" width="26" height="10" viewBox="0 0 26 10" aria-hidden="true">
+  return `<svg class="s5-staple" width="26" height="8" viewBox="0 0 26 8" aria-hidden="true">
     <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#D9D9D6"/><stop offset="1" stop-color="#8B8B87"/>
+      <stop offset="0" stop-color="#B4B8B5"/><stop offset=".45" stop-color="#8A8E8B"/>
+      <stop offset="1" stop-color="#5F625F"/>
     </linearGradient></defs>
-    <path d="M2 9 V3 A2 2 0 0 1 4 1 H22 A2 2 0 0 1 24 3 V9"
-      fill="none" stroke="url(#${gid})" stroke-width="2.4"/>
+    <rect x="1.5" y="2" width="23" height="4" rx="2" fill="url(#${gid})"/>
   </svg>`
 }
 

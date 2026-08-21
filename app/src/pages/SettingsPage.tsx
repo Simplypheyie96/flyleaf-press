@@ -333,7 +333,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
                     <span style={{ width: `${Math.round((cov.done / cov.total) * 100)}%` }} />
                   </div>
                   <p className="gr-now">
-                    {cov.waiting ? 'A catalogue is rate-limiting us \u2014 waiting it out\u2026' : cov.current ?? `${cov.done} of ${cov.total}`}
+                    {cov.waiting ? 'Waiting out a rate limit to retry the skipped books\u2026' : cov.current ?? `${cov.done} of ${cov.total}`}
                   </p>
                 </>
               )}

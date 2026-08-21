@@ -671,9 +671,12 @@
   font-family:var(--serif); font-weight:600; line-height:1.2; letter-spacing:-.01em;
   font-variant-numeric:tabular-nums; color:var(--tx, var(--ink));
 }
-/* every arrangement holds one long value — "Best" is a book title — so they
-   all truncate on the same terms rather than each inventing its own */
-.mo-stats b{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+/* every arrangement holds one long value — "Best" is a book title — and a
+   summary that cuts its own words with an ellipsis stops summarizing, so the
+   value WRAPS. Every arrangement can afford the line: the chits, cells and
+   register columns are blocks, and the leader rows keep their dots on the
+   first baseline. overflow-wrap guards the one case a space can't save. */
+.mo-stats b{ min-width:0; overflow-wrap:anywhere; }
 
 /* C1 · frame-edge strip. One running line of codes: figure, then the name of
    the figure, separated by a sprocket dot. Baseline-aligned rather than
