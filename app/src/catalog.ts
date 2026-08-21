@@ -99,6 +99,47 @@ export function isIsbn(q: string): boolean {
   return /^\d{9}[\dX]$/.test(s) || /^97[89]\d{10}$/.test(s)
 }
 
+/** The other form of the same number. Cover hosts index by whichever ISBN an
+    edition was catalogued under, so a 13 that misses can hit as a 10 and vice
+    versa. Only 978-prefixed 13s convert; a 979 book has no 10-digit form. */
+export function otherIsbn(isbn: string): string | undefined {
+  const s = isbn.replace(/[-\s]/g, '')
+  if (/^978\d{10}$/.test(s)) {
+    const core = s.slice(3, 12)
+    const sum = [...core].reduce((a, d, i) => a + Number(d) * (10 - i), 0)
+    const check = (11 - (sum % 11)) % 11
+    return core + (check === 10 ? 'X' : String(check))
+  }
+  if (/^\d{9}[\dX]$/i.test(s)) {
+    const core = `978${s.slice(0, 9)}`
+    const sum = [...core].reduce((a, d, i) => a + Number(d) * (i % 2 ? 3 : 1), 0)
+    return core + String((10 - (sum % 10)) % 10)
+  }
+  return undefined
+}
+
+/** The 10-digit form of an ISBN, if it has one: the number itself when it is
+    already a 10, its converted twin when it is a 978-prefixed 13, and nothing
+    for a 979 (which has no 10-digit form). */
+export function isbn10Of(isbn: string): string | undefined {
+  const s = isbn.replace(/[-\s]/g, '')
+  if (/^\d{9}[\dX]$/i.test(s)) return s
+  if (/^978\d{10}$/.test(s)) return otherIsbn(s)
+  return undefined
+}
+
+/** Amazon's static cover host — the only place that reliably has art for
+    Amazon-imprint books (Lake Union, Montlake, 47North…), which Apple never
+    sells and Open Library often catalogues coverless. Keyed by ISBN-10 ONLY
+    (a 13 answers with the miss GIF even when the book exists), CORS-open
+    (`access-control-allow-origin: *`, measured), no API and no quota. A miss
+    is a 200 carrying a 43-byte 1×1 GIF, not a 404 — which is exactly what
+    `coverToDataUrl`'s `blob.size < 500` guard exists to reject, so a blank
+    can never be saved as somebody's cover. */
+export function amazonCover(isbn10: string): string {
+  return `https://images-na.ssl-images-amazon.com/images/P/${encodeURIComponent(isbn10)}.01.LZZ.jpg`
+}
+
 /* Open Library only returns the fields you ask for, and the page count is not
    in the default set — an ISBN lookup without this list came back with every
    candidate's `pages` undefined, which is what made the Pages field stop
@@ -209,6 +250,16 @@ export async function searchBooks(q: string): Promise<SearchResult> {
         merged.push(c)
       }
     }
+  }
+  /* Amazon's cover host as a last candidate for anything carrying an ISBN —
+     it is how an Amazon-imprint book (which Open Library returns coverless
+     and Apple does not carry at all) still shows its art at Add time. Last,
+     because catalogue art is usually cleaner when it exists. */
+  for (const c of merged) {
+    const ten = c.isbn ? isbn10Of(c.isbn) : undefined
+    if (!ten) continue
+    const u = amazonCover(ten)
+    if (!c.covers.includes(u)) c.covers.push(u)
   }
   return { candidates: merged.slice(0, 12), answered, asked: 3, limited }
 }

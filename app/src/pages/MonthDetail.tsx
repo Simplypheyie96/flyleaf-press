@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import type { Settings, CollageId, ExportShape } from '../types'
-import { COLLAGE_IDS, COLLAGE_NAMES, COLLAGE_GROUNDS } from '../types'
+import { COLLAGE_IDS, YEAR_COLLAGE_IDS, COLLAGE_NAMES, COLLAGE_GROUNDS } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
 import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
@@ -16,7 +16,7 @@ import {
 } from '../format'
 
 /* One span's collage — viewable and shareable at any point, open or closed.
-   All seven collage styles are live here and again at share.
+   A month offers all seven collage styles; a year offers the four that pack.
 
    ONE PAGE SERVES THE MONTH AND THE YEAR. A year key is four digits and a
    month key is seven, so `/collage/2026` and `/collage/2026-07` are told apart
@@ -33,6 +33,11 @@ export function MonthDetail({ settings }: { settings: Settings }) {
   const keyOf = isYear ? yearKey : monthKey
   const nameOf = isYear ? yearName : monthName
   const [style, setStyle] = useState<CollageId>(settings.defaultCollage)
+  /* A year offers only the styles that PACK — the row-per-book ones run to a
+     strip at a hundred books. Derived rather than clamped in state, so walking
+     month → year → month in one mounted page never loses the picked style. */
+  const ids = isYear ? YEAR_COLLAGE_IDS : COLLAGE_IDS
+  const shown = ids.includes(style) ? style : ids[0]
   /* one way out — the sheet shows the collage, its shape, and both
      destinations */
   const [sharing, setSharing] = useState(false)
@@ -50,8 +55,8 @@ export function MonthDetail({ settings }: { settings: Settings }) {
      object itself would make the sheet re-lay-out the collage on every tick. */
   const build = useCallback(
     (host: HTMLDivElement, shape: ExportShape) =>
-      books && key ? buildCollagePage({ name: nameOf(key), books, span }, style, host, shape) : [],
-    [books, key, style, span]
+      books && key ? buildCollagePage({ name: nameOf(key), books, span }, shown, host, shape) : [],
+    [books, key, shown, span]
   )
 
   if (!month) return null
@@ -90,13 +95,13 @@ export function MonthDetail({ settings }: { settings: Settings }) {
           <>
             <div className="field">
               <span className="ui-lbl">Collage style</span>
-              <StylePicker ids={COLLAGE_IDS} names={COLLAGE_NAMES} grounds={COLLAGE_GROUNDS} value={style} onChange={setStyle} />
+              <StylePicker ids={ids} names={COLLAGE_NAMES} grounds={COLLAGE_GROUNDS} value={shown} onChange={setStyle} />
             </div>
 
             {/* a twenty-book month — let alone a hundred-book year — is taller
                 than any phone, so the same clamp the review card uses keeps the
                 actions within reach */}
-            <CollapsedCard html={renderCollage(month, style)} />
+            <CollapsedCard html={renderCollage(month, shown)} />
 
             {/* the style picker and the card are already on this page, so the
                 sheet carries no picker of its own — it opens on the shape and
@@ -116,7 +121,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
           shape={settings.exportShape}
           onShape={(s) => db.settings.update(1, { exportShape: s })}
           exportImages={(mode: ExportMode, shape: ExportShape) =>
-            shareCollageImage(month, style, mode, shape)}
+            shareCollageImage(month, shown, mode, shape)}
           onClose={() => setSharing(false)}
         />
       )}

@@ -27,7 +27,7 @@
    and there is no half-finished state to get stale. */
 
 import { db } from '../db'
-import { coverToDataUrl, searchBooks } from '../catalog'
+import { amazonCover, coverToDataUrl, isbn10Of, otherIsbn, searchBooks } from '../catalog'
 import type { Review } from '../types'
 
 /** Between two static cover fetches. Enough to be a queue rather than a burst. */
@@ -66,26 +66,6 @@ export interface Progress {
     404 rather than a 1×1 grey placeholder saved as somebody's book. */
 function olCover(isbn: string): string {
   return `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-L.jpg?default=false`
-}
-
-/** The other form of the same number. Open Library indexes covers by whichever
-    ISBN an edition was catalogued under, so a 13 that misses can hit as a 10
-    and vice versa — one extra request off a static host, only ever spent on a
-    miss. Only 978-prefixed 13s convert; a 979 book has no 10-digit form. */
-function otherIsbn(isbn: string): string | undefined {
-  const s = isbn.replace(/[-\s]/g, '')
-  if (/^978\d{10}$/.test(s)) {
-    const core = s.slice(3, 12)
-    const sum = [...core].reduce((a, d, i) => a + Number(d) * (10 - i), 0)
-    const check = (11 - (sum % 11)) % 11
-    return core + (check === 10 ? 'X' : String(check))
-  }
-  if (/^\d{9}[\dX]$/i.test(s)) {
-    const core = `978${s.slice(0, 9)}`
-    const sum = [...core].reduce((a, d, i) => a + Number(d) * (i % 2 ? 3 : 1), 0)
-    return core + String((10 - (sum % 10)) % 10)
-  }
-  return undefined
 }
 
 /**
@@ -141,13 +121,20 @@ export async function backfillCovers(
        by whichever ISBN the edition was catalogued with. */
     if (rec.isbn) {
       const twin = otherIsbn(rec.isbn)
-      for (const num of twin ? [rec.isbn, twin] : [rec.isbn]) {
+      const ten = isbn10Of(rec.isbn)
+      const urls = [
+        ...(twin ? [rec.isbn, twin] : [rec.isbn]).map(olCover),
+        /* Amazon last: OL's art is usually cleaner, but for an
+           Amazon-imprint book it is the only host that answers at all. */
+        ...(ten ? [amazonCover(ten)] : []),
+      ]
+      for (const url of urls) {
         if (sig?.aborted) return undefined
-        const url = olCover(num)
         const data = await coverToDataUrl(url)
         /* The URL is kept alongside the bytes so the edit page's cover grid
            has a candidate to show without going and searching again. */
         if (data) return { cover: data, covers: [url], viaSearch: false }
+        await sleep(CDN_GAP_MS, sig)
       }
     }
     if (sig?.aborted) return undefined

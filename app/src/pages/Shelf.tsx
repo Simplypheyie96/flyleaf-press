@@ -232,7 +232,9 @@ export function Shelf({ settings }: { settings: Settings }) {
           <section key={g.key ?? `flat-${i}`}>
             {g.key && (
               <div className="sec-h">
-                <span className="ui-lbl">{monthName(g.key)}</span>
+                <span className="ui-lbl">
+                  {monthName(g.key)} · {g.rows.length} book{g.rows.length === 1 ? '' : 's'}
+                </span>
                 <Link className="ui-lbl" to={`/collage/${g.key}`}>Collage →</Link>
               </div>
             )}

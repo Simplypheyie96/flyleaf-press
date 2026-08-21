@@ -63,7 +63,40 @@ export function Write() {
      otherwise swallow the form */
   const [coverOpen, setCoverOpen] = useState(false)
 
+  /* the modal's own search: a book published under two names ("Another Life"
+     is also "The Things We Do for Love") keeps its other jacket reachable —
+     found covers are APPENDED to the grid, never replacing what is there */
+  const [coverQ, setCoverQ] = useState('')
+  const [coverSearching, setCoverSearching] = useState(false)
+  const [coverNote, setCoverNote] = useState('')
+
   const [saving, setSaving] = useState(false)
+
+  const searchMoreCovers = async () => {
+    const q = coverQ.trim()
+    if (!q || coverSearching) return
+    setCoverSearching(true)
+    setCoverNote('')
+    try {
+      const res = await searchBooks(q)
+      const found: string[] = []
+      for (const c of res.candidates)
+        for (const u of c.covers) if (!covers.includes(u) && !found.includes(u)) found.push(u)
+      if (found.length) {
+        setCovers((cur) => [...cur, ...found.filter((u) => !cur.includes(u)).slice(0, 12)])
+      } else {
+        setCoverNote(
+          res.limited > 0
+            ? 'A catalogue is rate-limiting us — try again in a minute.'
+            : 'No covers under that title.'
+        )
+      }
+    } catch {
+      setCoverNote('The search failed. Check the connection and try again.')
+    } finally {
+      setCoverSearching(false)
+    }
+  }
 
   useEffect(() => {
     getSettings().then((s) => !editing && setStyle(s.defaultStyle))
@@ -407,6 +440,20 @@ export function Write() {
             {!hunting && covers.length === 0 && !uploadedCover && (
               <p className="field-hint">No covers found. Upload your own, or go without.</p>
             )}
+            <div className="field">
+              <label className="ui-lbl" htmlFor="w-coverq">Find covers under another title</label>
+              <div style={{ display: 'flex', gap: 8, minWidth: 0 }}>
+                <input id="w-coverq" type="search" value={coverQ} style={{ flex: 1, minWidth: 0 }}
+                  placeholder="e.g. the book's other name"
+                  onChange={(e) => setCoverQ(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && searchMoreCovers()} />
+                <button type="button" className="btn btn--ghost btn--sm"
+                  disabled={coverSearching || !coverQ.trim()} onClick={searchMoreCovers}>
+                  {coverSearching ? 'Searching…' : 'Find covers'}
+                </button>
+              </div>
+              {coverNote && <p className="field-hint">{coverNote}</p>}
+            </div>
             <div className="modal-actions">
               <label className="btn btn--ghost btn--sm">
                 Upload your own

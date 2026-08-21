@@ -3,6 +3,11 @@ export type CollageId = 'contact' | 'shelf' | 'tickets' | 'pinboard' | 'ledger' 
 
 export const STYLE_IDS: StyleId[] = ['archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes', 'jacket', 'airmail']
 export const COLLAGE_IDS: CollageId[] = ['contact', 'shelf', 'tickets', 'pinboard', 'ledger', 'postmark', 'marquee']
+/* The styles a YEAR offers. Tickets, Ledger and Marquee draw one row per book,
+   which holds a month and runs to a strip nobody can read as an object at two
+   hundred rows — a year gets only the styles that PACK: the grids and the
+   spine rail. All seven still ship and still serve every month. */
+export const YEAR_COLLAGE_IDS: CollageId[] = ['contact', 'shelf', 'pinboard', 'postmark']
 
 export const STYLE_NAMES: Record<StyleId, string> = {
   archive: 'Archive',
@@ -140,12 +145,16 @@ export type ShelfView = 'list' | 'covers'
 export type ExportShape = 'wide' | 'phone'
 export const EXPORT_SHAPES: readonly ExportShape[] = ['wide', 'phone'] as const
 export const EXPORT_SHAPE_NAMES: Record<ExportShape, string> = {
-  wide: 'Wide layout',
-  phone: 'Phone layout',
+  wide: 'Large card',
+  phone: 'Small card',
 }
-/* One quality for both. Resolution was never the interesting choice here —
-   a 3× file is not "for desktop", it is just a bigger file of the same thing. */
-export const EXPORT_SCALE = 2
+/* How wide the FILE comes out, per shape — the one figure the choice buys,
+   asked for as round numbers (3000 and 1440). The export scale is DERIVED
+   (file ÷ leaf), so these stay exact while the leaf widths below stay what
+   they are: design facts about how the card composes, not about pixels.
+   The scales land fractional (25/6 and 720/191); the banded writer snaps its
+   seams to where the two grids realign — see tallPng in share/export.ts. */
+export const SHAPE_FILE_W: Record<ExportShape, number> = { wide: 3000, phone: 1440 }
 /* The MAT is the same on both shapes. It is a slim even border, not a frame:
    the card is the object, and every pixel of mat is a pixel the card does not
    get in the file. Its floor is the tallest thing that VISIBLY overhangs a
@@ -155,10 +164,9 @@ export const MAT = 16
    both sides. A phone at 390 gives its card 350 after the app's 20px gutters, so
    that is the width the phone shape must reproduce: setting the LEAF to 390
    instead squeezed the card to 288, narrower than any handset ever shows it. */
-/* Wide is sized so the file comes out 1440px across at EXPORT_SCALE = 2:
-   688 card + 16 mat each side = a 720px leaf. A long review runs very tall,
-   and the wider column is what keeps its height in proportion. Phone stays
-   the width a 390px handset actually gives the card. */
+/* Wide is 688 card + 16 mat each side = a 720px leaf. A long review runs very
+   tall, and the wider column is what keeps its height in proportion. Phone
+   stays the width a 390px handset actually gives the card. */
 export const SHAPE_CARD_W: Record<ExportShape, number> = { wide: 688, phone: 350 }
 export const SHAPE_W: Record<ExportShape, number> = {
   wide: SHAPE_CARD_W.wide + MAT * 2,

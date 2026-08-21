@@ -6,7 +6,7 @@
    in. That is exactly what the export shape selects. */
 
 import type { Review, StyleId, CollageId, ExportShape } from '../types'
-import { EXPORT_SCALE, SHAPE_W } from '../types'
+import { SHAPE_FILE_W, SHAPE_W } from '../types'
 import { renderReviewCard } from '../cards/review'
 import { renderCollage, type MonthData } from '../cards/collage'
 import { paragraphs } from '../format'
@@ -303,13 +303,14 @@ function isFlat(g: CanvasRenderingContext2D, x: number, y: number, w: number, h:
    (a tainted canvas cannot be read back), and there the old path is no worse
    than it ever was. */
 async function bakeImages(pages: HTMLElement[]): Promise<void> {
-  const imgs = pages.flatMap((p) => [...p.querySelectorAll('img')])
-  for (const img of imgs) {
+  for (const page of pages) {
+  const scale = scaleOf(page.offsetWidth)
+  for (const img of page.querySelectorAll('img')) {
     try {
       if (!img.naturalWidth || !img.naturalHeight) continue
       const box = img.getBoundingClientRect()
-      const w = Math.max(1, Math.round(box.width * EXPORT_SCALE))
-      const h = Math.max(1, Math.round(box.height * EXPORT_SCALE))
+      const w = Math.max(1, Math.round(box.width * scale))
+      const h = Math.max(1, Math.round(box.height * scale))
       /* never upscale: a 60px thumbnail asked to fill 300px gains nothing but
          bytes, so the natural size is the ceiling */
       const k = Math.min(1, img.naturalWidth / w, img.naturalHeight / h)
@@ -335,6 +336,7 @@ async function bakeImages(pages: HTMLElement[]): Promise<void> {
       /* tainted or undrawable — leave the original src alone */
     }
   }
+  }
   /* the swapped sources are new images; give them the same guarantee */
   await settleImages(pages)
 }
@@ -349,8 +351,8 @@ async function bakeImages(pages: HTMLElement[]): Promise<void> {
    These bound the *canvas*, not the PNG, which addresses 2^31 a side. So a
    leaf too tall for one canvas is drawn in horizontal bands and written
    through `encodePng`, which streams scanlines and never holds the picture.
-   Length stops costing sharpness: every export is EXPORT_SCALE, whatever the
-   review's length. See src/share/png.ts. */
+   Length stops costing sharpness: every export comes out at its shape's full
+   file width, whatever the review's length. See src/share/png.ts. */
 /* the ground a saved image is painted on, matching --paper */
 const PAPER = '#F4F2ED'
 const MAX_CANVAS_PX = 16_777_216
@@ -368,6 +370,24 @@ function fitsOneCanvas(w: number, h: number, k: number): boolean {
   return dw <= MAX_CANVAS_SIDE && dh <= MAX_CANVAS_SIDE && dw * dh <= MAX_CANVAS_PX
 }
 
+/* The export scale is the ratio that makes THIS leaf its shape's file width.
+   Every page is grounded at exactly SHAPE_W[shape] before it gets here, so the
+   leaf's own laid-out width says which shape it is — nearest wins, and the two
+   are 338px apart, so "nearest" is not a guess. Deriving the scale from the
+   width the file is divided by is also what makes the file width EXACT:
+   round(w × FILE_W/w) cannot land anywhere but FILE_W. */
+function shapeOfWidth(w: number): 'wide' | 'phone' {
+  return Math.abs(w - SHAPE_W.wide) <= Math.abs(w - SHAPE_W.phone) ? 'wide' : 'phone'
+}
+function scaleOf(w: number): number {
+  return w > 0 ? SHAPE_FILE_W[shapeOfWidth(w)] / w : 1
+}
+
+function gcd(a: number, b: number): number {
+  while (b) { const t = a % b; a = b; b = t }
+  return a
+}
+
 /* Only reached where CompressionStream is missing — Safari before 16.4, and
    nothing else current. There the old behaviour is the honest one: drop the
    pixel ratio until the canvas will hold the image, and let `pixelSize` print
@@ -376,10 +396,11 @@ function fitsOneCanvas(w: number, h: number, k: number): boolean {
 function exportScale(page: HTMLElement): number {
   const w = page.offsetWidth
   const h = page.offsetHeight
-  if (!w || !h) return EXPORT_SCALE
-  if (CAN_STREAM_PNG || fitsOneCanvas(w, h, EXPORT_SCALE)) return EXPORT_SCALE
+  if (!w || !h) return 1
+  const base = scaleOf(w)
+  if (CAN_STREAM_PNG || fitsOneCanvas(w, h, base)) return base
   return Math.min(
-    EXPORT_SCALE,
+    base,
     Math.sqrt(MAX_CANVAS_PX / (w * h)),
     MAX_CANVAS_SIDE / w,
     MAX_CANVAS_SIDE / h
@@ -532,11 +553,13 @@ async function onePng(
    band then wraps that same string in an outer <svg> whose viewBox is panned
    down the leaf, which crops without re-cloning anything.
 
-   The band boundaries are chosen in device rows and are even, so at
-   EXPORT_SCALE = 2 every band maps exactly two device pixels to one CSS
-   pixel at an integer offset. That is what keeps the joins invisible: a band
-   whose origin landed on a half pixel would resample the text a hair
-   differently from its neighbour and draw a line across the review. */
+   The band boundaries are chosen in device rows, snapped to where the device
+   grid and the CSS grid realign: the scale is fractional (25/6 wide, 720/191
+   phone), so a band origin lands on an integer CSS pixel only every
+   dw / gcd(dw, w) device rows — 25 rows for the wide shape, 720 for the
+   phone. That is what keeps the joins invisible: a band whose origin landed
+   on a fractional CSS pixel would resample the text a hair differently from
+   its neighbour and draw a line across the review. */
 async function tallPng(
   page: HTMLElement,
   toSvg: (n: HTMLElement, o: Record<string, unknown>) => Promise<string>,
@@ -544,14 +567,15 @@ async function tallPng(
 ): Promise<Blob> {
   const w = page.offsetWidth
   const h = page.offsetHeight
-  const k = EXPORT_SCALE
+  const k = scaleOf(w)
   const boxes = inkedBoxes(page)
   const inner = await leafSvg(page, toSvg, fontEmbedCSS)
 
   const dw = Math.round(w * k)
   const dh = Math.round(h * k)
+  const step = dw / gcd(dw, Math.round(w))
   const bandDev =
-    Math.max(2, 2 * Math.floor(Math.min(MAX_CANVAS_SIDE, BAND_PX / dw) / 2))
+    Math.max(step, step * Math.floor(Math.min(MAX_CANVAS_SIDE, BAND_PX / dw) / step))
 
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!
@@ -602,7 +626,7 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
        review and every collage — that path is the faster one and it is the
        one this app spends nearly all its time on. The banded writer takes
        over only where the alternative used to be a soft image. */
-    if (CAN_STREAM_PNG && !fitsOneCanvas(page.offsetWidth, page.offsetHeight, EXPORT_SCALE)) {
+    if (CAN_STREAM_PNG && !fitsOneCanvas(page.offsetWidth, page.offsetHeight, scaleOf(page.offsetWidth))) {
       blobs.push(await tallPng(page, toSvg, fontEmbedCSS))
       continue
     }
