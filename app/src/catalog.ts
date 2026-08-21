@@ -132,7 +132,10 @@ async function searchOpenLibrary(q: string): Promise<Candidate[]> {
 }
 
 async function searchApple(q: string): Promise<Candidate[]> {
-  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=ebook&limit=8`
+  /* `country=US` pins the storefront — same as Flyleaf. Without it Apple picks
+     one from the caller's IP, and storefronts differ wildly in catalogue depth:
+     a book that is plainly on Apple Books comes back empty from a thin one. */
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=ebook&limit=8&country=US`
   const res = await fetch(url)
   if (!res.ok) reject('apple', res.status)
   const data = await res.json()

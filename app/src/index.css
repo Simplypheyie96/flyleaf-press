@@ -344,7 +344,7 @@ body::before{
    measured 0px where every other pair in the form has 20px. */
 .form-sec > .field:last-child{ margin-bottom:0; }
 .form-sec > *:last-child{ margin-bottom:0; }
-.field input[type="text"], .field input[type="search"], .field input[type="date"], .field input[type="number"], .field textarea, .field select{
+.field input[type="text"], .field input[type="search"], .field input[type="date"], .field input[type="email"], .field input[type="number"], .field textarea, .field select{
   border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
   color:var(--ink); font-family:var(--sans); font-size:13px;
   padding:11px 12px; outline:none; width:100%; min-width:0;
@@ -693,7 +693,7 @@ body::before{
    already 16.5px, which is why writing a review never had the bug. */
 @media (pointer: coarse){
   .field input[type="text"], .field input[type="search"], .field input[type="date"],
-  .field input[type="number"], .field textarea, .field select,
+  .field input[type="email"], .field input[type="number"], .field textarea, .field select,
   .shelf-tools input[type="search"],
   .plate-edit-row input{
     font-size:16px;
@@ -818,6 +818,22 @@ body::before{
   margin:12px 0 20px;
 }
 .confirm-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+/* the tip jar's amount presets — pressed chips, same clothing as the format
+   chips on the editor: chrome stays black-on-white, the pressed one inverts */
+.tip-amounts{ display:flex; gap:8px; flex-wrap:wrap; margin:2px 0 16px; }
+.tip-amount{
+  font:inherit; font-size:13px; padding:8px 14px; cursor:pointer;
+  background:var(--paper); color:var(--ink);
+  border:1px solid var(--rule); border-radius:999px;
+}
+.tip-amount[aria-pressed="true"]{
+  background:var(--ink); color:var(--paper); border-color:var(--ink);
+}
+.tip-fine{
+  font-size:11.5px; line-height:1.6; color:var(--ink-soft);
+  margin:16px 0 0;
+}
 
 /* format chooser — one full-width slip per option, label over explanation */
 .choice-list{ display:flex; flex-direction:column; gap:10px; margin:16px 0 20px; }

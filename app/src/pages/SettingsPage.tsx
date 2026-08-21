@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react'
 import { GoodreadsSheet } from '../components/GoodreadsSheet'
+import { backfillCovers, type Progress } from '../import/covers'
+import { Tip, TIP_JAR } from '../components/Tip'
 import { FROM_YEAR } from '../import/goodreads'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
@@ -34,11 +36,22 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   const importRef = useRef<HTMLInputElement>(null)
   const grRef = useRef<HTMLInputElement>(null)
   const [grFile, setGrFile] = useState<File | null>(null)
+  /* the cover sweep, runnable from here as well as from inside the Goodreads
+     import — a sweep that got rate-limited or interrupted there had no way to
+     be run again, which is how a shelf ends up with "so many books without
+     covers" and no button anywhere to fix it */
+  const [cov, setCov] = useState<Progress | null>(null)
+  const [covMsg, setCovMsg] = useState('')
+  const covAbort = useRef<AbortController | null>(null)
+  const sweeping = cov !== null && cov.done < cov.total
   /* Live, because the row below is allowed to refuse. A button that offers to
      delete a library which does not exist, warns about consequences that
      cannot happen, and then reports success, is indistinguishable from a
      broken button — which is precisely how it was read. */
   const count = useLiveQuery(() => db.reviews.count(), [], -1)
+  /* live for the same reason: the row below counts what it is about to look
+     up, and refuses when there is nothing */
+  const coverless = useLiveQuery(() => db.reviews.filter((r) => !r.cover).count(), [], -1)
   const some = count > 0
   /* two forms, because "all 1 review" is not English: the plain count for the
      result line, and a phrase that reads on a button and in a question */
@@ -121,6 +134,24 @@ export function SettingsPage({ settings }: { settings: Settings }) {
     /* say what was destroyed. "Library cleared." is true of clearing fourteen
        and of clearing nothing, so it could not tell those two apart either. */
     setMsg(`${gone} deleted. The shelf is empty.`)
+  }
+
+  const runCoverSweep = async () => {
+    if (sweeping) {
+      covAbort.current?.abort()
+      return
+    }
+    setCovMsg('')
+    covAbort.current = new AbortController()
+    const done = await backfillCovers(setCov, covAbort.current.signal)
+    setCov(null)
+    const left = done.total - done.found
+    setCovMsg(
+      done.found === 0
+        ? 'No covers found this time — the catalogues may be rate-limiting; try again in a few minutes.'
+        : `${done.found} cover${done.found === 1 ? '' : 's'} found.` +
+          (left > 0 ? ` ${left} still without one — run it again later to keep looking.` : ''),
+    )
   }
 
   return (
@@ -272,6 +303,33 @@ export function SettingsPage({ settings }: { settings: Settings }) {
                 e.target.value = ''
               }} />
           </div>
+          {/* a paragraph of copy, so the button goes underneath — and the
+              progress bar with it */}
+          <div className="set-row set-row--stack">
+            <div className="set-row-txt">
+              <div className="ui-lbl">Find missing covers</div>
+              <p>
+                {coverless === -1 ? 'Counting the shelf\u2026'
+                  : coverless === 0 ? 'Every book on the shelf has a cover.'
+                  : `${coverless} book${coverless === 1 ? ' has' : 's have'} no cover. Looks each one up in the catalogues \u2014 slowly, so they don\u2019t turn us away. You can keep using the app meanwhile.`}
+              </p>
+              {cov && cov.total > 0 && (
+                <>
+                  <div className="gr-bar" role="progressbar" aria-valuenow={cov.done} aria-valuemin={0} aria-valuemax={cov.total}>
+                    <span style={{ width: `${Math.round((cov.done / cov.total) * 100)}%` }} />
+                  </div>
+                  <p className="gr-now">
+                    {cov.waiting ? 'A catalogue is rate-limiting us \u2014 waiting it out\u2026' : cov.current ?? `${cov.done} of ${cov.total}`}
+                  </p>
+                </>
+              )}
+              {covMsg && <p role="status">{covMsg}</p>}
+            </div>
+            <button className="btn btn--ghost btn--sm" disabled={coverless < 1 && !sweeping}
+              onClick={() => void runCoverSweep()}>
+              {sweeping ? 'Stop' : 'Find covers'}
+            </button>
+          </div>
           {import.meta.env.DEV && (
             <div className="set-row">
               <div className="set-row-txt">
@@ -299,6 +357,12 @@ export function SettingsPage({ settings }: { settings: Settings }) {
         </div>
 
         {msg && <p className="field-hint" role="status" style={{ marginTop: 14 }}>{msg}</p>}
+
+        {TIP_JAR && (
+          <div className="panel">
+            <Tip />
+          </div>
+        )}
 
         {/* what this thing is, in the place people look when they want to know.
             The launch screen says the same in one line; this is the longer
