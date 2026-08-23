@@ -388,7 +388,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             </div>
           </a>
           <a
-            href="https://ereader.flyleaf.cc/"
+            href="https://read.flyleaf.cc/"
             target="_blank"
             rel="noopener noreferrer"
             className="set-row"
