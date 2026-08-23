@@ -372,11 +372,34 @@ export function SettingsPage({ settings }: { settings: Settings }) {
 
         {msg && <p className="field-hint" role="status" style={{ marginTop: 14 }}>{msg}</p>}
 
-        {TIP_JAR && (
-          <div className="panel">
-            <Tip />
-          </div>
-        )}
+        {/* Companion apps — Flyleaf Journal and Flyleaf Ereader */}
+        <div className="panel">
+          <div className="ui-lbl" style={{ marginBottom: 12 }}>Also from Flyleaf</div>
+          <a
+            href="https://flyleaf.cc/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="set-row"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            <div className="set-row-txt">
+              <div className="ui-lbl">Flyleaf Journal ↗</div>
+              <p>Your personal reading journal on your own device.</p>
+            </div>
+          </a>
+          <a
+            href="https://ereader.flyleaf.cc/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="set-row"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            <div className="set-row-txt">
+              <div className="ui-lbl">Flyleaf Ereader ↗</div>
+              <p>Read your EPUB books in a clean, distraction-free web reader.</p>
+            </div>
+          </a>
+        </div>
 
         {/* what this thing is, in the place people look when they want to know.
             The launch screen says the same in one line; this is the longer
