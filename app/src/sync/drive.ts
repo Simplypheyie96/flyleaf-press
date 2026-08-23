@@ -17,6 +17,39 @@
    keystroke. */
 
 const FILE_NAME = 'library.json'
+
+/* WHOSE FILE IS THIS. Written onto every file this app creates, and the reason
+   it has to exist:
+
+   `appDataFolder` is scoped to the OAUTH CLIENT, not to an app, whatever the
+   name suggests. This app USED TO share its client with Flyleaf eReader, which
+   meant ONE hidden folder holding this app's `library.json` beside the
+   eReader's `shelf.json`, `marks.json`, `place.json` and one
+   `book-<fingerprint>` per book it had backed up. The eReader moved to its own
+   client in its own Google Cloud project on 23 Aug 2026, so today the folder
+   this app can see holds only this app's files.
+
+   Reading and writing were always safe either way: `findLibrary` asks Drive for
+   one name and nothing else, so no document of another app's can be read as a
+   library or overwritten by one. DELETING was not. `dropLibraries` took every
+   file in the folder — see the note on it — so this app's "remove the copy from
+   my Drive" would have taken a shared folder's other occupant with it.
+
+   THE TAG STAYS, and not as dead weight. Sharing a client is one decision away
+   — Flyleaf is a third product under the same name — and a folder that is ours
+   alone today is one consent screen away from not being. A file carrying
+   another app's tag is never ours to delete, whatever it is called, so renaming
+   this document later cannot reintroduce the bug either. The name is the bridge
+   for files written before the tag existed. */
+const APP = 'press'
+
+/** Is this file ours to delete? Our tag, or — for a backup made before the tag
+    existed — our one filename. Anything else belongs to a sibling app and is
+    left where it is: stranding a stranger's file costs a few kilobytes of
+    somebody's quota, deleting it costs them their backup. */
+export function ours(file: { name: string; app?: string }): boolean {
+  return file.app ? file.app === APP : file.name === FILE_NAME
+}
 const FILES = 'https://www.googleapis.com/drive/v3/files'
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files'
 
@@ -116,8 +149,8 @@ export async function writeLibrary(
      somebody's own documents. A file cannot be re-parented on update, so that
      goes on the create only. */
   const meta = id
-    ? { appProperties: { device } }
-    : { name: FILE_NAME, parents: ['appDataFolder'], appProperties: { device } }
+    ? { appProperties: { device, app: APP } }
+    : { name: FILE_NAME, parents: ['appDataFolder'], appProperties: { device, app: APP } }
 
   const boundary = `flyleaf-press-${crypto.randomUUID()}`
   const head =
@@ -139,9 +172,9 @@ export async function writeLibrary(
   return unpack((await response.json()) as DriveFile & { appProperties?: Record<string, string> })
 }
 
-/** Take the library back out of Drive — every file in the folder, not just the
-    one we expect, so an old name or a half-written upload cannot be left
-    behind claiming to be a backup.
+/** Take the library back out of Drive — every file in the folder THIS APP
+    wrote, including duplicates and any name it no longer uses, so a
+    half-written upload cannot be left behind claiming to be a backup.
 
     This exists because it could not be done by hand. `appDataFolder` is hidden
     — that is the point of it, and it is why this app can back up without
@@ -150,13 +183,35 @@ export async function writeLibrary(
     of somebody's library somewhere has to be able to take it away again, from
     inside itself, in one press.
 
+    IT USED TO TAKE EVERYTHING IN THE FOLDER, and the comment here argued for
+    that: a stray name cannot be left behind if nothing is left behind. Sound
+    reasoning about a folder of our own, and wrong about a folder shared with
+    another app — which this one was, because `appDataFolder` is scoped to the
+    OAuth client and this client was the eReader's too (`APP` above). "Remove
+    the copy from my Drive" in the review app would have taken a reading app's
+    shelf, marks, reading position and every backed-up book with it: one press,
+    no warning, and the reassurance printed afterwards true of this app and
+    false of the other one. Nothing was ever lost to it — the eReader had not
+    yet synced when this was found, and it has its own client now — but the
+    filter is what makes that a fact rather than a near miss.
+
+    The listing is unfiltered on purpose even now: asking Drive only for
+    `library.json` would hide a file of ours under some older name, and those
+    are exactly what this is for. `ours` decides what goes, one row at a time —
+    so this stays correct whether the folder is ours alone or shared again.
+
     The library on the device is untouched. This deletes the copy. */
 export async function dropLibraries(token: string): Promise<number> {
-  const url = `${FILES}?spaces=appDataFolder&pageSize=100&fields=${encodeURIComponent('files(id,name)')}`
+  const url = `${FILES}?spaces=appDataFolder&pageSize=1000&fields=${encodeURIComponent('files(id,name,appProperties)')}`
   const { files } = (await (await ask(token, url)).json()) as {
-    files?: { id: string; name: string }[]
+    files?: { id: string; name: string; appProperties?: Record<string, string> }[]
   }
   if (!files?.length) return 0
-  for (const file of files) await ask(token, `${FILES}/${file.id}`, { method: 'DELETE' })
-  return files.length
+  let gone = 0
+  for (const file of files) {
+    if (!ours({ name: file.name, app: file.appProperties?.app })) continue
+    await ask(token, `${FILES}/${file.id}`, { method: 'DELETE' })
+    gone += 1
+  }
+  return gone
 }
