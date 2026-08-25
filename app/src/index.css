@@ -141,7 +141,7 @@ body::before{
 .app-head{
   display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
   gap:6px 16px; padding-bottom:14px; margin-bottom:28px;
-  border-bottom:1px solid var(--rule);
+  border-bottom:1px solid var(--ink-soft);
 }
 .app-head h1{
   font-family:var(--serif); font-weight:500; font-size:19px; line-height:1;
@@ -558,14 +558,44 @@ body::before{
 }
 .stars-input:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
 .stars-input svg{ display:block; }
-/* one calm line: the stars, then a modest numeral — the caption lives in the
-   field hint below, so nothing wraps at 360px */
-.rate-input-row{ display:flex; align-items:center; gap:16px; }
-.rate-input-num{
+/* one calm line where there is room for one: the stars, then a modest numeral.
+   It wraps by measuring itself rather than by asking the viewport how wide the
+   phone is — at 360px the numeral drops under the stars, and at 390px up it
+   does not. The caption lives in the field hint below. */
+.rate-input-row{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+/* The numeral is writable, because a quarter of a 30px star is 7.5px of target
+   and a rating you can say out loud should not have to be aimed at. It stays
+   where the readout already was, so the row gains a way in and no height. */
+.rate-input-write{ display:flex; align-items:baseline; gap:6px; min-width:0; }
+/* The rule under the numeral is the whole of what says "you can write here", so
+   it takes --ink-soft rather than the --rule hairline the boxed fields use: at
+   1.34:1 against the dark ground that hairline was a cue nobody could see.
+   Written at .field-input specificity, the way .inp-num already is: the blanket
+   rule up at .field input[type="text"] hands every field a full-width bordered
+   box, which for a numeral three characters long is a text field inviting a
+   sentence — and at 360px it took the whole row and pushed the stars onto a
+   line of their own. */
+.rate-input-num,
+.field input.rate-input-num{
   font-family:var(--serif); font-weight:600; font-size:22px; line-height:1;
   letter-spacing:-.01em; font-variant-numeric:tabular-nums; white-space:nowrap;
+  width:3.4ch; min-width:0; padding:4px 0 3px; text-align:center; color:var(--ink);
+  background:transparent; border:0; border-bottom:1px solid var(--ink-soft);
+  border-radius:0; appearance:none; -webkit-appearance:none;
 }
-.rate-input-of{ font-family:var(--sans); font-size:12px; font-weight:400; color:var(--ink-soft); }
+.rate-input-num::placeholder{ color:var(--ink-soft); }
+.rate-input-num:focus,
+.field input.rate-input-num:focus{ outline:none; border-color:transparent; border-bottom-color:var(--ink); }
+/* The suffix holds the width of its longest state, so whether the row fits on
+   one line is decided by the width available and not by whether there is a
+   rating yet. Without it "Not yet rated" is three times the width of "/ 5" and
+   the row un-wraps under the finger the moment you rate something. No viewport
+   breakpoint decides this: the field is not the viewport, and a query against
+   one is the bug the two-up date row was fixed for. */
+.rate-input-of{
+  font-family:var(--sans); font-size:12px; font-weight:400; color:var(--ink-soft);
+  min-width:6em;
+}
 
 /* ── style picker (review styles + collage styles as themes) ── */
 .style-pick{ display:flex; flex-wrap:wrap; gap:8px; }
@@ -675,7 +705,7 @@ body::before{
 }
 .plate-edit-row img{ width:64px; aspect-ratio:1; object-fit:cover; border-radius:var(--r-img); background:var(--paper); display:block; }
 .plate-edit-row input{
-  border:0; border-bottom:1px solid var(--rule); background:transparent;
+  border:0; border-bottom:1px solid var(--ink-soft); background:transparent;
   font-family:var(--hand); font-size:15px; color:var(--ink); padding:6px 2px; width:100%; outline:none;
 }
 .plate-edit-row input:focus{ border-bottom-color:var(--ink); }
@@ -703,6 +733,10 @@ body::before{
   .shelf-tools input[type="search"]{ height:44px; }
   /* the hint stands in for the value, so it takes the same size */
   .date-ph{ font-size:16px; }
+  /* the rating numeral is already 22px — well over the size that makes iOS zoom
+     the page in — and the rule above would otherwise SHRINK it on a phone.
+     Equal specificity, written later, so it wins. */
+  .field input.rate-input-num{ font-size:22px; }
 }
 
 /* Finished sits UNDER started, at every width. They read as a pair, which is
@@ -908,7 +942,7 @@ body::before{
 .onb .style-pick{ justify-content:center; }
 
 /* settings rows */
-.set-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; border-bottom:1px solid var(--rule); }
+.set-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; border-bottom:1px solid var(--ink-soft); }
 .set-row:last-child{ border-bottom:0; }
 /* the action never breaks across two lines — at 360px a two-word label like
    "Sync now" wrapped while every other button in the app stayed on one */
