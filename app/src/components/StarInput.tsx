@@ -10,6 +10,12 @@ const STEP = 0.25
    star is 7.5px of target, and missing it wrote a rating nobody meant. Halves
    double that to 15px, which is a target rather than a knack. */
 const POINTER_STEP = 0.5
+/* The stars are what the rating is set with, and 30px made each half a 15px
+   target — the size of the thing was doing half the work of the arithmetic.
+   40px is 20px a half, and it is also the honest size for the one control on
+   this form you aim at rather than type into. The row is still 216px wide, so
+   nothing about where it wraps changes. */
+const STAR_PX = 40
 
 /** Snap to the 0.25 grid the cards print on, inside 0–5. */
 function snap(n: number): number {
@@ -69,7 +75,7 @@ export function StarInput({ value, onChange }: { value: number; onChange: (v: nu
      stays paper-light in both themes — but this control is chrome, and in dark
      mode a #1B1917 star on a #151515 ground is a star you cannot see. */
   const stars = Array.from({ length: STARS }, (_, i) =>
-    starSvg(Math.min(1, Math.max(0, value - i)), 30, 'var(--ink)', 'var(--ink-soft)')
+    starSvg(Math.min(1, Math.max(0, value - i)), STAR_PX, 'var(--ink)', 'var(--ink-soft)')
   ).join('')
 
   const commit = () => {

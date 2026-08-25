@@ -577,7 +577,7 @@ body::before{
    line of their own. */
 .rate-input-num,
 .field input.rate-input-num{
-  font-family:var(--serif); font-weight:600; font-size:22px; line-height:1;
+  font-family:var(--serif); font-weight:600; font-size:26px; line-height:1;
   letter-spacing:-.01em; font-variant-numeric:tabular-nums; white-space:nowrap;
   width:3.4ch; min-width:0; padding:4px 0 3px; text-align:center; color:var(--ink);
   background:transparent; border:0; border-bottom:1px solid var(--ink-soft);
@@ -736,7 +736,7 @@ body::before{
   /* the rating numeral is already 22px — well over the size that makes iOS zoom
      the page in — and the rule above would otherwise SHRINK it on a phone.
      Equal specificity, written later, so it wins. */
-  .field input.rate-input-num{ font-size:22px; }
+  .field input.rate-input-num{ font-size:26px; }
 }
 
 /* Finished sits UNDER started, at every width. They read as a pair, which is
