@@ -4,15 +4,22 @@ import { fmtRating } from '../format'
 
 const STARS = 5
 const STEP = 0.25
+/* THE STARS ARE THE COARSE CONTROL, and half a star is what people actually
+   aim for. Quarters are still there — typed, and one arrow press at a time —
+   but they are not something a finger should have to hit: a quarter of a 30px
+   star is 7.5px of target, and missing it wrote a rating nobody meant. Halves
+   double that to 15px, which is a target rather than a knack. */
+const POINTER_STEP = 0.5
 
 /** Snap to the 0.25 grid the cards print on, inside 0–5. */
 function snap(n: number): number {
   return Math.min(5, Math.max(0, Math.round(n / STEP) * STEP))
 }
 
-/* Interactive 0.25-step rating: type the number, or drag or click across the
-   five stars, or use arrow keys. The stars themselves are the same geometric-fill
-   SVG the cards print with, so what you set is exactly what ships. */
+/* Interactive 0.25-step rating: type the number, or use the arrow keys, or
+   drag or click across the five stars — which set halves, the resolution a
+   finger can hold. The stars themselves are the same geometric-fill SVG the
+   cards print with, so what you set is exactly what ships. */
 export function StarInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const ref = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
@@ -32,26 +39,27 @@ export function StarInput({ value, onChange }: { value: number; onChange: (v: nu
   }
 
   /* THE STAR A FINGER IS OVER DECIDES THE VALUE — this used to be one linear
-     map of 20 quarter-cells across the whole row, which spends cells on the
-     4px gaps as well as on the stars. The arithmetic put every whole number in
-     the GUTTER: at 30px stars, 3.0 lived in an 8.3px window straddling the gap
+     map of quarter-cells across the whole row, which spends cells on the 4px
+     gaps as well as on the stars. The arithmetic put every whole number in the
+     GUTTER: at 30px stars, 3.0 lived in an 8.3px window straddling the gap
      after the third star, so aiming at the third star returned 2.5 and aiming
-     just right of it returned 2.75. Reading the star's own box instead means a
-     quarter is a quarter OF THAT STAR, the whole number is its trailing quarter
+     just right of it returned 2.75. Reading the star's own box instead means
+     the step is a step OF THAT STAR, the whole number is its trailing half
      plus the gap after it, and the fill always ends under the finger. */
   const fromClientX = (clientX: number) => {
     const el = ref.current
     if (!el) return
     const boxes = (Array.from(el.children) as HTMLElement[]).map((c) => c.getBoundingClientRect())
     if (boxes.length !== STARS) return
-    if (clientX < boxes[0].left) return set(STEP)
+    const cells = 1 / POINTER_STEP
+    if (clientX < boxes[0].left) return set(POINTER_STEP)
     for (let i = STARS - 1; i >= 0; i--) {
       const b = boxes[i]
       if (clientX >= b.left) {
         /* Past this star's right edge means the gap after it, which reads as
            this star full rather than as a fraction of the next one. */
         const within = Math.min(1, (clientX - b.left) / b.width)
-        return set(i + Math.max(1, Math.ceil(within * 4)) / 4)
+        return set(i + Math.max(1, Math.ceil(within * cells)) / cells)
       }
     }
   }
@@ -115,6 +123,9 @@ export function StarInput({ value, onChange }: { value: number; onChange: (v: nu
            pointerdown. Harmless where pointerdown worked: it recomputes the
            same value from the same x and sets the same value. */
         onClick={(e) => fromClientX(e.clientX)}
+        /* The arrows keep the full 0.25 grid, where the pointer does not: a key
+           press cannot miss, so there is nothing to protect it from, and this is
+           the only route to a quarter that does not go through the text field. */
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
             e.preventDefault()
