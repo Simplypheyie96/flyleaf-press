@@ -119,6 +119,37 @@ export interface Review {
 }
 
 /**
+ * A book picked for a month that has not been read yet — the month's hopefuls.
+ *
+ * It is deliberately NOT a Review with empty fields. A review carries a rating
+ * and two dates and a body, all of which are required to save one, and none of
+ * which a book you merely intend to read can honestly have; a hopeful put on
+ * the shelf as a review would be a rated, dated, reviewed book that nobody has
+ * opened. What it does carry is exactly what the card prints — the title, the
+ * author, the cover, and the length if a catalogue knew it.
+ *
+ * `covers` persists the candidate art the same way a review does, so the cover
+ * stays changeable from the list afterwards rather than only at add time.
+ */
+export interface Hopeful {
+  id?: number
+  /** the month this list is for — 'YYYY-MM', the same key the collages use */
+  month: string
+  title: string
+  author: string
+  series?: string
+  isbn?: string
+  /** a dataURL, or nothing — never a generated placeholder */
+  cover?: string
+  /** every candidate cover the catalogues offered, in trust order */
+  covers?: string[]
+  pages?: number
+  /** decides the order on the card — first added, first printed */
+  createdAt: number
+  editedAt?: number
+}
+
+/**
  * A review that was deleted, remembered by fingerprint so the deletion can
  * travel. Without these a merge is one-directional: delete a review on the
  * phone, and the laptop — which still holds it — puts it straight back on the

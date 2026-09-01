@@ -1,10 +1,11 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Grave, Review, Settings } from './types'
+import type { Grave, Hopeful, Review, Settings } from './types'
 
 export const db = new Dexie('flyleaf-press') as Dexie & {
   reviews: EntityTable<Review, 'id'>
   settings: EntityTable<Settings, 'id'>
   graves: EntityTable<Grave, 'key'>
+  hopefuls: EntityTable<Hopeful, 'id'>
 }
 
 db.version(1).stores({
@@ -18,6 +19,17 @@ db.version(2).stores({
   reviews: '++id, no, title, author, finished, createdAt, editedAt',
   settings: 'id',
   graves: 'key, at',
+})
+/* v3 adds the hopefuls — books picked for a month before they are read, which
+   are a different kind of row from a review and not a review with holes in it:
+   no rating, no dates, no body, and nothing to paginate. They live in their own
+   table so nothing that walks the shelf, the collages or the stats has to learn
+   to skip them. Additive, like v2: existing rows are untouched. */
+db.version(3).stores({
+  reviews: '++id, no, title, author, finished, createdAt, editedAt',
+  settings: 'id',
+  graves: 'key, at',
+  hopefuls: '++id, month, createdAt, editedAt',
 })
 
 const SETTINGS_DEFAULTS: Settings = {

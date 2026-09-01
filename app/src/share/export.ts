@@ -177,7 +177,13 @@ export function buildCollagePage(
   shape: ExportShape
 ): HTMLElement[] {
   prepHost(host, shape)
-  host.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage(m, style)}</div></div>`
+  /* The broad column holds MORE cells, not bigger ones — the column chooser
+     needs to know which card it is composing for, and this is the only place
+     that knows. Callers pass a MonthData describing the reading; the shape is
+     a property of the export, so it is stamped on here rather than threaded
+     through every page that builds one. */
+  const laid: MonthData = { ...m, wide: shape === 'wide' }
+  host.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage(laid, style)}</div></div>`
   return ground([host.querySelector('.share-page') as HTMLElement], shape)
 }
 
@@ -745,7 +751,10 @@ export function reviewBaseName(rec: Review): string {
 }
 
 export function collageBaseName(m: MonthData): string {
-  return `${slug(m.name)}-reading`
+  /* A hopefuls card is not a record of reading, so it may not be named for
+     one — a file called july-2026-reading holding books nobody has opened
+     misdescribes itself the moment it is out of the app. */
+  return `${slug(m.name)}-${m.span === 'hopefuls' ? 'hopefuls' : 'reading'}`
 }
 
 export function fileName(base: string, i: number, total: number): string {

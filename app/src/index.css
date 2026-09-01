@@ -1062,6 +1062,32 @@ body::before{
   border:1px solid var(--rule); border-radius:999px; padding:5px 10px; color:var(--ink-soft);
 }
 
+/* hopefuls — a row you edit, not a row you open. The cover and the two
+   controls sit on one line where there is room for them; under 520px the
+   controls drop to their own line rather than squeezing the title into a
+   two-word column. The buttons are real controls, so the row is a div and not
+   a link: a nested button inside an <a> is not a thing HTML allows. */
+.hope-row{
+  display:grid; grid-template-columns:44px 1fr; gap:12px 14px; align-items:center;
+  background:var(--card-w); border-radius:var(--r-md); border:1px solid var(--rule);
+  padding:16px 18px; min-width:0;
+}
+.hope-row > img{
+  width:44px; aspect-ratio:2/3; object-fit:cover; border-radius:4px; display:block;
+  background:var(--rule);
+}
+.hope-miss{
+  width:44px; aspect-ratio:2/3; display:flex; align-items:center; justify-content:center;
+  text-align:center; border:1px dashed var(--rule); border-radius:4px;
+  font-size:8px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft);
+}
+.hope-txt{ min-width:0; }
+.hope-acts{ grid-column:1 / -1; display:flex; gap:8px; }
+@media (min-width:520px){
+  .hope-row{ grid-template-columns:44px 1fr auto; }
+  .hope-acts{ grid-column:auto; }
+}
+
 /* empty states */
 .empty{
   text-align:center; padding:60px 20px; color:var(--ink-soft);

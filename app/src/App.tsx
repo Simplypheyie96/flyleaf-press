@@ -11,6 +11,7 @@ import { Write } from './pages/Write'
 import { ReviewDetail } from './pages/ReviewDetail'
 import { Months } from './pages/Months'
 import { MonthDetail } from './pages/MonthDetail'
+import { HopefulsDetail } from './pages/HopefulsDetail'
 import { SettingsPage } from './pages/SettingsPage'
 import type { Settings } from './types'
 
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/review/:id/edit" element={<Write />} />
         <Route path="/collage" element={<Months />} />
         <Route path="/collage/:key" element={<MonthDetail settings={settings} />} />
+        <Route path="/hopefuls/:month" element={<HopefulsDetail settings={settings} />} />
         <Route path="/months" element={<Navigate to="/collage" replace />} />
         <Route path="/months/:key" element={<MonthRedirect />} />
         <Route path="/settings" element={<SettingsPage settings={settings} />} />

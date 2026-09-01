@@ -863,6 +863,48 @@
 .c2-stars{ margin-top:3px; }
 .c2 .patch{ left:-26px; top:-20px; opacity:.08; transform:rotate(-12deg); }
 
+/* THE HOPEFULS GRID — the three list styles, packed.
+
+   Shared skeleton, per-style clothing. The cell is a cover with two lines and
+   a status word under it; what each card adds is its own object's detail —
+   the stub's plate and perforated foot, the register's rule, the board's
+   feature number. Columns come from gridCols(), the same counted rule the
+   cover styles use, so a seven-book list packs like a seven-book grid. */
+.hg{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:24px 16px; }
+.hg-c{ min-width:0; }
+.hg-cap{ margin-top:9px; min-width:0; }
+.hg-name{
+  font-family:var(--serif); font-weight:600; font-size:13.5px;
+  line-height:1.25; letter-spacing:-.008em; color:var(--tx);
+}
+.hg-by{
+  font-family:var(--mono); font-size:8.5px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--meta); margin-top:4px;
+}
+.hg-end{ margin-top:7px; }
+.card-compact .hg{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:20px 13px; }
+.card-compact .hg-name{ font-size:12px; }
+
+/* c3 — each hopeful is its own unpunched stub, foot and all */
+.hg--c3 .hg-c{
+  background:var(--card-w); box-shadow:var(--sh-plate); border-radius:2px;
+  padding:9px 9px 10px; transform:rotate(var(--tr,0deg));
+}
+.hg--c3 .hg-end{ margin-top:9px; padding-top:8px; border-top:2px dashed var(--rule); }
+
+/* c5 — a ruled register cell, the same hairline the rows carried */
+.hg--c5{ border-top:1.5px solid rgba(27,25,23,.55); padding-top:20px; }
+.hg--c5 .hg-c{ padding-bottom:10px; border-bottom:1px solid rgba(27,25,23,.22); }
+
+/* c7 — a listing keeps its feature number, set above the frame */
+.hg--c7{ border-top:1px solid rgba(244,242,237,.28); padding-top:20px; }
+.hg--c7 .hg-c{ padding-bottom:11px; border-bottom:1px solid rgba(244,242,237,.18); }
+.hg-no{
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em;
+  color:var(--mustard); margin-bottom:6px;
+}
+.hg--c7 .hg-name{ letter-spacing:.02em; text-transform:uppercase; }
+
 /* C3 · Tickets (pink) */
 .c3{ background:var(--pink); }
 /* one column by default; a long month splits into two so the card stays a

@@ -134,6 +134,145 @@ const SEED: Omit<Review, 'id'>[] = [
   },
 ]
 
+/* ── FOUR HEAVY MONTHS, so the column rule can be looked at rather than argued
+   about ──────────────────────────────────────────────────────────────────────
+   The months above hold five, six and three books, which is a perfectly
+   ordinary shelf and exactly the wrong fixture for the one thing gridCols()
+   decides: February is 10, March 12, April 16 and May 20 — the count the user
+   named, the other count the user named, the tall outlier the five-column cap
+   leaves behind, and the cap itself. Together with the months above they also
+   put 72 books in 2026, which is the only way to see the year collage at a
+   realistic size. Same dev-only rule as everything else in this file.
+
+   The reviews are one line each on purpose. A collage cell prints the cover,
+   the title, the author and the stars and never the prose, so length here would
+   only be noise in a fixture that exists to be measured. */
+const HEAVY: [string, string, string, number][] = [
+  /* February — 10 */
+  ['2026-02-02', 'Piranesi', 'Susanna Clarke', 4.5],
+  ['2026-02-04', 'The Vanishing Half', 'Brit Bennett', 4],
+  ['2026-02-07', 'Klara and the Sun', 'Kazuo Ishiguro', 3.75],
+  ['2026-02-09', 'Hamnet', 'Maggie O’Farrell', 4.75],
+  ['2026-02-13', 'The Overstory', 'Richard Powers', 4.25],
+  ['2026-02-16', 'Girl, Woman, Other', 'Bernardine Evaristo', 4.5],
+  ['2026-02-19', 'Normal People', 'Sally Rooney', 3.5],
+  ['2026-02-22', 'Small Things Like These', 'Claire Keegan', 5],
+  ['2026-02-25', 'The Remains of the Day', 'Kazuo Ishiguro', 4.75],
+  ['2026-02-27', 'Beloved', 'Toni Morrison', 5],
+  /* March — 12 */
+  ['2026-03-01', 'A Little Life', 'Hanya Yanagihara', 4.25],
+  ['2026-03-03', 'The Secret History', 'Donna Tartt', 4.5],
+  ['2026-03-06', 'Never Let Me Go', 'Kazuo Ishiguro', 4],
+  ['2026-03-08', 'Circe', 'Madeline Miller', 4.5],
+  ['2026-03-11', 'The Goldfinch', 'Donna Tartt', 3.75],
+  ['2026-03-14', 'Half of a Yellow Sun', 'Chimamanda Ngozi Adichie', 5],
+  ['2026-03-17', 'Homegoing', 'Yaa Gyasi', 4.75],
+  ['2026-03-19', 'Transcendent Kingdom', 'Yaa Gyasi', 4.25],
+  ['2026-03-22', 'On Earth We’re Briefly Gorgeous', 'Ocean Vuong', 4],
+  ['2026-03-24', 'The Sympathizer', 'Viet Thanh Nguyen', 4.25],
+  ['2026-03-27', 'Severance', 'Ling Ma', 3.5],
+  ['2026-03-30', 'Exit West', 'Mohsin Hamid', 4],
+  /* April — 16 */
+  ['2026-04-01', 'Life After Life', 'Kate Atkinson', 4.25],
+  ['2026-04-03', 'The Night Circus', 'Erin Morgenstern', 3.75],
+  ['2026-04-05', 'Bunny', 'Mona Awad', 3.25],
+  ['2026-04-07', 'The Priory of the Orange Tree', 'Samantha Shannon', 4],
+  ['2026-04-09', 'Babel', 'R. F. Kuang', 4.5],
+  ['2026-04-11', 'The Poppy War', 'R. F. Kuang', 4],
+  ['2026-04-13', 'Gideon the Ninth', 'Tamsyn Muir', 4.5],
+  ['2026-04-15', 'The Ten Thousand Doors of January', 'Alix E. Harrow', 3.75],
+  ['2026-04-17', 'Spinning Silver', 'Naomi Novik', 4.25],
+  ['2026-04-19', 'Uprooted', 'Naomi Novik', 4],
+  ['2026-04-21', 'The Bear and the Nightingale', 'Katherine Arden', 4.25],
+  ['2026-04-23', 'Jonathan Strange & Mr Norrell', 'Susanna Clarke', 4.75],
+  ['2026-04-25', 'A Deadly Education', 'Naomi Novik', 3.5],
+  ['2026-04-27', 'The Starless Sea', 'Erin Morgenstern', 3.25],
+  ['2026-04-29', 'Ninth House', 'Leigh Bardugo', 4],
+  ['2026-04-30', 'The Atlas Six', 'Olivie Blake', 3],
+  /* May — 20 */
+  ['2026-05-01', 'Educated', 'Tara Westover', 4.5],
+  ['2026-05-02', 'Just Kids', 'Patti Smith', 4.75],
+  ['2026-05-04', 'H Is for Hawk', 'Helen Macdonald', 4.25],
+  ['2026-05-05', 'The Year of Magical Thinking', 'Joan Didion', 4.5],
+  ['2026-05-07', 'Wolf Hall', 'Hilary Mantel', 4.75],
+  ['2026-05-08', 'Bring Up the Bodies', 'Hilary Mantel', 4.5],
+  ['2026-05-10', 'The Mirror and the Light', 'Hilary Mantel', 4.25],
+  ['2026-05-12', 'Lincoln in the Bardo', 'George Saunders', 3.75],
+  ['2026-05-13', 'The Underground Railroad', 'Colson Whitehead', 4.5],
+  ['2026-05-15', 'The Nickel Boys', 'Colson Whitehead', 4.25],
+  ['2026-05-16', 'Trust', 'Hernan Diaz', 4],
+  ['2026-05-18', 'Demon Copperhead', 'Barbara Kingsolver', 4.75],
+  ['2026-05-19', 'Tomorrow, and Tomorrow, and Tomorrow', 'Gabrielle Zevin', 4.25],
+  ['2026-05-21', 'Lessons in Chemistry', 'Bonnie Garmus', 4],
+  ['2026-05-22', 'The Seven Husbands of Evelyn Hugo', 'Taylor Jenkins Reid', 3.75],
+  ['2026-05-24', 'Daisy Jones & The Six', 'Taylor Jenkins Reid', 3.5],
+  ['2026-05-26', 'Malibu Rising', 'Taylor Jenkins Reid', 3.25],
+  ['2026-05-27', 'Yellowface', 'R. F. Kuang', 3.75],
+  ['2026-05-29', 'The Wager', 'David Grann', 4.25],
+  ['2026-05-31', 'Killers of the Flower Moon', 'David Grann', 4.5],
+]
+
+/* The twenty jpgs in public/covers, cycled. A fixture for measuring geometry
+   needs every cell to carry real art at a real aspect; whose art it is does not
+   change a single measurement. */
+const COVER_POOL = [
+  '9780062060624', '9780062255655', '9780063021426', '9780316229241',
+  '9780316229265', '9780316229296', '9780316556347', '9780525620785',
+  '9780593135204', '9780593318171', '9780593321201', '9780593321447',
+  '9780804172448', '9781250186430', '9781250217288', '9781250313195',
+  '9781455563937', '9781534431003', '9781635570298', '9781635575637',
+]
+const FORMAT_POOL: Review['formats'][] = [
+  ['Physical'], ['Ebook'], ['Audiobook'], ['Physical', 'Ebook'], ['Ebook', 'Audiobook'],
+]
+const STYLE_POOL: Review['style'][] = [
+  'archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes', 'jacket', 'airmail',
+]
+
+const HEAVY_SEED: Omit<Review, 'id'>[] = HEAVY.map(([finished, title, author, rating], i) => {
+  const isbn = COVER_POOL[i % COVER_POOL.length]
+  const days = 2 + (i % 9)
+  const start = new Date(`${finished}T00:00:00Z`)
+  start.setUTCDate(start.getUTCDate() - days)
+  return {
+    no: 100 + i, title, author,
+    finished, started: start.toISOString().slice(0, 10),
+    formats: FORMAT_POOL[i % FORMAT_POOL.length],
+    rating, isbn, cover: c(isbn),
+    pages: 224 + ((i * 37) % 400),
+    body: `Read in ${days} days. A fixture entry — the month it sits in is the point, not the prose.`,
+    plates: [], style: STYLE_POOL[i % STYLE_POOL.length], createdAt: 100 + i,
+  }
+})
+
+/* A month's hopefuls, for the same reason the reviews are here: the layouts
+   are worth nothing to look at empty. Keyed to THIS month and the NEXT one so
+   the fixture is still about the right months whenever it is loaded, rather
+   than about a week in 2026. */
+const HOPE: [string, string, string][] = [
+  /* Title, author and ISBN have to agree: the cover file is named for the
+     ISBN, so a mismatched triple prints somebody else's jacket and reads as a
+     broken cover rather than as fixture data. The first six are books the demo
+     shelf has NOT read — which is what a hopeful is. */
+  ['9780316229241', 'The Stone Sky', 'N. K. Jemisin'],
+  ['9780316229265', 'The Obelisk Gate', 'N. K. Jemisin'],
+  ['9780316556347', 'Circe', 'Madeline Miller'],
+  ['9780593135204', 'Project Hail Mary', 'Andy Weir'],
+  ['9780593318171', 'Klara and the Sun', 'Kazuo Ishiguro'],
+  ['9781635570298', 'The Priory of the Orange Tree', 'Samantha Shannon'],
+  ['9781455563937', 'Pachinko', 'Min Jin Lee'],
+  ['9780804172448', 'Station Eleven', 'Emily St. John Mandel'],
+  ['9780062060624', 'The Song of Achilles', 'Madeline Miller'],
+  ['9780525620785', 'Mexican Gothic', 'Silvia Moreno-Garcia'],
+  ['9781635575637', 'Piranesi', 'Susanna Clarke'],
+  ['9780063021426', 'Babel', 'R. F. Kuang'],
+]
+
+function monthOffset(n: number): string {
+  const now = new Date()
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth() + n, 1)).toISOString().slice(0, 7)
+}
+
 /** Install the demo books. Dev only — see the note at the top of this file. */
 export async function seedIfEmpty(): Promise<void> {
   // Transaction serializes concurrent callers (StrictMode double-mounts the
@@ -141,6 +280,25 @@ export async function seedIfEmpty(): Promise<void> {
   await db.transaction('rw', db.reviews, async () => {
     const count = await db.reviews.count()
     if (count > 0) return
-    await db.reviews.bulkAdd(SEED as Review[])
+    await db.reviews.bulkAdd([...SEED, ...HEAVY_SEED] as Review[])
+  })
+  /* Checked on its OWN emptiness, not the shelf's. A shelf with books on it
+     already returns above, and a fixture that only ever loaded onto a blank
+     device would be unreachable to anyone who has been using the dev server —
+     which is precisely who wants to look at a hopefuls layout. */
+  await db.transaction('rw', db.hopefuls, async () => {
+    if ((await db.hopefuls.count()) > 0) return
+    const here = monthOffset(0)
+    const next = monthOffset(1)
+    await db.hopefuls.bulkAdd(
+      HOPE.map(([isbn, title, author], i) => ({
+        /* seven this month, five the next — two different sizes to look at,
+           and neither of them a round number that flatters the grid */
+        month: i < 7 ? here : next,
+        title, author, isbn, cover: c(isbn),
+        pages: 288 + ((i * 53) % 320),
+        createdAt: 200 + i,
+      }))
+    )
   })
 }
