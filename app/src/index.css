@@ -351,6 +351,14 @@ body::before{
   transition:border-color 160ms var(--ease);
 }
 .field input:focus, .field textarea:focus{ border-color:var(--ink); }
+/* A STATED LINE HEIGHT, so a single-line control's height is arithmetic rather
+   than whatever the engine's `normal` works out to. It is what lets the date
+   input below be given the same height as its neighbours instead of the height
+   its own shadow tree feels like being. Textareas are left out on purpose —
+   prose wants the looser leading it already has. */
+.field input[type="text"], .field input[type="search"], .field input[type="date"], .field input[type="email"], .field input[type="number"], .field select{
+  line-height:1.25;
+}
 
 /* ── date fields ───────────────────────────────────────────────────────────
    An empty date input is a blank box on WebKit — no placeholder, and in
@@ -382,6 +390,23 @@ body::before{
      the earlier 12/40 clipped the year. */
   padding-left:11px; padding-right:38px;
   max-width:100%;
+  /* THE HEIGHT IS OURS, NOT THE SHADOW TREE'S. `::-webkit-datetime-edit` is
+     what sizes a date control vertically, and it sizes off its own content —
+     so the box was 4px taller than every other field in the form (45 against
+     41 at the touch size, 40 against 38 under a mouse), and on iOS it CHANGED
+     between empty and filled: short while the field held nothing, then
+     resettling once a date went in. That is the reported "padding around it is
+     weird" — not a padding value anywhere in this file, but a box whose height
+     was content, measured on a tree we cannot see or measure from script.
+     Stated instead, off the same arithmetic every other single-line control
+     resolves to — 1.25 line, 11px of padding a side, 1px of border — so empty
+     and filled are the same box, and that box matches its neighbours. */
+  height:calc(1.25em + 24px);
+}
+/* and with a stated height, the digits have to be told to sit in the middle of
+   it — the shadow tree centred itself against the height it used to choose. */
+.date-wrap input[type="date"]::-webkit-datetime-edit{
+  display:flex; align-items:center; height:100%;
 }
 /* the value itself may not push the box around either */
 .date-wrap input[type="date"]::-webkit-date-and-time-value{
