@@ -25,7 +25,19 @@ export function Write() {
   const nav = useNavigate()
   const { id } = useParams()
   const location = useLocation()
-  const candidate = (location.state as { candidate?: Candidate } | null)?.candidate
+  /* Route state, from a catalogue pick or from a hopeful being written up. A
+     hopeful arrives carrying a cover it already holds as BYTES — somebody
+     chose that picture on the hopefuls page, and going back to a URL to
+     arrive at the same one is a way to lose it — so it rides the same slot an
+     upload does. `hopeful` is the row's id: that list is books you mean to
+     read, so writing one up moves it onto the shelf rather than leaving the
+     hopefuls card advertising a book you have finished. Nothing is lost in
+     the move — every fact the row held is on this form. */
+  const sent = location.state as
+    { candidate?: Candidate; cover?: string; hopeful?: number } | null
+  const candidate = sent?.candidate
+  const held = sent?.cover
+  const fromHopeful = sent?.hopeful
 
   const editing = id != null
   const [loaded, setLoaded] = useState(!editing)
@@ -56,9 +68,12 @@ export function Write() {
   const [covers, setCovers] = useState<string[]>(candidate?.covers ?? [])
   const [hunting, setHunting] = useState(false)
   const [coverIdx, setCoverIdx] = useState<number | 'none' | 'upload'>(
-    (candidate?.covers ?? []).length ? 0 : 'none'
+    held ? 'upload' : (candidate?.covers ?? []).length ? 0 : 'none'
   )
-  const [uploadedCover, setUploadedCover] = useState('')
+  const [uploadedCover, setUploadedCover] = useState(held ?? '')
+  /* a carried cover is not an upload, and calling somebody's own catalogue
+     pick one would be a small lie in the one line that explains the picture */
+  const [carried, setCarried] = useState(!!held)
   /* the candidate grid lives in a modal — a long candidate list would
      otherwise swallow the form */
   const [coverOpen, setCoverOpen] = useState(false)
@@ -211,6 +226,9 @@ export function Write() {
         editedAt: Date.now(),
       }
       const savedId = editing ? (await db.reviews.put({ ...rec, id: Number(id) }), Number(id)) : await db.reviews.add(rec as Review)
+      /* the hopeful has become the review — after the write, so an abandoned
+         form leaves the list exactly as it was */
+      if (fromHopeful != null && !editing) await db.hopefuls.delete(fromHopeful)
       nav(`/review/${savedId}`, { replace: true })
     } finally {
       setSaving(false)
@@ -284,7 +302,9 @@ export function Write() {
                   {hunting
                     ? 'Looking for covers…'
                     : chosenCover
-                      ? coverIdx === 'upload' ? 'Your own upload' : 'From the catalogues'
+                      ? coverIdx === 'upload'
+                      ? carried ? 'The cover you picked' : 'Your own upload'
+                      : 'From the catalogues'
                       : 'The card prints a blank slot'}
                 </p>
                 <button type="button" className="btn btn--ghost btn--sm" onClick={() => setCoverOpen(true)}>
@@ -427,7 +447,7 @@ export function Write() {
               {uploadedCover && (
                 <button type="button" aria-pressed={coverIdx === 'upload'}
                   onClick={() => { setCoverIdx('upload'); setCoverOpen(false) }}>
-                  <img src={uploadedCover} alt="Your uploaded cover" />
+                  <img src={uploadedCover} alt={carried ? 'The cover you picked' : 'Your uploaded cover'} />
                 </button>
               )}
               {covers.map((u, i) => (
@@ -462,6 +482,7 @@ export function Write() {
                     const f = e.target.files?.[0]
                     if (f) {
                       setUploadedCover(await fileToDataUrl(f))
+                      setCarried(false)
                       setCoverIdx('upload')
                       setCoverOpen(false)
                     }

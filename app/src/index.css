@@ -24,6 +24,17 @@
   --coal:#221E1B;
   --pink:#F3D9DD;
   --blue:#DAE4EE;
+  /* Four more grounds, added when two review styles and two collage styles
+     were found sitting on the same paper as a neighbour — Masthead on
+     Airmail's butter, Dust Jacket on Catalogue's coal, Postmark on Ledger's
+     mustard, Marquee on Contact Sheet's coal — which made the style pickers
+     show pairs of identical dots. Sage is newsprint gone green with age,
+     manila is the light-yellow envelope Postmark is franked on, aubergine is the
+     cloth under a jacket, moss is the felt of a letter board. */
+  --sage:#D9E0D0;
+  --manila:#E8D5A6;
+  --aubergine:#35294F;
+  --moss:#1F2D28;
   --cream:#F4F2ED;
 
   --serif:"Playfair Display",Georgia,serif;
@@ -1082,7 +1093,7 @@ body::before{
   font-size:8px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft);
 }
 .hope-txt{ min-width:0; }
-.hope-acts{ grid-column:1 / -1; display:flex; gap:8px; }
+.hope-acts{ grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:8px; }
 @media (min-width:520px){
   .hope-row{ grid-template-columns:44px 1fr auto; }
   .hope-acts{ grid-column:auto; }

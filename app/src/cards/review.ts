@@ -119,7 +119,7 @@ function archive(rec: Review): string {
 
 /* ── S2 · Masthead — the review as a printed page (butter) ── */
 function masthead(rec: Review): string {
-  return `<article class="card s2" style="--rot:.3deg">
+  return `<article class="card card--sage s2" style="--rot:.3deg">
     ${patch(170)}
     <div class="s2-head">
       <div class="s2-kicker">
@@ -248,7 +248,7 @@ function fieldnotes(rec: Review): string {
    the whole sheet and folded in, so a band with the card's padding around it
    would read as a box drawn on paper rather than as the thing itself. */
 function jacket(rec: Review): string {
-  return `<article class="card card--coal s6" style="--rot:.6deg">
+  return `<article class="card card--aubergine s6" style="--rot:.6deg">
     ${patch(150)}
     <div class="s6-band">
       <div class="s6-kick">

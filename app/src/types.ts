@@ -31,11 +31,11 @@ export const COLLAGE_NAMES: Record<CollageId, string> = {
 /* the ground each style sits on — used for the little pastel swatch dots */
 export const STYLE_GROUNDS: Record<StyleId, string> = {
   archive: '#DCA94C',
-  masthead: '#F6EBD9',
+  masthead: '#D9E0D0',
   catalogue: '#221E1B',
   scrapbook: '#F3D9DD',
   fieldnotes: '#DAE4EE',
-  jacket: '#221E1B',
+  jacket: '#35294F',
   airmail: '#F6EBD9',
 }
 export const COLLAGE_GROUNDS: Record<CollageId, string> = {
@@ -44,8 +44,8 @@ export const COLLAGE_GROUNDS: Record<CollageId, string> = {
   tickets: '#F3D9DD',
   pinboard: '#DAE4EE',
   ledger: '#DCA94C',
-  postmark: '#DCA94C',
-  marquee: '#221E1B',
+  postmark: '#E8D5A6',
+  marquee: '#1F2D28',
 }
 
 export const FORMAT_NAMES = ['Ebook', 'Audiobook', 'Physical'] as const

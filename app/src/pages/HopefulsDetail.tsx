@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import type { CollageId, ExportShape, Hopeful, Review, Settings } from '../types'
@@ -54,6 +54,7 @@ function asReview(h: Hopeful): Review {
  * below the list is the same share machinery the month collage uses.
  */
 export function HopefulsDetail({ settings }: { settings: Settings }) {
+  const nav = useNavigate()
   const { month } = useParams()
   const key = month ?? currentMonthKey()
 
@@ -129,6 +130,29 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
       setAdding(false)
     }
   }
+
+  /* A hopeful is a book you have already looked up: the title, the author,
+     the series, the ISBN, the length and the jacket are all sitting on the
+     row. Writing it up should therefore cost nothing that has already been
+     paid for — the editor opens on the second step, filled in, with the
+     cover you chose here already chosen there. The row's id travels too, so
+     a saved review takes the book off this list. */
+  const write = (h: Hopeful) =>
+    nav('/write', {
+      state: {
+        candidate: {
+          title: h.title,
+          author: h.author,
+          series: h.series,
+          isbn: h.isbn,
+          pages: h.pages,
+          covers: h.covers ?? [],
+          source: 'openlibrary',
+        } satisfies Candidate,
+        cover: h.cover,
+        hopeful: h.id,
+      },
+    })
 
   const books = (rows ?? []).map(asReview)
   const data: MonthData = { name: monthName(key), books, span: 'hopefuls' }
@@ -226,6 +250,13 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
                         <span className="res-a" style={{ display: 'block' }}>{h.author}</span>
                       </span>
                       <span className="hope-acts">
+                        <button
+                          type="button"
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => write(h)}
+                        >
+                          Review it
+                        </button>
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm"

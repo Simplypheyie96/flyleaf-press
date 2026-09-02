@@ -33,15 +33,20 @@
   --star:var(--mustard);
   --star-line:rgba(27,25,23,.58);
   --plate-g:var(--card-w);
+  /* --g is the ground itself, for the one place a style paints its own paper
+     as INK — the reversed edition chip on the jacket */
+  --g:var(--butter);
   background:var(--butter);
 }
 .card--mustard{
+  --g:var(--mustard);
   background:var(--mustard);
   --meta:rgba(27,25,23,.72); --num:var(--ink);
   --hair:rgba(27,25,23,.18);
   --star:var(--ink); --star-line:rgba(27,25,23,.62);
 }
 .card--coal{
+  --g:var(--coal);
   background:var(--coal);
   --tx:var(--cream);
   --meta:rgba(244,242,237,.66); --num:var(--cream);
@@ -49,14 +54,35 @@
   --star:var(--mustard); --star-line:rgba(244,242,237,.55);
 }
 .card--pink{
+  --g:var(--pink);
   background:var(--pink);
   --hair:rgba(27,25,23,.14);
   --star:var(--ink); --star-line:rgba(27,25,23,.55);
 }
 .card--blue{
+  --g:var(--blue);
   background:var(--blue);
   --hair:rgba(27,25,23,.14);
   --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+.card--sage{
+  --g:var(--sage);
+  background:var(--sage);
+  /* ink-soft measures ~4.3:1 on sage — the one pale ground it fails on — so
+     metadata steps to ink at 72%, as it does on mustard */
+  --meta:rgba(27,25,23,.72);
+  --hair:rgba(27,25,23,.16);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+/* aubergine is the second dark ground and takes coal's contrast state whole:
+   cream text, mustard stars, cream hairlines */
+.card--aubergine{
+  --g:var(--aubergine);
+  background:var(--aubergine);
+  --tx:var(--cream);
+  --meta:rgba(244,242,237,.68); --num:var(--cream);
+  --hair:rgba(244,242,237,.22);
+  --star:var(--mustard); --star-line:rgba(244,242,237,.55);
 }
 
 .card .lbl{
@@ -171,7 +197,7 @@
 .s6 .fmt-sep{ display:none; }
 .s6 .fmt-t{ padding:3px 8px 2px; opacity:.36; }
 .s6 .fmt-t[data-on="true"]{
-  background:var(--cream); color:var(--coal); opacity:1; border-radius:1px;
+  background:var(--cream); color:var(--g); opacity:1; border-radius:1px;
 }
 
 /* S7 · Airmail — struck with a rubber stamp: a doubled hairline frame,
@@ -306,7 +332,7 @@
 .card-compact .s1-rate .rate, .card-compact .s1-rate .stars{ justify-content:flex-start; }
 .card-compact .s1-cover{ width:92px; grid-column:1; grid-row:span 2; align-self:start; }
 
-/* ── S2 · Masthead (butter) ─────────────────────────────────── */
+/* ── S2 · Masthead (sage) ─────────────────────────────────── */
 .s2-head{ position:relative; padding-right:150px; min-height:196px; }
 .s2-kicker{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-bottom:18px; }
 .s2 .title{ font-size:40px; }
@@ -446,7 +472,7 @@
 .card-compact .s5-grid{ grid-template-columns:72px 1fr; gap:11px 12px; }
 .card-compact .s5-rate .rate-num{ font-size:30px; }
 
-/* ── S6 · Dust Jacket (coal) ────────────────────────────────────
+/* ── S6 · Dust Jacket (aubergine) ────────────────────────────────────
    A jacket is printed across the whole sheet, so the band bleeds to the card
    edges — negative margins of exactly one --pad on three sides, which is why
    it tracks the compact padding without a second rule. */
@@ -776,6 +802,8 @@
   display:grid; grid-template-columns:repeat(auto-fit, minmax(118px, 1fr));
   gap:1px; background:rgba(27,25,23,.35);
 }
+/* Mustard cells on the manila envelope: the deep-yellow-on-light-yellow pair
+   is the look of this card and stays as it is. */
 .mo-cell{ background:var(--mustard); padding:8px 11px 9px; min-width:0; }
 .mo-cell b{ display:block; margin-top:4px; font-size:15px; }
 
@@ -983,7 +1011,7 @@
   letter-spacing:.14em; text-transform:uppercase; color:var(--meta); }
 
 /* C6 · Postmark (manila) — every book franked and stuck to the sheet */
-.c6{ background:var(--mustard); --meta:rgba(27,25,23,.72); --air-r:#B3312A; --air-b:#2B4C8C; }
+.c6{ background:var(--manila); --meta:rgba(27,25,23,.72); --air-r:#B3312A; --air-b:#2B4C8C; }
 .c6-sheet{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:28px 18px; }
 .c6-stamp{ transform:rotate(var(--sr,0deg)); min-width:0; }
 .c6-face{ position:relative; padding:8px; background:var(--card-w); box-shadow:var(--sh-plate); }
@@ -994,10 +1022,10 @@
 .c6-perf{
   position:absolute; inset:-3px; pointer-events:none;
   background:
-    radial-gradient(circle at center, var(--mustard) 2.4px, transparent 2.9px) left top / 9px 6px repeat-x,
-    radial-gradient(circle at center, var(--mustard) 2.4px, transparent 2.9px) left bottom / 9px 6px repeat-x,
-    radial-gradient(circle at center, var(--mustard) 2.4px, transparent 2.9px) left top / 6px 9px repeat-y,
-    radial-gradient(circle at center, var(--mustard) 2.4px, transparent 2.9px) right top / 6px 9px repeat-y;
+    radial-gradient(circle at center, var(--manila) 2.4px, transparent 2.9px) left top / 9px 6px repeat-x,
+    radial-gradient(circle at center, var(--manila) 2.4px, transparent 2.9px) left bottom / 9px 6px repeat-x,
+    radial-gradient(circle at center, var(--manila) 2.4px, transparent 2.9px) left top / 6px 9px repeat-y,
+    radial-gradient(circle at center, var(--manila) 2.4px, transparent 2.9px) right top / 6px 9px repeat-y;
 }
 .c6-val{
   position:absolute; right:11px; top:11px; z-index:2;
@@ -1016,8 +1044,8 @@
 .card-compact .c6-name{ font-size:12px; }
 .card-compact .c6-val{ right:9px; top:9px; font-size:11px; }
 
-/* C7 · Marquee (coal) — the month as a listings board, one line a feature */
-.c7{ background:var(--coal); --tx:var(--cream); --meta:rgba(244,242,237,.62); }
+/* C7 · Marquee (moss) — the month as a listings board, one line a feature */
+.c7{ background:var(--moss); --tx:var(--cream); --meta:rgba(244,242,237,.62); }
 .c7-board{ border-top:1px solid rgba(244,242,237,.28); }
 .c7-board.is-split{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:30px; }
 .card-compact .c7-board.is-split{ grid-template-columns:1fr; }

@@ -388,10 +388,16 @@ function moStats(m: MonthData, id: HeadId): string {
    ceiling is a ceiling, not a choice: raising it only lets the scorer consider
    a wider grid, and the scorer still has to prefer it. Nothing the brief named
    moves — ten still goes five across, twelve still goes four, because at those
-   counts rounding up lands on five anyway — while sixteen goes 6x3 at 1.19 and
-   twenty 7x3 at 1.06. Both are shorter AND squarer than what they replaced. */
+   counts rounding up lands on five anyway — while sixteen goes 6x3 at 1.19.
+
+   SIX is the hard top, on every card and at both column widths, and it is a
+   brief rather than a fit: past six a row of jackets stops reading as books
+   and starts reading as a strip of thumbnails, whatever the aspect says. It
+   costs the heavy month some height — twenty books went 7x3 and now go 6x4 —
+   and a year gets tall, which the year accepts. The lists have the same kind
+   of ceiling at three, for the same reason; `widen` respects both. */
 const GRID_MAX_COLS = 5
-const GRID_MAX_COLS_TOP = 10
+const GRID_MAX_COLS_TOP = 6
 function gridCeiling(n: number): number {
   /* the columns at which rows/cols lands on the target — derived from the fit
      rather than written as a number, so re-fitting the aspect moves both */
@@ -433,9 +439,9 @@ const WIDE_FACTOR = SHAPE_CARD_W.wide / SHAPE_CARD_W.phone
  * row. Where stepping back one column fixes exactly that, it steps back —
  * seven books go 4 (4+3) to 6 (6+1) to 5 (5+2), which is the shape asked for.
  */
-function widen(base: number, n: number, wide?: boolean): number {
+function widen(base: number, n: number, wide: boolean | undefined, max: number): number {
   if (!wide || base < 2) return base
-  let c = Math.min(n, Math.round(base * WIDE_FACTOR))
+  let c = Math.min(n, max, Math.round(base * WIDE_FACTOR))
   if (c > base && n % c === 1 && n % (c - 1) !== 1) c--
   return Math.max(base, c)
 }
@@ -461,7 +467,7 @@ function gridCols(n: number, wide?: boolean, perRow: number = ASPECT_PER_ROW): n
        side: a cover has a legible floor and a column too many shrinks it */
     if (score < bestScore) { bestScore = score; best = c }
   }
-  return widen(best, n, wide)
+  return widen(best, n, wide, GRID_MAX_COLS_TOP)
 }
 
 /* The row-per-book styles have the OPPOSITE fault, and the old threshold made
@@ -500,7 +506,9 @@ const LIST_PER_ROW = 0.096
    banner. It was also the only place left in the app where a card was still one
    thing across. The ceiling moved 2 -> 3 for the long lists alone: at twenty
    books two columns is still the closest shape, and three only wins once the
-   list is long enough that two would run past twice its own width. */
+   list is long enough that two would run past twice its own width. Three is
+   also the most a list may ever be, on the broad column too — a fourth column
+   of bars leaves each one too narrow to carry a title. */
 const LIST_MAX_COLS = 3
 const LIST_MIN_COLS = 2
 
@@ -513,7 +521,7 @@ function listCols(n: number, wide?: boolean): number {
     const err = Math.abs(aspect - TARGET_ASPECT)
     if (err < bestErr) { bestErr = err; best = c }
   }
-  return widen(best, n, wide)
+  return widen(best, n, wide, LIST_MAX_COLS)
 }
 
 function fmts(b: Review): string {
