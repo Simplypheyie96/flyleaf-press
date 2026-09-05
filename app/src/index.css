@@ -21,21 +21,70 @@
   --danger-fg:#FDF7F5;
   --mustard:#DCA94C;
   --butter:#F6EBD9;
-  --coal:#221E1B;
-  --pink:#F3D9DD;
+  --coal:#121416;
+  --seaglass:#BFEBEE;
   --blue:#DAE4EE;
   /* Four more grounds, added when two review styles and two collage styles
      were found sitting on the same paper as a neighbour — Masthead on
      Airmail's butter, Dust Jacket on Catalogue's coal, Postmark on Ledger's
-     mustard, Marquee on Contact Sheet's coal — which made the style pickers
-     show pairs of identical dots. Sage is newsprint gone green with age,
-     manila is the light-yellow envelope Postmark is franked on, aubergine is the
-     cloth under a jacket, moss is the felt of a letter board. */
+     mustard, Marquee on Contact Sheet's coal.
+
+     The first pass gave both of the LATTER two a second near-black, and a
+     near-black is not distinguishable from another near-black in a 10px
+     swatch dot: coal #221E1B beside moss #1F2D28, and coal beside aubergine
+     #35294F, still read as one colour in both pickers. A dot can only carry a
+     difference of HUE AND LIGHTNESS, so the two dark neighbours moved off the
+     dark end instead of shuffling around on it.
+
+     Sage is newsprint gone green with age. Manila is the light-yellow envelope
+     Postmark is franked on. Lilac is the Dust Jacket's paper — the jacket was
+     aubergine under a mustard band, which is a purple-and-yellow pairing
+     nobody asked for; it is now a pale lilac sheet with the aubergine printed
+     ACROSS it as the band, so aubergine stays in the app as ink rather than as
+     paper.
+
+     Marquee took three tries. Moss green was a second near-black beside coal;
+     velvet #48222A fixed the swatch dot and was disliked as a colour; and the
+     next dark that would have cleared both — bottle green — measured dE 7.6
+     from Specimen's teal, i.e. straight back to the fault velvet was for. So
+     Marquee left the dark end altogether. Electric is the lit blue of a bulb
+     board, the one colour in a pastel picker of twelve that is not already
+     spoken for: dE 11.6 from Scrapbook's sea-glass, 16.4 from Herbarium's
+     mint, and 18.2 from Fieldnotes' blue, all past the shipped tightest pair.
+     Ink measures 9.40:1 on it and terracotta 2.78:1 — both inside what already
+     ships, since Archive's mustard sits at 8.20 and 2.42. The app is down to
+     two dark grounds, coal and teal, which is one fewer near-black to tell
+     apart in a 15px dot. */
   --sage:#D9E0D0;
   --manila:#E8D5A6;
+  --lilac:#D8CCEA;
+  --electric:#76CADD;
   --aubergine:#35294F;
-  --moss:#1F2D28;
   --cream:#F4F2ED;
+  /* The five grounds the second set of styles brought in. Every one was picked
+     by measuring CIELAB distance against the nine already here rather than by
+     eye: the closest new pair is sage/mint at dE 15.0 and manila/apricot at
+     16.1, both wider than the tightest pair in the set (butter/sage, 8.8), so
+     no two swatch dots in a picker of twelve can read as the same colour.
+     Salmon's nearest neighbours are apricot and quartz, both at dE 11.7, and
+     quartz's is lilac at 9.7 — clear of that same floor. Only one of the five
+     is dark, so the near-black question is just teal against coal, at dE 22.4
+     — and since Marquee left the dark end, that is now the only dark pair in
+     the app.
+     No brown, by instruction — apricot is a peach at L*80, not a tan.
+
+     Broadside's olive (#3B4127) and Passport's navy (#27365E) were BOTH cut
+     on report: neither was a contrast or a distance failure, they were simply
+     not liked. Their replacements flip those two cards from dark grounds to
+     light ones, which suits both metaphors better than the originals did — a
+     broadside is ink pressed into cheap pulp stock, not cream printed on a
+     dark sheet, and a visa page is a pale security sheet that gets stamped.
+     The flip is why .pp and .vp carry no cream rgba() hardcodes any more. */
+  --mint:#A6CFBB;
+  --salmon:#FDBDB5;
+  --apricot:#F2BC97;
+  --quartz:#E5BDD0;
+  --teal:#1E4645;
 
   --serif:"Playfair Display",Georgia,serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -634,22 +683,41 @@ body::before{
 }
 
 /* ── style picker (review styles + collage styles as themes) ── */
-.style-pick{ display:flex; flex-wrap:wrap; gap:8px; }
+/* Twelve per picker. A flat row of twelve pills was four rows deep on a phone
+   and the tallest thing on the share sheet, which is the one surface where
+   height is actually scarce — so the picker folds behind the same .disclose
+   row the face picker in Settings uses, and opens as a grid rather than as a
+   wrap of pills. The name is allowed to run to two lines: truncating a style
+   name to fit a column is worse than a row of buttons being 12px taller. */
+.style-fold{ display:block; }
+.style-pick{
+  display:grid; gap:6px; margin-top:8px;
+  grid-template-columns:repeat(auto-fill,minmax(132px,1fr));
+}
 .style-pick button{
-  display:inline-flex; align-items:center; gap:8px;
-  border:1px solid var(--rule); border-radius:999px; cursor:pointer;
+  display:flex; align-items:center; gap:8px; text-align:left;
+  border:1px solid var(--rule); border-radius:9px; cursor:pointer;
   background:var(--card-w); color:var(--ink-soft);
-  height:34px; padding:0 14px 0 9px;
-  font-size:11.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  min-height:36px; padding:7px 11px 7px 9px; min-width:0;
+  font-size:11.5px; font-weight:500; letter-spacing:.06em; line-height:1.3;
+  text-transform:uppercase;
   transition:color 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease);
 }
+.style-pick-name{ min-width:0; overflow-wrap:break-word; }
 .style-pick button[aria-pressed="true"]{
   color:var(--ink); border-color:var(--ink);
   box-shadow:inset 0 0 0 1px var(--ink);
 }
+/* The ring is a MID grey, not ink at 18%, because the dot it draws is a card
+   ground and two of the fourteen grounds are near-black. An ink ring on a
+   near-black dot, on an unpressed button in dark chrome, is a black circle
+   edged in black on a black pill — the swatch that says which card you are
+   picking simply is not there. One mid grey is the only single value that
+   shows on both ends: it edges coal and teal against the dark chrome, and on
+   the pale grounds it reads as the same soft hairline the ink ring did. */
 .style-dot{
-  width:16px; height:16px; border-radius:50%;
-  box-shadow:inset 0 0 0 1px rgba(27,25,23,.18);
+  width:15px; height:15px; border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(140,140,140,.55);
   flex:0 0 auto;
 }
 
@@ -975,7 +1043,6 @@ body::before{
 .onb-sub + .onb-sub{ margin-top:3px; }
 .onb-sub:last-of-type{ margin-bottom:30px; }
 .onb .field{ text-align:left; }
-.onb .style-pick{ justify-content:center; }
 
 /* settings rows */
 .set-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; border-bottom:1px solid var(--ink-soft); }

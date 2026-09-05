@@ -94,8 +94,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
         ) : (
           <>
             <div className="field">
-              <span className="ui-lbl">Collage style</span>
-              <StylePicker ids={ids} names={COLLAGE_NAMES} grounds={COLLAGE_GROUNDS} value={shown} onChange={setStyle} />
+              <StylePicker ids={ids} names={COLLAGE_NAMES} grounds={COLLAGE_GROUNDS} value={shown} onChange={setStyle} label="Collage style" />
             </div>
 
             {/* a twenty-book month — let alone a hundred-book year — is taller
@@ -103,9 +102,6 @@ export function MonthDetail({ settings }: { settings: Settings }) {
                 actions within reach */}
             <CollapsedCard html={renderCollage(month, shown)} />
 
-            {/* the style picker and the card are already on this page, so the
-                sheet carries no picker of its own — it opens on the shape and
-                the two destinations */}
             <div className="detail-acts detail-acts--one">
               <button className="btn" onClick={() => setSharing(true)}>Share</button>
             </div>
@@ -117,6 +113,25 @@ export function MonthDetail({ settings }: { settings: Settings }) {
         <ExportSheet
           heading={month.name}
           baseName={collageBaseName(month)}
+          /* The sheet carries the style picker too, exactly as the review's
+             does. It used to carry none, on the argument that the page above
+             already had one and a second copy would be two controls for one
+             setting — but they are not two settings, they are one `style`
+             state driving both, so they cannot disagree. What the argument
+             actually cost was the whole point of the sheet: this is the moment
+             the card is going out, with the card in front of you, and picking
+             its clothes meant closing the sheet, changing it on the page, and
+             opening the sheet again to look. */
+          picker={
+            <StylePicker
+              ids={ids}
+              names={COLLAGE_NAMES}
+              grounds={COLLAGE_GROUNDS}
+              value={shown}
+              onChange={setStyle}
+              label="Collage style"
+            />
+          }
           build={build}
           shape={settings.exportShape}
           onShape={(s) => db.settings.update(1, { exportShape: s })}

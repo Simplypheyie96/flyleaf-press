@@ -23,12 +23,20 @@ function ratingBlock(r: number, size: number): string {
     ${starRow(r, size)}`
 }
 
-function fmtLine(rec: Review, stack?: boolean): string {
-  return `<div class="fmt ${stack ? 'fmt--stack' : ''}">` +
+/* Every format is listed and the chosen ones carry data-on; how that mark is
+   DRAWN is each style's own business (a tick box, a highlighter swipe, a
+   stamp), never an underline. The separator dot is optional because the styles
+   that give each format its own cell already have a boundary between them. */
+function fmtRow(rec: Review, cls = '', sep = true): string {
+  return `<div class="fmt ${cls}">` +
     FORMAT_NAMES.map((k, i) =>
       `<span class="fmt-t" data-on="${rec.formats.includes(k)}">${k}</span>` +
-      (i < FORMAT_NAMES.length - 1 ? `<span class="fmt-sep" aria-hidden="true">·</span>` : '')
+      (sep && i < FORMAT_NAMES.length - 1 ? `<span class="fmt-sep" aria-hidden="true">·</span>` : '')
     ).join('') + `</div>`
+}
+
+function fmtLine(rec: Review, stack?: boolean): string {
+  return fmtRow(rec, stack ? 'fmt--stack' : '')
 }
 
 function meta(label: string, value: string): string {
@@ -72,13 +80,13 @@ function plateRow(rec: Review): string {
     `</div>`
 }
 
-function body(rec: Review, marginTop: number): string {
+function body(rec: Review, marginTop: number, cls = ''): string {
   const ps = paragraphs(rec.body).map((p) => `<p>${escapeHtml(p)}</p>`).join('')
   /* a review can be a rating and two dates with nothing written — that is a
      complete record of having read something. Emit nothing at all rather than
      an empty div, whose top margin would leave the card hanging open. */
   if (!ps) return ''
-  return `<div class="body" style="margin-top:${marginTop}px">${ps}</div>`
+  return `<div class="body ${cls}" style="margin-top:${marginTop}px">${ps}</div>`
 }
 
 function colophon(rec: Review): string {
@@ -179,7 +187,7 @@ function catalogue(rec: Review): string {
 
 /* ── S4 · Scrapbook — pasted, taped, torn (pink) ── */
 function scrapbook(rec: Review): string {
-  return `<article class="card card--pink s4" style="--rot:1.3deg">
+  return `<article class="card card--seaglass s4" style="--rot:1.3deg">
     <span class="s4-washi-1" aria-hidden="true"></span>
     <span class="s4-washi-2" aria-hidden="true"></span>
     ${patch(140)}
@@ -243,12 +251,16 @@ function fieldnotes(rec: Review): string {
   </article>`
 }
 
-/* ── S6 · Dust Jacket — the review as the book's own jacket (coal) ──
+/* ── S6 · Dust Jacket — the review as the book's own jacket (lilac) ──
    The band bleeds to the card edges on purpose: a jacket is printed across
    the whole sheet and folded in, so a band with the card's padding around it
-   would read as a box drawn on paper rather than as the thing itself. */
+   would read as a box drawn on paper rather than as the thing itself.
+
+   Lilac sheet, aubergine band. It was an aubergine sheet under a mustard band,
+   i.e. purple and yellow, and it was also a second near-black beside
+   Catalogue's coal in the style picker — one change answers both. */
 function jacket(rec: Review): string {
-  return `<article class="card card--aubergine s6" style="--rot:.6deg">
+  return `<article class="card card--lilac s6" style="--rot:.6deg">
     ${patch(150)}
     <div class="s6-band">
       <div class="s6-kick">
@@ -323,6 +335,253 @@ function airmail(rec: Review): string {
   </article>`
 }
 
+/* ── S8 · Herbarium — the book mounted and determined, the way a pressed
+   specimen is (mint). The frame is the sheet's own ruled border and the
+   determination slip is the thing filled in by hand afterwards. ── */
+function herbarium(rec: Review): string {
+  return `<article class="card card--mint hb" style="--rot:-.5deg">
+    ${patch(160)}
+    <div class="hb-frame" aria-hidden="true"></div>
+    <div class="hb-top">
+      <div class="hb-mount">
+        ${cover(rec, 'hb-cover')}
+        <span class="hb-corner hb-corner--0" aria-hidden="true"></span>
+        <span class="hb-corner hb-corner--1" aria-hidden="true"></span>
+        <span class="hb-corner hb-corner--2" aria-hidden="true"></span>
+        <span class="hb-corner hb-corner--3" aria-hidden="true"></span>
+      </div>
+      <div class="hb-id">
+        <div class="lbl hb-kick">Herbarium of read things</div>
+        <h2 class="title hb-title">${escapeHtml(rec.title)}</h2>
+        <div class="by hb-by">${escapeHtml(rec.author)}</div>
+        ${rec.series ? `<div class="hb-series lbl">${seriesLine(rec)}</div>` : ''}
+      </div>
+    </div>
+    <div class="hb-det">
+      <div class="hb-det-head">
+        <span class="lbl">Determination</span>
+        <span class="lbl">Nº ${rec.no}</span>
+      </div>
+      <div class="hb-det-grid">
+        ${meta('Started', prettyDate(rec.started))}
+        ${meta('Finished', prettyDate(rec.finished))}
+        ${pagesMeta(rec)}
+        ${meta('Rating', `${fmtRating(rec.rating)} / 5`)}
+      </div>
+      <div class="hb-det-foot">
+        <div class="hb-det-fmt">
+          <span class="lbl">Format</span>
+          ${fmtRow(rec, 'hb-fmt', false)}
+        </div>
+        ${starRow(rec.rating, 19)}
+      </div>
+    </div>
+    ${body(rec, 30)}
+    ${plateRow(rec)}
+    ${colophon(rec)}
+  </article>`
+}
+
+/* ── S9 · Broadside — the review as a hand-set poster (newsprint). Type is the
+   whole design: the title is the largest thing on any of the twelve cards,
+   and the cover is a small cut set into the text rather than a picture the
+   words have to work around. ── */
+function broadside(rec: Review): string {
+  return `<article class="card card--salmon bs" style="--rot:.4deg">
+    ${patch(190)}
+    <div class="lbl bs-kick">Read and set in type · Nº ${rec.no}</div>
+    <hr class="bs-rule bs-rule--fat">
+    <h2 class="title bs-title">${escapeHtml(rec.title)}</h2>
+    <hr class="bs-rule">
+    <div class="by bs-by">${escapeHtml(rec.author)}</div>
+    <hr class="bs-rule bs-rule--fat">
+    <div class="bs-bar">
+      <div class="bs-rate">${ratingBlock(rec.rating, 22)}</div>
+      <div class="bs-facts">
+        ${meta('Started', prettyDate(rec.started))}
+        ${meta('Finished', prettyDate(rec.finished))}
+        ${pagesMeta(rec)}
+        ${rec.series ? meta('Series', seriesLine(rec)) : ''}
+      </div>
+    </div>
+    ${fmtRow(rec, 'bs-fmt')}
+    <hr class="bs-rule">
+    <div class="bs-set">
+      <div class="bs-cut">${cover(rec)}</div>
+      ${body(rec, 0, 'bs-body')}
+    </div>
+    ${plateRow(rec)}
+    ${colophon(rec)}
+  </article>`
+}
+
+/* ── S10 · J-card — the review folded into a cassette insert (apricot). The
+   spine is the only place in the app where type runs vertically, and the
+   tracks are the reading's facts listed the way a tape lists its songs. ── */
+function jcard(rec: Review): string {
+  const track = (label: string, value: string) =>
+    `<div class="jc-track"><span class="lbl">${label}</span><i aria-hidden="true"></i><span class="jc-val">${value}</span></div>`
+  return `<article class="card card--apricot jc" style="--rot:-.7deg">
+    <div class="jc-spine">
+      <span>${escapeHtml(rec.title)}</span>
+      <span class="jc-spine-by">${escapeHtml(rec.author)}</span>
+    </div>
+    <div class="jc-main">
+      ${patch(150)}
+      <div class="jc-top">
+        <div class="jc-front">${cover(rec)}</div>
+        <div class="jc-id">
+          <div class="lbl">Side A · Nº ${rec.no}</div>
+          <h2 class="title jc-title">${escapeHtml(rec.title)}</h2>
+          <div class="by">${escapeHtml(rec.author)}</div>
+          ${rec.series ? `<div class="lbl jc-series">${seriesLine(rec)}</div>` : ''}
+          <div class="jc-rate">${ratingBlock(rec.rating, 20)}</div>
+        </div>
+      </div>
+      <div class="jc-tracks">
+        ${track('01 · Started', prettyDate(rec.started))}
+        ${track('02 · Finished', prettyDate(rec.finished))}
+        ${rec.pages ? track('03 · Pages', String(rec.pages)) : ''}
+      </div>
+      <div class="jc-fmt-row">
+        <span class="lbl">Format</span>
+        ${fmtRow(rec, 'jc-fmt', false)}
+      </div>
+      ${body(rec, 24, 'jc-body')}
+      ${plateRow(rec)}
+      ${colophon(rec)}
+    </div>
+  </article>`
+}
+
+/* ── S11 · Passport — the reading as a border crossing (quartz). The stamps are
+   RECTANGULAR entry stamps, never the round cancellation ring: that device
+   belongs to the airmail card and to the Postmark collage, and a third card
+   wearing it would make all three read as one style. They sit in a wrapping
+   flex row rather than absolutely, because the data column is ~430px wide on
+   a full card and ~176px compact — two stamps cannot be pinned side by side
+   at a width that is not known here. ── */
+function passport(rec: Review): string {
+  /* the machine-readable strip: A–Z and 0–9 survive, everything else becomes
+     the filler chevron, and the line is padded to a fixed length so both rows
+     end level. Escaped last, because "<" is the filler AND the tag opener. */
+  const mrz = (s: string, n: number) =>
+    (s.toUpperCase().replace(/[^A-Z0-9]+/g, '<').slice(0, n) + '<'.repeat(n))
+      .slice(0, n)
+      .replace(/</g, '&lt;')
+
+  const stamp = (label: string, date: string, rot: number) => {
+    const p = (date || '').split(' ')
+    return `<svg class="pp-stamp" style="transform:rotate(${rot}deg)" width="158" height="76"
+      viewBox="0 0 158 76" fill="none" aria-hidden="true">
+      <rect x="1.4" y="1.4" width="155.2" height="73.2" stroke="currentColor" stroke-width="1.6" opacity=".7"/>
+      <rect x="6.5" y="6.5" width="145" height="63" stroke="currentColor" stroke-width="1" opacity=".5"/>
+      <text x="79" y="24" text-anchor="middle" fill="currentColor" opacity=".78"
+        font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing="2.4">${label}</text>
+      <text x="79" y="47" text-anchor="middle" fill="currentColor" opacity=".92"
+        font-family="IBM Plex Mono, monospace" font-size="15">${escapeHtml(p.slice(0, 2).join(' '))}</text>
+      <text x="79" y="63" text-anchor="middle" fill="currentColor" opacity=".7"
+        font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.6">${escapeHtml(p[2] || '')}</text>
+    </svg>`
+  }
+
+  const line = (label: string, value: string) =>
+    `<div class="pp-line"><span class="lbl">${label}</span><span class="pp-val">${value}</span></div>`
+
+  return `<article class="card card--quartz pp" style="--rot:.5deg">
+    <div class="pp-guilloche" aria-hidden="true"></div>
+    <div class="pp-in">
+      ${patch(170)}
+      <div class="pp-head">
+        <span class="lbl">Flyleaf Press · Reader's passport</span>
+        <span class="lbl">Nº ${rec.no}</span>
+      </div>
+      <hr class="pp-rule">
+      <div class="pp-top">
+        <div class="pp-photo">${cover(rec)}</div>
+        <div class="pp-data">
+          <h2 class="title pp-title">${escapeHtml(rec.title)}</h2>
+          ${line('Author', escapeHtml(rec.author))}
+          ${rec.series ? line('Series', seriesLine(rec)) : ''}
+          ${rec.pages ? line('Pages', String(rec.pages)) : ''}
+          <div class="pp-line pp-line--rate">
+            <span class="lbl">Rating</span>
+            <span class="pp-val"><span class="r-num">${fmtRating(rec.rating)}</span>${starRow(rec.rating, 17)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="pp-stamps">
+        ${stamp('ENTRY', prettyDate(rec.started), -2)}
+        ${stamp('EXIT', prettyDate(rec.finished), 1.6)}
+      </div>
+      <div class="pp-fmt-row">
+        <span class="lbl">Format</span>
+        ${fmtRow(rec, 'pp-fmt', false)}
+      </div>
+      <div class="pp-mrz">
+        <div>P&lt;FLYPRESS&lt;${mrz(rec.title, 30)}</div>
+        <div>${mrz(rec.author, 20)}${mrz(String(rec.no), 4)}${mrz((rec.finished || '').replace(/-/g, ''), 10)}</div>
+      </div>
+      ${body(rec, 26)}
+      ${plateRow(rec)}
+      ${colophon(rec)}
+    </div>
+  </article>`
+}
+
+/* ── S12 · Specimen — the book set as a type specimen sheet (teal). The
+   rating is the point size, so the card's own showing gets larger the more
+   the book was liked, and the table is the metadata as a foundry would list
+   it. ── */
+function specimen(rec: Review): string {
+  const row = (label: string, value: string) =>
+    `<div class="ts-row"><span class="lbl">${label}</span><span class="ts-val">${value}</span></div>`
+  const step = (px: number) =>
+    `<div class="ts-step"><span class="ts-pt">${px}</span><span class="ts-spec" style="font-size:${px}px">${escapeHtml(rec.title)}</span></div>`
+  return `<article class="card card--teal ts" style="--rot:-.3deg">
+    ${patch(200)}
+    <div class="ts-head">
+      <span class="lbl">Specimen sheet · Nº ${rec.no}</span>
+      <span class="lbl">${fmtRating(rec.rating)} / 5</span>
+    </div>
+    <hr class="ts-rule ts-rule--fat">
+    <div class="ts-showing">
+      <span class="ts-pt ts-pt--big">72</span>
+      <div class="ts-display">${escapeHtml(rec.title)}</div>
+    </div>
+    <div class="ts-steps">
+      ${step(30)}
+      ${step(19)}
+      ${step(13)}
+    </div>
+    <hr class="ts-rule">
+    <div class="ts-cols">
+      <div class="ts-table">
+        ${row('Cut by', escapeHtml(rec.author))}
+        ${row('Started', prettyDate(rec.started))}
+        ${row('Finished', prettyDate(rec.finished))}
+        ${rec.pages ? row('Extent', String(rec.pages)) : ''}
+        ${rec.series ? row('Family', seriesLine(rec)) : ''}
+      </div>
+      <figure class="ts-cut">
+        ${cover(rec)}
+        <figcaption class="lbl">Fig. 1</figcaption>
+      </figure>
+    </div>
+    <div class="ts-fmt-row">
+      <span class="lbl">Format</span>
+      ${fmtRow(rec, 'ts-fmt', false)}
+    </div>
+    <div class="ts-sample">
+      <span class="lbl">In use</span>
+      ${starRow(rec.rating, 20)}
+    </div>
+    ${body(rec, 14)}
+    ${plateRow(rec)}
+    ${colophon(rec)}
+  </article>`
+}
+
 export const REVIEW_RENDERERS: Record<StyleId, (rec: Review) => string> = {
   archive,
   masthead,
@@ -331,6 +590,11 @@ export const REVIEW_RENDERERS: Record<StyleId, (rec: Review) => string> = {
   fieldnotes,
   jacket,
   airmail,
+  herbarium,
+  broadside,
+  jcard,
+  passport,
+  specimen,
 }
 
 export function renderReviewCard(rec: Review, style?: StyleId): string {

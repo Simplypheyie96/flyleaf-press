@@ -6,6 +6,32 @@
    what phone it happens on.
    ───────────────────────────────────────────────────────────── */
 
+/* The soft paper tooth for the coal ground — the review card and the contact
+   sheet, the only two places that set it. Teal is dark and deliberately does
+   not take it: it is a printed board, not a sheet of black paper. It is built from
+   repeating-linear-gradients and nothing else — never an SVG noise primitive
+   and never a filter, because the card gets rasterized and a filter is the one
+   thing the rasterizer is entitled to disagree with us about (the same reason
+   the format marks are borders rather than box-shadows, and the reason the gem
+   clip lost its drop-shadow).
+   Every period is a whole number of CSS pixels, so at the 2x export both
+   options land on whole device rows and the hatch cannot moire against the
+   pixel grid. The two crossed hatches at ~2% white are the tooth; the two
+   broad gradients are the uneven ink a dark sheet always shows. Stops are
+   written rgba(255,255,255,0), never `transparent` — `transparent` is
+   rgba(0,0,0,0), and interpolating toward it greys the midpoint of every
+   band, which on a near-black ground is exactly where it shows. */
+.card{
+  --tooth:
+    repeating-linear-gradient(63deg,
+      rgba(255,255,255,.026) 0 1px, rgba(255,255,255,0) 1px 4px),
+    repeating-linear-gradient(-27deg,
+      rgba(255,255,255,.019) 0 1px, rgba(255,255,255,0) 1px 5px),
+    linear-gradient(155deg,
+      rgba(255,255,255,.045) 0%, rgba(255,255,255,0) 38%, rgba(0,0,0,.10) 100%),
+    linear-gradient(20deg, rgba(0,0,0,.12), rgba(0,0,0,0) 55%);
+}
+
 .card-wrap{ --pad:28px; }
 .card-wrap.card-compact{ --pad:22px; }
 
@@ -47,15 +73,15 @@
 }
 .card--coal{
   --g:var(--coal);
-  background:var(--coal);
+  background:var(--tooth), var(--coal);
   --tx:var(--cream);
   --meta:rgba(244,242,237,.66); --num:var(--cream);
   --hair:rgba(244,242,237,.22);
   --star:var(--mustard); --star-line:rgba(244,242,237,.55);
 }
-.card--pink{
-  --g:var(--pink);
-  background:var(--pink);
+.card--seaglass{
+  --g:var(--seaglass);
+  background:var(--seaglass);
   --hair:rgba(27,25,23,.14);
   --star:var(--ink); --star-line:rgba(27,25,23,.55);
 }
@@ -74,15 +100,82 @@
   --hair:rgba(27,25,23,.16);
   --star:var(--ink); --star-line:rgba(27,25,23,.55);
 }
-/* aubergine is the second dark ground and takes coal's contrast state whole:
-   cream text, mustard stars, cream hairlines */
-.card--aubergine{
-  --g:var(--aubergine);
-  background:var(--aubergine);
+/* Lilac is the Dust Jacket's sheet. It was aubergine — a dark purple card
+   carrying a mustard band, i.e. purple and yellow, which is the one pairing on
+   the seven that read as a clash rather than as a printed object. The jacket is
+   now the pale sheet and the aubergine is what is PRINTED on it (see .s6-band),
+   which is the right way round for a jacket anyway: the band is ink, not paper.
+
+   ink-soft measures 3.8:1 on lilac, so metadata steps to ink at 72% exactly as
+   it does on sage and mustard — measured 5.6:1. */
+.card--lilac{
+  --g:var(--lilac);
+  background:var(--lilac);
+  --meta:rgba(27,25,23,.72);
+  --hair:rgba(27,25,23,.16);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+
+/* ── The five grounds that came in with Herbarium, Broadside, J-card, Passport
+   and Specimen. Each name is one review card AND one collage, so a modifier
+   carries the tokens both need and neither style hardcodes a colour.
+
+   Measured against every shipped ground before they were picked: the tightest
+   new pair is newsprint/sage at ΔE 9.6, then quartz/lilac at 12.4, sage/mint
+   at 15.0 and manila/apricot at 16.1 — every one wider than the tightest pair
+   already shipping (butter/sage, 8.5), so no two swatch dots in a picker of
+   twelve read as the same colour. Teal is the only dark of the five and clears
+   the shipped coal floor of 19.2 against it (dE 22.4). No brown
+   anywhere: apricot is a peach at L*80, and the prototype's kraft was cut
+   outright. Newsprint and quartz replaced an olive and a navy that measured
+   fine and were simply not liked — see the note in index.css. */
+.card--mint{
+  --g:var(--mint);
+  background:var(--mint);
+  /* ink-soft measures 4.4:1 on mint — the same failure sage has — so metadata
+     steps to ink at 72%, measured 6.9:1 */
+  --meta:rgba(27,25,23,.72);
+  --hair:rgba(27,25,23,.2);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+.card--apricot{
+  --g:var(--apricot);
+  background:var(--apricot);
+  --meta:rgba(27,25,23,.72);
+  --hair:rgba(27,25,23,.2);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+/* Newsprint and quartz are pale, so they take the same ink-derived tokens
+   mint and apricot do — ink at 72% for metadata (measured 5.26:1 on newsprint,
+   5.28:1 on quartz, both well past the 4.5 the small mono labels need), and
+   NO --num override, so the numeral falls through to the terracotta the other
+   light grounds print it in (3.07:1 and 3.09:1 — large text, and mid-pack
+   among the nine already shipping, where mustard sits at 2.42). */
+.card--salmon{
+  --g:var(--salmon);
+  background:var(--salmon);
+  --meta:rgba(27,25,23,.72);
+  --hair:rgba(27,25,23,.2);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+.card--quartz{
+  --g:var(--quartz);
+  background:var(--quartz);
+  --meta:rgba(27,25,23,.72);
+  --hair:rgba(27,25,23,.2);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+/* Teal, the one dark ground of the five, takes cream ink and a warm star the
+   way coal does. --plate-g is deliberately NOT overridden: a polaroid is white
+   paper on any ground, and the plate row is the one thing on the card that is
+   an object lying on it rather than something printed into it. */
+.card--teal{
+  --g:var(--teal);
+  background:var(--teal);
   --tx:var(--cream);
   --meta:rgba(244,242,237,.68); --num:var(--cream);
-  --hair:rgba(244,242,237,.22);
-  --star:var(--mustard); --star-line:rgba(244,242,237,.55);
+  --hair:rgba(244,242,237,.24);
+  --star:#E4C56A; --star-line:rgba(244,242,237,.58);
 }
 
 .card .lbl{
@@ -192,12 +285,15 @@
 .s5 .fmt-t[data-on="true"]{ border-color:currentColor; }
 
 /* S6 · Dust Jacket — the edition line, set reversed out of the ink the
-   way a jacket band is printed. */
+   way a jacket band is printed. The chip paints INK and lets the card's own
+   ground through as the letterform; on the old dark sheet it was the other way
+   about (cream chip, aubergine letters), and the pale sheet flips both halves
+   rather than only one — a cream chip on lilac is a chip nobody can see. */
 .s6 .fmt{ column-gap:6px; row-gap:7px; }
 .s6 .fmt-sep{ display:none; }
-.s6 .fmt-t{ padding:3px 8px 2px; opacity:.36; }
+.s6 .fmt-t{ padding:3px 8px 2px; opacity:.42; }
 .s6 .fmt-t[data-on="true"]{
-  background:var(--cream); color:var(--g); opacity:1; border-radius:1px;
+  background:var(--ink); color:var(--g); opacity:1; border-radius:1px;
 }
 
 /* S7 · Airmail — struck with a rubber stamp: a doubled hairline frame,
@@ -393,7 +489,7 @@
 }
 .s4::before{
   content:""; position:absolute; inset:0; z-index:-1;
-  background:var(--pink); border-radius:2px;
+  background:var(--seaglass); border-radius:2px;
   clip-path:polygon(0 0, 100% 0, 100% calc(100% - 14px),
     97.5% calc(100% - 6px), 94% calc(100% - 13px), 90% calc(100% - 4px),
     86% calc(100% - 12px), 81.5% calc(100% - 5px), 77% calc(100% - 13px),
@@ -468,20 +564,26 @@
 .s5 .patch{ right:-24px; top:-26px; opacity:.09; transform:rotate(22deg); }
 .card-compact .s5 .title{ font-size:25px; }
 .card-compact .s5-side{ gap:16px; }
+.card-compact .s5-rate{ flex-wrap:wrap; row-gap:6px; }
 .card-compact .s5-cover{ width:88px; }
 .card-compact .s5-grid{ grid-template-columns:72px 1fr; gap:11px 12px; }
 .card-compact .s5-rate .rate-num{ font-size:30px; }
 
-/* ── S6 · Dust Jacket (aubergine) ────────────────────────────────────
+/* ── S6 · Dust Jacket (lilac, banded aubergine) ──────────────────────
    A jacket is printed across the whole sheet, so the band bleeds to the card
    edges — negative margins of exactly one --pad on three sides, which is why
-   it tracks the compact padding without a second rule. */
+   it tracks the compact padding without a second rule.
+
+   The band is aubergine on lilac: one hue, two values, which is how a jacket
+   is actually printed. It was mustard on aubergine — a yellow band on a purple
+   sheet — and that pair was the reported clash. Cream on aubergine measures
+   11.9:1. */
 .s6-band{
   margin:calc(var(--pad) * -1) calc(var(--pad) * -1) 26px;
   padding:22px var(--pad) 24px;
-  background:var(--mustard);
-  --tx:var(--ink); --meta:rgba(27,25,23,.7);
-  color:var(--ink);
+  background:var(--aubergine);
+  --tx:var(--cream); --meta:rgba(244,242,237,.68);
+  color:var(--cream);
   border-radius:2px 2px 0 0;
   position:relative; z-index:1;
 }
@@ -521,7 +623,7 @@
 .card-compact .s6-panel{ gap:16px; }
 .card-compact .s6-front{ width:88px; }
 .card-compact .s6-grid{ grid-template-columns:60px 1fr; gap:11px 12px; }
-.card-compact .s6-rate{ white-space:nowrap; }
+.card-compact .s6-rate{ flex-wrap:wrap; row-gap:6px; }
 /* the bars wrap under the prose here, so they take the colophon's own clearance */
 .card-compact .s6-bars{ margin-top:22px; }
 .card-compact .s6-rate .rate-num{ font-size:30px; }
@@ -668,11 +770,15 @@
 .mo-head--c6 .mo-sub{ margin-top:10px; padding-top:9px; border-top:1px solid rgba(27,25,23,.3); }
 
 /* C7 · a listings board is lit from its frame, so the head sits between two
-   runs of lamps and is the only centred head of the seven */
+   runs of lamps and is the only centred head of the seven. The lamps were
+   mustard, which measures 1.15:1 on this ground — a rail of bulbs nobody can
+   see. They are ink now: the board is the lit surface and the sockets are what
+   is dark on it. rgba(27,25,23,0) rather than `transparent`, which is
+   rgba(0,0,0,0) and would fade each dot through a grey halo. */
 .mo-head--c7{ display:block; text-align:center; }
 .mo-head--c7 .mo-lamps{
   height:9px;
-  background:radial-gradient(circle at center, var(--mustard) 3px, transparent 3.4px) left center / 21px 9px repeat-x;
+  background:radial-gradient(circle at center, rgba(27,25,23,.82) 3px, rgba(27,25,23,0) 3.4px) left center / 21px 9px repeat-x;
   opacity:.9;
 }
 .mo-head--c7 .mo-title{ margin:12px 0 0; letter-spacing:.01em; }
@@ -793,32 +899,53 @@
 /* C6 · customs declaration. A ruled form of cells: the rules are the grid's
    own 1px gaps showing through, which is the only way they stay aligned when
    the cell count changes and the last row is short. */
-.mo-stats--customs{ border:1.5px solid rgba(27,25,23,.45); }
+.mo-stats--customs{
+  border:1.5px solid rgba(27,25,23,.45); background:var(--cream);
+  overflow:hidden; /* clips the last row's and last column's outer rule */
+}
 .mo-cn{
   display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
   padding:7px 11px; border-bottom:1.5px solid rgba(27,25,23,.45);
 }
+/* The rules are per-cell BORDERS, not 1px grid gaps over a dark container.
+   The gap trick draws the form correctly only while the cells fill the grid:
+   a short last row — which is most months, since the count is whatever the
+   month yields — left the container's own backdrop showing as a bare grey
+   block filling the rest of the row. It read as a colour poured into the
+   space, not as a rule, which is the same fault the mustard cells had.
+   Borders cannot do that, because a border needs a cell to belong to, so the
+   unfilled part of the row is simply paper. The grid is pulled 1px right and
+   down under the container's overflow:hidden so the last column's and last
+   row's outer rule is clipped rather than doubling the container's frame. */
 .mo-cells{
   display:grid; grid-template-columns:repeat(auto-fit, minmax(118px, 1fr));
-  gap:1px; background:rgba(27,25,23,.35);
+  gap:0; margin:0 -1px -1px 0;
 }
-/* Mustard cells on the manila envelope: the deep-yellow-on-light-yellow pair
-   is the look of this card and stays as it is. */
-.mo-cell{ background:var(--mustard); padding:8px 11px 9px; min-width:0; }
+/* The cells are CREAM, not mustard. A CN22 is a paper label stuck onto the
+   envelope, so the form is a lighter sheet lying on the manila with the ink
+   rules showing through the grid's 1px gaps. Mustard cells made it deep yellow
+   on light yellow — the same hue at two values, filling the widest block on
+   the card, which read as a colour poured into the space rather than as a
+   thing pasted there. */
+.mo-cell{
+  background:var(--cream); padding:8px 10px 8px 11px; min-width:0;
+  border-right:1px solid rgba(27,25,23,.35);
+  border-bottom:1px solid rgba(27,25,23,.35);
+}
 .mo-cell b{ display:block; margin-top:4px; font-size:15px; }
 
 /* C7 · the lit ticker. Figures large and centred over their names, framed the
    way the board above it is framed. */
 .mo-stats--ticker{
   padding:14px 0 15px;
-  border-top:1px solid rgba(244,242,237,.28);
-  border-bottom:1px solid rgba(244,242,237,.28);
+  border-top:1px solid rgba(27,25,23,.30);
+  border-bottom:1px solid rgba(27,25,23,.30);
 }
 .mo-tick-row{
   display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr);
   gap:12px; text-align:center;
 }
-.mo-tick b{ display:block; font-size:19px; color:var(--mustard); }
+.mo-tick b{ display:block; font-size:19px; color:var(--ink); }
 .mo-tick .lbl{ display:block; margin-top:5px; }
 
 /* ── compact (350px) ── */
@@ -854,9 +981,43 @@
   color:var(--meta, var(--ink-soft));
 }
 
+/* ── A COVER HAS A CEILING, AND IT IS THREE-TO-A-ROW ──────────────────
+   `gridCols` has a floor of two columns and no ceiling on the CELL, so a
+   two-book month drew two jackets 308px across on the standard card and 458px
+   on the Large one — the whole card was two enormous covers. The scorer is
+   right to keep two columns (a single column of covers is a stack, not a
+   grid); what was missing is that a month with two books in it is a SMALL
+   OBJECT and should look like one.
+
+   So the grid is capped at the width its own column count would occupy if
+   every cell were the size a cell is three-to-a-row on the standard card —
+   220px — and centred in whatever is left. Above that count the cap is wider
+   than the card and does nothing, which is why this is one rule rather than a
+   branch: it can only ever bite where the cells are larger than a cover has
+   any business being. Measured on the 688px card: n=2 goes 308 -> 220 with a
+   symmetric 88px mat; n>=3 is untouched. On the 988px card it also catches
+   n=3 (300 -> 220) and n=4 (222 -> 220).
+
+   --gx is each grid's own column gap, written beside it so the arithmetic
+   cannot drift from the gap it is describing. */
+.c1-grid, .c2-rail, .c4-board, .c6-sheet, .hg,
+.cb-grid, .vp-sheet, .cs-grid{
+  --cap:220px;
+  max-width:calc(var(--cols,3) * var(--cap) + (var(--cols,3) - 1) * var(--gx,16px));
+  margin-inline:auto;
+}
+.card-compact .c1-grid, .card-compact .c2-rail,
+.card-compact .c4-board, .card-compact .c6-sheet, .card-compact .hg,
+.card-compact .cb-grid, .card-compact .vp-sheet, .card-compact .cs-grid{ --cap:130px; }
+
 /* C1 · Contact Sheet (coal) */
-.c1{ background:var(--coal); --tx:var(--cream); --meta:rgba(244,242,237,.6); }
-.c1-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; }
+.c1{
+  background:var(--tooth), var(--coal);
+  --tx:var(--cream); --meta:rgba(244,242,237,.6);
+  --hair:rgba(244,242,237,.22);
+  --star:var(--mustard); --star-line:rgba(244,242,237,.55);
+}
+.c1-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
 .c1-cell{ min-width:0; }
 .c1-no{ font-family:var(--mono); font-size:9px; letter-spacing:.16em; color:var(--meta); margin-bottom:6px; text-transform:uppercase; }
 .c1-meta{ display:flex; align-items:baseline; gap:7px; margin-top:8px; flex-wrap:wrap; }
@@ -868,18 +1029,18 @@
    auto-fit rather than a fixed count because repeat() takes an <integer> and
    nothing else: min() and calc() are not legal there, so "as many as fit above
    this width" is the only way to say it in CSS. */
-.card-compact .c1-grid{ grid-template-columns:repeat(auto-fit, minmax(84px, 1fr)); gap:14px 12px; }
+.card-compact .c1-grid{ grid-template-columns:repeat(auto-fit, minmax(84px, 1fr)); gap:14px 12px; --gx:12px; }
 
 /* C2 · Shelf (butter) */
 .c2{ background:var(--butter); }
-.c2-rail{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:0 20px;
+.c2-rail{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:0 20px; --gx:20px;
   align-items:end; padding:0 4px; }
 /* the rail keeps its JS-decided column count on a phone — the rows were
    sliced to that width, so overriding it here would wrap a book onto a rail
    of its own and part it from its rating */
 /* both the cover rail and the meta rail under it take the same rule, so they
    resolve to the same number of columns and stay in step */
-.card-compact .c2-rail{ gap:0 10px; grid-template-columns:repeat(auto-fit, minmax(78px, 1fr)); }
+.card-compact .c2-rail{ gap:0 10px; --gx:10px; grid-template-columns:repeat(auto-fit, minmax(78px, 1fr)); }
 .c2-book{ position:relative; padding-bottom:14px; min-width:0; }
 .c2-book .cov{ transform:rotate(var(--lean,0deg)); transform-origin:bottom center; }
 .c2-edge{ height:5px; background:var(--ink); opacity:.75; border-radius:1px;
@@ -898,7 +1059,7 @@
    the stub's plate and perforated foot, the register's rule, the board's
    feature number. Columns come from gridCols(), the same counted rule the
    cover styles use, so a seven-book list packs like a seven-book grid. */
-.hg{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:24px 16px; }
+.hg{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:24px 16px; --gx:16px; }
 .hg-c{ min-width:0; }
 .hg-cap{ margin-top:9px; min-width:0; }
 .hg-name{
@@ -910,7 +1071,7 @@
   color:var(--meta); margin-top:4px;
 }
 .hg-end{ margin-top:7px; }
-.card-compact .hg{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:20px 13px; }
+.card-compact .hg{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:20px 13px; --gx:13px; }
 .card-compact .hg-name{ font-size:12px; }
 
 /* c3 — each hopeful is its own unpunched stub, foot and all */
@@ -925,16 +1086,16 @@
 .hg--c5 .hg-c{ padding-bottom:10px; border-bottom:1px solid rgba(27,25,23,.22); }
 
 /* c7 — a listing keeps its feature number, set above the frame */
-.hg--c7{ border-top:1px solid rgba(244,242,237,.28); padding-top:20px; }
-.hg--c7 .hg-c{ padding-bottom:11px; border-bottom:1px solid rgba(244,242,237,.18); }
+.hg--c7{ border-top:1px solid rgba(27,25,23,.30); padding-top:20px; }
+.hg--c7 .hg-c{ padding-bottom:11px; border-bottom:1px solid rgba(27,25,23,.16); }
 .hg-no{
   font-family:var(--mono); font-size:10px; letter-spacing:.08em;
-  color:var(--mustard); margin-bottom:6px;
+  color:var(--meta); margin-bottom:6px;
 }
 .hg--c7 .hg-name{ letter-spacing:.02em; text-transform:uppercase; }
 
 /* C3 · Tickets (pink) */
-.c3{ background:var(--pink); }
+.c3{ background:var(--seaglass); }
 /* one column by default; a long month splits into two so the card stays a
    card rather than a receipt */
 .c3-stack{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); gap:14px; }
@@ -977,7 +1138,7 @@
   background-image:
     repeating-linear-gradient(0deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px),
     repeating-linear-gradient(90deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px); }
-.c4-board{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:26px 18px; }
+.c4-board{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:26px 18px; --gx:18px; }
 .c4-pin{ position:relative; min-width:0; transform:rotate(var(--pr,0deg)); }
 .c4-photo{ background:var(--card-w); padding:8px 8px 0; box-shadow:var(--sh-plate); border-radius:2px; }
 .c4-cap{ font-family:var(--hand); font-size:13px; line-height:1.3; color:var(--ink-soft);
@@ -985,7 +1146,7 @@
 .c4-cap .r-num{ font-family:var(--hand); font-weight:700; font-size:13.5px; color:var(--accent); }
 .c4-tack{ position:absolute; top:-7px; left:50%; margin-left:-7px; z-index:2; }
 .c4 .patch{ left:50%; bottom:-30px; margin-left:-60px; opacity:.08; }
-.card-compact .c4-board{ grid-template-columns:repeat(auto-fit, minmax(92px, 1fr)); gap:22px 14px; }
+.card-compact .c4-board{ grid-template-columns:repeat(auto-fit, minmax(92px, 1fr)); gap:22px 14px; --gx:14px; }
 
 /* C5 · Ledger (mustard) */
 .c5{ background:var(--mustard); --meta:rgba(27,25,23,.72); }
@@ -1012,7 +1173,7 @@
 
 /* C6 · Postmark (manila) — every book franked and stuck to the sheet */
 .c6{ background:var(--manila); --meta:rgba(27,25,23,.72); --air-r:#B3312A; --air-b:#2B4C8C; }
-.c6-sheet{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:28px 18px; }
+.c6-sheet{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:28px 18px; --gx:18px; }
 .c6-stamp{ transform:rotate(var(--sr,0deg)); min-width:0; }
 .c6-face{ position:relative; padding:8px; background:var(--card-w); box-shadow:var(--sh-plate); }
 .c6-face .cov{ border-radius:0; box-shadow:none; }
@@ -1040,20 +1201,37 @@
   color:var(--meta); margin:4px 0 5px;
 }
 .c6 .patch{ right:-26px; bottom:-24px; opacity:.10; transform:rotate(-14deg); }
-.card-compact .c6-sheet{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:22px 13px; }
+.card-compact .c6-sheet{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:22px 13px; --gx:13px; }
 .card-compact .c6-name{ font-size:12px; }
 .card-compact .c6-val{ right:9px; top:9px; font-size:11px; }
 
-/* C7 · Marquee (moss) — the month as a listings board, one line a feature */
-.c7{ background:var(--moss); --tx:var(--cream); --meta:rgba(244,242,237,.62); }
-.c7-board{ border-top:1px solid rgba(244,242,237,.28); }
+/* C7 · Marquee (electric) — the month as a listings board, one line a feature.
+   The card was dark twice and is now light. Moss was a second near-black
+   beside Contact Sheet's coal; velvet #48222A cleared that and was disliked;
+   every remaining dark that would have cleared coal collided with Specimen's
+   teal instead. Electric is the lit blue of a bulb board, and it is the right
+   way round anyway — a marquee IS a lit sheet with black letters set on it,
+   which is what the board below now draws.
+
+   Ink 9.40:1. ink-soft fails here at 3.09:1, as it does on sage and lilac, so
+   metadata steps to ink at 72% (4.98:1). Mustard is 1.15:1 on this ground —
+   invisible — so the stars take ink like every other pale ground, and the
+   numerals take ink rather than terracotta (2.78:1 at 16px), which is the
+   black letter the metaphor wanted. */
+.c7{
+  background:var(--electric);
+  --meta:rgba(27,25,23,.72);
+  --hair:rgba(27,25,23,.16);
+  --star:var(--ink); --star-line:rgba(27,25,23,.55);
+}
+.c7-board{ border-top:1px solid rgba(27,25,23,.30); }
 .c7-board.is-split{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:30px; }
 .card-compact .c7-board.is-split{ grid-template-columns:1fr; }
 .c7-line{
   display:grid; grid-template-columns:24px 30px 1fr auto; gap:0 13px; align-items:center;
-  padding:11px 0; border-bottom:1px solid rgba(244,242,237,.18);
+  padding:11px 0; border-bottom:1px solid rgba(27,25,23,.16);
 }
-.c7-no{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--mustard); }
+.c7-no{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--meta); }
 .c7-cov{ width:30px; }
 .c7-name{
   font-family:var(--serif); font-weight:600; font-size:15px; line-height:1.2;
@@ -1064,12 +1242,437 @@
   color:var(--meta); margin-top:4px;
 }
 .c7-rate{ text-align:right; }
-.c7-rate .r-num{ font-size:16px; color:var(--mustard); }
+.c7-rate .r-num{ font-size:16px; color:var(--ink); }
 .c7-rate .stars-s{ margin-top:2px; }
-.c7 .patch{ left:-30px; bottom:-26px; opacity:.09; transform:rotate(16deg); }
+.c7 .patch{ left:-30px; bottom:-26px; opacity:.07; transform:rotate(16deg); }
 .card-compact .c7-line{ grid-template-columns:20px 26px 1fr auto; gap:0 10px; }
 .card-compact .c7-cov{ width:26px; }
 .card-compact .c7-name{ font-size:13px; }
+
+
+/* ═════════════════════════════════════════════════════════════
+   S8–S12 · the five review cards that came in with the new grounds.
+   Rules inherited from the seven above and kept here: no negative z-index,
+   no var() inside an SVG attribute, a format mark is a border or a
+   background and never a box-shadow, and never an underline.
+   ═════════════════════════════════════════════════════════════ */
+
+/* ── S8 · Herbarium (mint) ── */
+.hb{ padding:calc(var(--pad) + 16px); }
+.hb .patch{ right:-40px; bottom:-46px; opacity:.06; }
+.hb-frame{ position:absolute; inset:13px; border:1px solid var(--hair); pointer-events:none; }
+.hb-frame::after{ content:''; position:absolute; inset:4px; border:1px solid var(--hair); opacity:.55; }
+.hb-top{ display:grid; grid-template-columns:150px 1fr; gap:0 34px; align-items:start; }
+.hb-mount{ position:relative; padding:9px; transform:rotate(-1.1deg); }
+.hb-mount .cover{ box-shadow:var(--sh-plate); }
+/* the paper corners a mounted sheet is held by — a triangle cut from a
+   border, so nothing is drawn in an SVG attribute and nothing is a shadow */
+.hb-corner{
+  position:absolute; width:0; height:0;
+  border-top:15px solid rgba(27,25,23,.7); border-right:15px solid transparent;
+}
+.hb-corner--sm{ border-top-width:9px; border-right-width:9px; }
+.hb-corner--0{ left:0; top:0; }
+.hb-corner--1{ right:0; top:0; transform:rotate(90deg); }
+.hb-corner--2{ right:0; bottom:0; transform:rotate(180deg); }
+.hb-corner--3{ left:0; bottom:0; transform:rotate(270deg); }
+.hb-id{ padding-top:6px; min-width:0; }
+.hb-kick{ display:block; }
+.hb-title{
+  margin:14px 0 0; font-family:var(--serif); font-style:italic; font-weight:400;
+  font-size:37px; line-height:1.1; letter-spacing:-.01em; color:var(--tx);
+}
+.hb-by{ margin-top:10px; font-style:normal; font-size:15px; }
+.hb-series{ display:block; margin-top:12px; }
+/* the determination slip. Full width because pushed right it left a column of
+   bare paper as tall as the cover, and a hole is not breathing room. */
+.hb-det{
+  margin:36px 0 0; width:100%;
+  background:rgba(252,251,248,.72); border:1px solid rgba(27,25,23,.3);
+  padding:16px 18px 15px;
+}
+.hb-det-head{ display:flex; justify-content:space-between; gap:14px; padding-bottom:11px; border-bottom:1px solid var(--hair); }
+.hb-det-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:14px 20px; padding:14px 0 0; }
+.hb-det-grid .val{ margin-top:4px; }
+.hb-det-foot{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px; padding-top:13px; border-top:1px solid var(--hair); }
+.hb-det-fmt{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-width:0; }
+.hb-det-foot > .stars{ margin-left:auto; padding:0; }
+/* format mark: a specimen pin — an outlined disc that fills when chosen */
+.hb-fmt{ column-gap:14px; }
+.hb-fmt .fmt-t{ position:relative; padding-left:13px; }
+.hb-fmt .fmt-t::before{
+  content:''; position:absolute; left:0; top:.34em;
+  width:7px; height:7px; border-radius:50%;
+  border:1px solid currentColor; background:transparent;
+}
+.hb-fmt .fmt-t[data-on="true"]::before{ background:currentColor; }
+
+/* ── S9 · Broadside (newsprint) — every colour here is a token, so the
+   ground's flip from olive to a pale pulp stock moved the fat rules, the cut
+   frame and the display type from cream to ink without touching a rule. */
+.bs .patch{ left:-46px; bottom:-58px; opacity:.07; }
+.bs-kick{ display:flex; justify-content:space-between; gap:16px; padding-bottom:12px; }
+.bs-rule{ display:block; height:1px; border:0; background:var(--hair); margin:14px 0; }
+.bs-rule--fat{ height:4px; background:var(--tx); opacity:.9; margin:10px 0; }
+.bs-title{
+  margin:12px 0; font-family:var(--serif); font-weight:600;
+  font-size:70px; line-height:.94; letter-spacing:-.022em;
+  text-transform:uppercase; color:var(--tx); overflow-wrap:break-word;
+}
+.bs-by{
+  font-family:var(--mono); font-size:14px; font-weight:500;
+  letter-spacing:.3em; text-transform:uppercase; color:var(--meta);
+  padding:2px 0;
+}
+.bs-bar{ display:flex; align-items:flex-start; gap:36px; padding:6px 0 4px; flex-wrap:wrap; }
+.bs-rate{ flex:none; }
+.bs-facts{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px 28px; flex:1; min-width:220px; }
+.bs-facts .val{ margin-top:4px; }
+/* format mark: the chosen word is simply set larger — a broadside marks a
+   thing by giving it more type, which is the only mark it owns */
+.bs-fmt{ column-gap:22px; align-items:baseline; }
+.bs-fmt .fmt-t{ font-size:12px; letter-spacing:.16em; opacity:.5; }
+.bs-fmt .fmt-t[data-on="true"]{ font-size:22px; letter-spacing:.06em; opacity:1; }
+.bs-fmt .fmt-sep{ display:none; }
+.bs-set{ padding-top:4px; }
+.bs-cut{ float:left; width:132px; margin:6px 24px 12px 0; border:2px solid var(--tx); }
+.bs-cut .cover{ border-radius:0; box-shadow:none; }
+.bs-cut .cover-missing{ border:0; }
+.bs-body{ text-align:justify; hyphens:auto; }
+.bs .plate-row, .bs .colo{ clear:both; }
+
+/* ── S10 · J-card (apricot) ── */
+.jc{ display:grid; grid-template-columns:36px 1fr; padding:0; overflow:hidden; }
+.jc-spine{
+  background:var(--tx); color:var(--g);
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  padding:20px 0;
+}
+.jc-spine span{
+  writing-mode:vertical-rl; transform:rotate(180deg);
+  font-family:var(--mono); font-size:9.5px; font-weight:500;
+  letter-spacing:.24em; text-transform:uppercase;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-height:100%;
+}
+.jc-spine-by{ opacity:.68; }
+.jc-main{ position:relative; padding:var(--pad); min-width:0; }
+.jc .patch{ right:-34px; top:-40px; opacity:.07; }
+.jc-top{ display:grid; grid-template-columns:130px 1fr; gap:0 26px; align-items:start; }
+.jc-front{ min-width:0; }
+.jc-id{ min-width:0; }
+.jc-title{ margin:12px 0 8px; font-size:30px; }
+.jc-series{ display:block; margin-top:11px; }
+.jc-rate{ margin-top:18px; }
+.jc-tracks{ margin-top:26px; border-top:1px solid var(--hair); }
+.jc-track{ display:flex; align-items:baseline; gap:10px; padding:9px 0; border-bottom:1px solid var(--hair); }
+.jc-track .lbl, .jc-val{ flex:none; }
+.jc-val{ font-family:var(--mono); font-size:12.5px; color:var(--tx); font-variant-numeric:tabular-nums; }
+/* the leader between a track's name and its figure, drawn as the row's own
+   empty <i> so no character has to be repeated to fill the gap */
+.jc-track i{ flex:1; height:0; border-bottom:1px dotted var(--hair); transform:translateY(-3px); min-width:12px; }
+.jc-fmt-row{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:20px; }
+/* format mark: an index tab — a heavy rule down the left of the chosen word */
+.jc-fmt{ column-gap:10px; }
+.jc-fmt .fmt-t{ padding:4px 10px 4px 9px; border-left:4px solid transparent; }
+.jc-fmt .fmt-t[data-on="true"]{ border-left-color:var(--tx); }
+/* liner notes set in two columns — the move nothing else in the set makes */
+.jc-body{ column-count:2; column-gap:28px; column-rule:1px solid var(--hair); }
+
+/* ── S11 · Passport (quartz) ──
+   The lattice and the frames are INK. They were cream for as long as this card
+   sat on navy; the ground is a pale security sheet now, and cream on it is
+   invisible — the same fault in the other direction that made them cream in
+   the first place. Every alpha below is the cream value's counterpart, so the
+   lattice is still a texture you have to look for and the frames still read as
+   a printed rule rather than a border drawn round a box. */
+.pp{ padding:0; }
+.pp-guilloche{
+  position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(27,25,23,.105) 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(-45deg, rgba(27,25,23,.105) 0 1px, transparent 1px 8px);
+}
+.pp-in{ position:relative; padding:var(--pad); }
+.pp .patch{ right:-38px; bottom:-44px; opacity:.07; }
+.pp-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.pp-rule{ display:block; height:1px; border:0; background:var(--hair); margin:14px 0 22px; }
+.pp-top{ display:grid; grid-template-columns:138px 1fr; gap:0 28px; align-items:start; }
+.pp-photo .cover{ border:2px solid rgba(27,25,23,.564); border-radius:0; box-shadow:none; }
+.pp-data{ position:relative; min-width:0; }
+.pp-title{ margin:0 0 6px; font-size:24px; line-height:1.14; }
+.pp-line{ display:flex; align-items:baseline; gap:14px; padding:9px 0; border-bottom:1px solid var(--hair); }
+.pp-line .lbl{ flex:none; width:74px; }
+.pp-val{
+  font-family:var(--mono); font-size:13px; line-height:1.45; color:var(--tx);
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0;
+}
+.pp-line--rate{ align-items:center; }
+.pp-line--rate .r-num{ font-size:19px; color:var(--num); }
+.pp-val .stars{ padding:0; }
+/* The stamps wrap rather than being pinned: the data column is ~430px on a
+   full card and ~176px compact, and two 158px stamps cannot sit side by side
+   at a width this stylesheet does not know. */
+.pp-stamps{ display:flex; flex-wrap:wrap; gap:14px 22px; margin-top:20px; }
+.pp-stamp{ display:block; flex:none; color:var(--tx); opacity:.9; }
+/* format mark: the chosen cell fills with the page's own lattice */
+.pp-fmt-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:24px; }
+.pp-fmt{ display:flex; flex:1; min-width:0; border:1px solid rgba(27,25,23,.535); }
+.pp-fmt .fmt-t{
+  flex:1; min-width:0; padding:8px 9px; text-align:center;
+  border-right:1px solid rgba(27,25,23,.535); opacity:.55;
+}
+.pp-fmt .fmt-t:last-child{ border-right:0; }
+.pp-fmt .fmt-t[data-on="true"]{
+  opacity:1;
+  background-image:repeating-linear-gradient(45deg, rgba(27,25,23,.362) 0 1px, transparent 1px 5px);
+}
+.pp-mrz{
+  margin-top:22px; padding:11px 0;
+  border-top:1px solid var(--hair); border-bottom:1px solid var(--hair);
+  font-family:var(--mono); font-size:13px; line-height:1.7; letter-spacing:.05em;
+  color:var(--tx); white-space:nowrap; overflow:hidden;
+}
+
+/* ── S12 · Specimen (teal) ── */
+.ts .patch{ left:-52px; bottom:-64px; opacity:.06; }
+.ts-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.ts-rule{ display:block; height:1px; border:0; background:var(--hair); margin:14px 0; }
+.ts-rule--fat{ height:3px; background:var(--tx); opacity:.85; margin:12px 0 18px; }
+.ts-showing{ display:flex; align-items:flex-start; gap:16px; }
+.ts-pt{
+  flex:none; width:34px; padding-top:6px;
+  font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--meta);
+  font-variant-numeric:tabular-nums;
+}
+.ts-pt--big{ padding-top:14px; }
+.ts-display{
+  margin:0; font-family:var(--serif); font-weight:600;
+  font-size:66px; line-height:.98; letter-spacing:-.026em; color:var(--tx);
+  min-width:0; overflow-wrap:break-word;
+}
+.ts-steps{ margin-top:22px; display:flex; flex-direction:column; gap:14px; }
+.ts-step{ display:flex; align-items:baseline; gap:16px; }
+.ts-spec{
+  font-family:var(--serif); font-weight:500; line-height:1.1;
+  letter-spacing:-.012em; color:var(--tx); min-width:0; overflow-wrap:break-word;
+}
+.ts-cols{ display:grid; grid-template-columns:1fr 118px; gap:0 30px; align-items:start; }
+.ts-table{ min-width:0; }
+.ts-row{ display:flex; align-items:baseline; gap:16px; padding:9px 0; border-bottom:1px solid var(--hair); }
+.ts-row .lbl{ flex:none; width:78px; }
+.ts-val{ min-width:0; font-family:var(--sans); font-size:13.5px; line-height:1.45; color:var(--tx); overflow-wrap:break-word; }
+.ts-cut{ margin:0; }
+.ts-cut .cover{ border:1px solid var(--hair); border-radius:0; box-shadow:none; }
+.ts-cut figcaption{ margin-top:9px; }
+.ts-fmt-row{ display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-top:20px; }
+/* format mark: a swatch square — filled when chosen, outlined when not */
+.ts-fmt{ column-gap:20px; }
+.ts-fmt .fmt-t{ display:inline-flex; align-items:center; gap:8px; }
+.ts-fmt .fmt-t::before{
+  content:''; width:9px; height:9px; flex:none;
+  border:1px solid currentColor; background:transparent;
+}
+.ts-fmt .fmt-t[data-on="true"]::before{ background:currentColor; }
+.ts-sample{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-top:20px; padding-bottom:2px; }
+.ts-sample .stars{ padding:0; }
+
+/* ── compact (narrow host) for the five review cards ── */
+.card-compact .hb{ padding:calc(var(--pad) + 10px); }
+.card-compact .hb-top,
+.card-compact .jc-top,
+.card-compact .pp-top{ grid-template-columns:110px 1fr; gap:0 20px; }
+.card-compact .hb-title{ font-size:28px; }
+.card-compact .hb-det-grid{ grid-template-columns:1fr 1fr; }
+.card-compact .bs-title{ font-size:42px; }
+.card-compact .bs-facts{ grid-template-columns:1fr; min-width:0; }
+.card-compact .bs-cut{ width:104px; margin-right:18px; }
+.card-compact .jc-body{ column-count:1; }
+/* Beside the label the value column is 51px at 360 and the star row is a
+   101px flex item that cannot break, so the rating ran off the page. The
+   label goes above its value instead, handing it the whole data column. */
+.card-compact .pp-line{ flex-direction:column; align-items:flex-start; gap:5px; }
+.card-compact .pp-line .lbl{ width:auto; }
+.card-compact .pp-mrz{ font-size:10px; }
+.card-compact .pp-fmt{ flex-wrap:wrap; }
+.card-compact .pp-fmt .fmt-t{ flex:1 0 44%; border-right:0; }
+.card-compact .ts-display{ font-size:42px; }
+.card-compact .ts-cols{ grid-template-columns:1fr; gap:24px; }
+
+/* ═════════════════════════════════════════════════════════════
+   C8–C12 · the five collages that came in with the same grounds. Each is
+   the collage half of one review card and shares its ground modifier, so
+   no rule below paints its own paper. Every one of them shows the covers:
+   a collage of a month's reading without the jackets is a list.
+   ═════════════════════════════════════════════════════════════ */
+
+/* heads ── */
+.mo-head--c8{ display:block; }
+.mo-head--c8 .mo-label{
+  background:rgba(252,251,248,.72); border:1px solid rgba(27,25,23,.3);
+  padding:14px 18px 15px; text-align:center;
+}
+.mo-head--c8 .mo-title{ margin:9px 0 10px; font-style:italic; font-weight:400; font-size:30px; }
+.mo-head--c8 .mo-sub{ justify-content:center; padding-top:11px; border-top:1px solid var(--hair); }
+
+.mo-head--c9{ display:block; text-align:center; }
+.mo-head--c9 .mo-bill-rule{ display:block; height:4px; border:0; background:var(--tx); opacity:.9; margin:0; }
+.mo-head--c9 .mo-kick{ margin-top:12px; }
+.mo-head--c9 .mo-title{ margin:8px 0 9px; font-size:38px; letter-spacing:-.02em; text-transform:uppercase; }
+.mo-head--c9 .mo-sub{ justify-content:center; margin-bottom:12px; }
+
+.mo-head--c10{ display:block; }
+.mo-head--c10 .mo-shell{ display:flex; align-items:center; gap:20px; }
+.mo-head--c10 .mo-hub{
+  flex:none; display:block; width:42px; height:42px; border-radius:50%;
+  border:1.5px solid rgba(27,25,23,.55);
+}
+.mo-head--c10 .mo-shell-mid{ flex:1; min-width:0; text-align:center; }
+.mo-head--c10 .mo-title{ margin-top:7px; font-size:28px; }
+.mo-head--c10 .mo-sub{ margin-top:11px; padding-top:10px; border-top:2px solid var(--tx); }
+
+.mo-head--c11{ display:block; }
+.mo-head--c11 .mo-doc{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.mo-head--c11 .mo-doc-rule{ display:block; height:1px; border:0; background:var(--hair); margin:11px 0 12px; }
+.mo-head--c11 .mo-title{ font-size:28px; }
+
+.mo-head--c12{ display:block; }
+.mo-head--c12 .mo-set{ display:flex; align-items:baseline; justify-content:space-between; gap:18px; flex-wrap:wrap; margin-top:9px; }
+.mo-head--c12 .mo-title{ font-size:34px; }
+.mo-head--c12 .mo-set-rule{ display:block; height:3px; border:0; background:var(--tx); opacity:.85; margin:11px 0 0; }
+
+/* stats ── */
+.mo-stats--label{ border:1px solid rgba(27,25,23,.28); background:rgba(252,251,248,.55); }
+.mo-lab-head{ display:flex; justify-content:space-between; gap:14px; padding:9px 14px; border-bottom:1px solid var(--hair); }
+.mo-lab-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:12px 20px; padding:13px 14px 14px; }
+.mo-lab{ min-width:0; }
+.mo-lab b{ display:block; margin-top:4px; }
+
+.mo-stats--billing{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px 40px; padding:4px 0 2px; }
+.mo-bill{ text-align:center; min-width:0; }
+.mo-bill b{ display:block; }
+.mo-bill .lbl{ display:block; margin-top:4px; }
+
+.mo-stats--strip{
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 12px;
+  padding:9px 14px; background:rgba(252,251,248,.5); border:1px solid rgba(27,25,23,.22);
+}
+.mo-st{ display:inline-flex; align-items:baseline; gap:8px; min-width:0; }
+.mo-slash{ color:var(--meta); opacity:.5; }
+
+.mo-stats--fields{ display:flex; flex-wrap:wrap; padding:2px 0 4px; }
+.mo-fld{ min-width:0; padding:0 18px; border-left:1px solid var(--hair); }
+.mo-fld:first-child{ padding-left:0; border-left:0; }
+.mo-fld b{ display:block; margin-top:5px; }
+
+.mo-stats--sorts{ display:flex; flex-wrap:wrap; gap:10px 0; padding:2px 0 4px; }
+.mo-sort{ min-width:0; padding:0 20px; border-left:1px solid var(--hair); }
+.mo-sort:first-child{ padding-left:0; border-left:0; }
+.mo-sort b{ display:block; }
+.mo-sort .lbl{ display:block; margin-top:4px; }
+
+/* C8 · Cabinet (mint) — every book mounted on its own sheet and filed */
+.c8{ padding:calc(var(--pad) + 12px); }
+.c8 .patch{ right:-46px; bottom:-52px; opacity:.06; }
+.cb-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
+.cb-cell{ background:rgba(252,251,248,.62); border:1px solid rgba(27,25,23,.22); padding:12px 12px 13px; min-width:0; }
+.cb-mount{ position:relative; padding:6px; }
+.cb-acc{ display:block; margin-top:11px; }
+.cb-t{ margin-top:6px; font-family:var(--serif); font-style:italic; font-size:14px; line-height:1.24; color:var(--tx); overflow-wrap:break-word; }
+.cb-a{ margin-top:5px; font-family:var(--mono); font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--meta); overflow-wrap:break-word; }
+.cb-r{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:9px; }
+.cb-r .r-num{ font-size:13px; color:var(--num); }
+.card-compact .c8{ padding:calc(var(--pad) + 6px); }
+.card-compact .cb-grid{ grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:14px 12px; --gx:12px; }
+.card-compact .cb-cell{ padding:9px 9px 10px; }
+
+/* C9 · Playbill (newsprint) — top billing to the book that earned it, and the
+   cut beside each name is what stops the bill being a list of words */
+.c9 .patch{ left:-52px; bottom:-64px; opacity:.07; }
+.pb-bill{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:34px; border-top:1px solid var(--hair); }
+.pb-line{ display:flex; align-items:center; gap:16px; padding:13px 0; border-bottom:1px solid var(--hair); min-width:0; }
+.pb-cov{ flex:none; width:42px; }
+.pb-txt{ flex:1; min-width:0; }
+/* hyphens before break-word: a word that genuinely cannot fit its column
+   should break with a hyphen, the way a printed bill would, rather than
+   dropping a bare letter onto the next line. <html lang="en"> is set, so
+   the dictionary is available. */
+.pb-t{ font-family:var(--serif); font-weight:600; line-height:1.02; letter-spacing:-.02em; text-transform:uppercase; color:var(--tx); hyphens:auto; overflow-wrap:break-word; }
+.pb-a{ margin-top:7px; font-family:var(--mono); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--meta); overflow-wrap:break-word; }
+.pb-r{ flex:none; text-align:right; }
+.pb-r .r-num{ font-size:17px; color:var(--num); }
+.pb-r .stars-s{ margin-top:3px; }
+.card-compact .pb-bill{ grid-template-columns:1fr; }
+.card-compact .pb-cov{ width:34px; }
+.card-compact .pb-line{ gap:12px; }
+.hg--c9{ border-top:1px solid var(--hair); padding-top:20px; }
+.hg--c9 .hg-c{ padding-bottom:11px; border-bottom:1px solid var(--hair); }
+
+/* C10 · Mixtape (apricot) — numbered tracks, a run of leader dots to the
+   rating, and the sleeve art at the head of each line */
+.c10 .patch{ right:-36px; top:-44px; opacity:.07; }
+.mx-list{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:32px; }
+.mx-row{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px dotted rgba(27,25,23,.35); min-width:0; }
+.mx-no{ flex:none; width:22px; font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--meta); font-variant-numeric:tabular-nums; }
+.mx-cov{ flex:none; width:32px; }
+.mx-txt{ flex:1; min-width:0; }
+.mx-t{ font-family:var(--serif); font-size:15px; line-height:1.24; color:var(--tx); overflow-wrap:break-word; }
+.mx-a{ margin-top:4px; font-family:var(--mono); font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--meta); overflow-wrap:break-word; }
+.mx-dots{ flex:1 0 16px; height:0; border-bottom:1px dotted rgba(27,25,23,.3); min-width:16px; }
+.mx-r{ flex:none; font-size:14px; color:var(--num); }
+.card-compact .mx-list{ grid-template-columns:1fr; }
+.card-compact .mx-dots{ display:none; }
+.card-compact .mx-cov{ width:28px; }
+.hg--c10{ border-top:2px solid var(--tx); padding-top:20px; }
+.hg--c10 .hg-c{ padding-bottom:10px; border-bottom:1px dotted rgba(27,25,23,.35); }
+
+/* C11 · Visa Page (quartz) — the inside of a passport, not a sheet of postage.
+   The round cancellation ring, the perforation and the par-avion bars all
+   belong to Postmark; a second collage wearing them made the two read as one
+   style with two grounds. What a passport and a postmark share is only that
+   both get stamped, and this one is stamped by a border, in rectangles. */
+.c11{ padding:0; }
+.vp-in{ position:relative; padding:var(--pad); }
+.c11 .patch{ right:-42px; bottom:-48px; opacity:.07; }
+.vp-sheet{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
+.vp-cell{ min-width:0; }
+.vp-photo{ padding:5px; border:1px solid rgba(27,25,23,.535); }
+.vp-photo .cov{ border-radius:0; box-shadow:none; }
+.vp-code{ display:block; margin-top:9px; }
+.vp-t{ margin-top:6px; font-family:var(--serif); font-weight:600; font-size:13.5px; line-height:1.24; letter-spacing:-.008em; color:var(--tx); overflow-wrap:break-word; }
+.vp-a{ margin-top:4px; font-family:var(--mono); font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--meta); overflow-wrap:break-word; }
+.vp-r{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.vp-r .r-num{ font-size:13px; color:var(--num); }
+.vp-mrz{ margin-top:24px; }
+.card-compact .vp-sheet{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:16px 13px; --gx:13px; }
+.card-compact .vp-t{ font-size:12px; }
+.card-compact .vp-mrz{ font-size:10px; }
+
+/* C12 · Character Set (teal) — every book a sort in its own compartment,
+   filed under the letter it sorts by. The glyph is painted FIRST in the DOM
+   and the cover after it, both positioned: paint order does the layering,
+   because a negative z-index survives on screen and vanishes in the file. */
+.c12 .patch{ left:-56px; bottom:-66px; opacity:.06; }
+.cs-grid{
+  display:grid; grid-template-columns:repeat(var(--cols,3),1fr); --gx:0px;
+  border-top:1px solid var(--hair); border-left:1px solid var(--hair);
+}
+.cs-cell{
+  position:relative; overflow:hidden; min-width:0; padding:16px 12px 14px;
+  border-right:1px solid var(--hair); border-bottom:1px solid var(--hair);
+}
+.cs-back{
+  position:absolute; left:50%; top:44%; transform:translate(-50%,-50%);
+  font-family:var(--serif); font-weight:600; font-size:118px; line-height:1;
+  color:var(--tx); opacity:.13; pointer-events:none; user-select:none;
+}
+.cs-mount{ position:relative; }
+.cs-line{ position:relative; display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-top:10px; }
+.cs-line .r-num{ font-size:13px; color:var(--num); }
+.cs-t{ position:relative; margin-top:6px; font-family:var(--mono); font-size:9px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; line-height:1.45; color:var(--tx); overflow-wrap:break-word; }
+.cs-a{ position:relative; margin-top:4px; font-family:var(--mono); font-size:8px; letter-spacing:.06em; color:var(--meta); overflow-wrap:break-word; }
+.card-compact .cs-grid{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); }
+.card-compact .cs-cell{ padding:12px 8px 11px; }
+.card-compact .cs-back{ font-size:82px; }
 
 /* ─────────────────────────────────────────────────────────────
    Share pages — fixed 720×1018 (1:√2) leaves the export rasterizes.

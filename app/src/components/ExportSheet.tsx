@@ -11,9 +11,10 @@ import {
    over, and never let you choose its size. They are the same act up to the
    last step now: look at the card, pick the size, then either hand it to
    another app or write it to the device.
-   The style picker rides along when the caller has one (a review), because the
-   preview is right here; a collage page already carries its picker above the
-   card, so it passes nothing. */
+   The style picker rides along, because the preview is right here and the
+   moment of sending is the moment you care what it looks like. Both pages pass
+   one; each drives the same state its own page picker drives, so the two
+   copies can never disagree. */
 export function ExportSheet({
   heading,
   baseName,

@@ -76,7 +76,9 @@ function cov(b: Review, cls?: string): string {
    rosette; what differs is the arrangement, the rule under it, and what the
    count is called, because a contact sheet counts frames and a ledger counts
    entries. */
-type HeadId = 'c1' | 'c2' | 'c3' | 'c4' | 'c5' | 'c6' | 'c7'
+type HeadId =
+  | 'c1' | 'c2' | 'c3' | 'c4' | 'c5' | 'c6' | 'c7'
+  | 'c8' | 'c9' | 'c10' | 'c11' | 'c12'
 
 function moHead(m: MonthData, id: HeadId): string {
   const n = m.books.length
@@ -149,6 +151,73 @@ function moHead(m: MonthData, id: HeadId): string {
       <div class="mo-title">${t}</div>
       <div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} feature${n === 1 ? '' : 's'}`)}</span></div>
       <div class="mo-lamps" aria-hidden="true"></div>
+    </div>`
+
+  /* C8 · a cabinet sheet is identified by the label pasted to it, so the head
+     IS that label: a ruled box, not a masthead. Sheets, because a herbarium
+     counts the mounts rather than the plants. */
+  if (id === 'c8')
+    return `<div class="mo-head mo-head--c8">
+      <div class="mo-label">
+        <div class="mo-kick">Cabinet of read things · Flyleaf Press</div>
+        <div class="mo-title">${t}</div>
+        <div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} sheet${n === 1 ? '' : 's'}`)}</span></div>
+      </div>
+    </div>`
+
+  /* C9 · a bill is centred and hammered between two heavy rules, and the month
+     is set in the poster's own uppercase — the only head of the twelve where
+     the month is not in title case, because a broadside has no lower case in
+     its largest size. Turns, because a bill counts performances. */
+  if (id === 'c9')
+    return `<div class="mo-head mo-head--c9">
+      <hr class="mo-bill-rule">
+      <div class="mo-kick">${num(`${n} turn${n === 1 ? '' : 's'}`)} · Flyleaf Press presents</div>
+      <div class="mo-title">${t}</div>
+      <div class="mo-sub">${mark(13)}<span class="lbl">One night only</span></div>
+      <hr class="mo-bill-rule">
+    </div>`
+
+  /* C10 · a cassette is titled on the label stuck to its shell, so the head is
+     that label — the hubs at either end, the side letter, the month written
+     across it. Tracks, because that is what a tape holds. */
+  if (id === 'c10')
+    return `<div class="mo-head mo-head--c10">
+      <div class="mo-shell">
+        <span class="mo-hub" aria-hidden="true"></span>
+        <div class="mo-shell-mid">
+          <div class="mo-kick">Side A · ${num(`${n} track${n === 1 ? '' : 's'}`)}</div>
+          <div class="mo-title">${t}</div>
+        </div>
+        <span class="mo-hub" aria-hidden="true"></span>
+      </div>
+      <div class="mo-sub">${mark(12)}<span class="lbl">Flyleaf Press · recorded at home</span></div>
+    </div>`
+
+  /* C11 · a data page states its own type and code before anything else, in
+     the machine's register, and the month is the field written into it.
+     Entries, because a visa page counts crossings. */
+  if (id === 'c11')
+    return `<div class="mo-head mo-head--c11">
+      <div class="mo-doc">
+        <span class="lbl">Type P · Flyleaf Press</span>
+        <span class="lbl">${num(`${n} entr${n === 1 ? 'y' : 'ies'}`)}</span>
+      </div>
+      <hr class="mo-doc-rule">
+      <div class="mo-line">${mark(14)}<div class="mo-title">${t}</div></div>
+    </div>`
+
+  /* C12 · a specimen sheet names the face and then shows it, so the count sits
+     on the month's own baseline as a size would, over one heavy rule. Sorts,
+     because a case of type is counted in sorts. */
+  if (id === 'c12')
+    return `<div class="mo-head mo-head--c12">
+      <div class="mo-kick">Specimen sheet · Flyleaf Press</div>
+      <div class="mo-set">
+        <div class="mo-title">${t}</div>
+        <span class="lbl">${num(`${n} sort${n === 1 ? '' : 's'}`)}</span>
+      </div>
+      <hr class="mo-set-rule">
     </div>`
 
   /* C5 · a register head: month left, the range of entries right, one heavy
@@ -318,6 +387,53 @@ function moStats(m: MonthData, id: HeadId): string {
       <div class="mo-tick-row">
         ${st.map((x) => `<div class="mo-tick"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
       </div>
+    </div>`
+
+  /* C8 · the determination label a mounted sheet carries: one ruled box with a
+     printed header strip and the figures set as a two-column table inside it.
+     Not the stub's totals block — no leaders, no doubled rule, nothing summed.
+     A label states; a receipt adds up. */
+  if (id === 'c8')
+    return `<div class="mo-stats mo-stats--label">
+      <div class="mo-lab-head"><span class="lbl">Determination</span><span class="lbl">Flyleaf Press</span></div>
+      <div class="mo-lab-grid">
+        ${st.map((x) => `<div class="mo-lab"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
+      </div>
+    </div>`
+
+  /* C9 · the billing under a poster's title: each figure on its own centred
+     line, value first and its name after it in small caps, the whole block
+     hanging between the head's rules and the bill itself. */
+  if (id === 'c9')
+    return `<div class="mo-stats mo-stats--billing">
+      ${st.map((x) => `<div class="mo-bill"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
+    </div>`
+
+  /* C10 · the line handwritten along the bottom of a cassette label: one
+     running strip of name/figure pairs cut by slashes, on the label's own
+     tinted ground. It is the only stats block of the twelve that is a single
+     line by construction rather than by luck. */
+  if (id === 'c10')
+    return `<div class="mo-stats mo-stats--strip">
+      ${st.map((x) => `<span class="mo-st"><span class="lbl">${x.label}</span><b>${x.value}</b></span>`).join('<span class="mo-slash" aria-hidden="true">/</span>')}
+    </div>`
+
+  /* C11 · the data fields of a passport page: the field name printed above the
+     value it holds, the fields divided by vertical hairlines rather than by
+     ruled rows. The register (C5) is a table read across; this is a form read
+     down, which is why the rules run the other way. */
+  if (id === 'c11')
+    return `<div class="mo-stats mo-stats--fields">
+      ${st.map((x) => `<div class="mo-fld"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
+    </div>`
+
+  /* C12 · the figures as loose sorts laid out along the top of the case:
+     left-aligned, unframed, each cut from the next by a single thin rule. No
+     box, no fill, no centring — a specimen sheet spends its ink on the
+     showing, not on the furniture around it. */
+  if (id === 'c12')
+    return `<div class="mo-stats mo-stats--sorts">
+      ${st.map((x) => `<div class="mo-sort"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
     </div>`
 
   /* C5 · a register head: column names ruled across the top, figures aligned
@@ -567,7 +683,11 @@ function hopeCap(b: Review): string {
 
 /* C1 · Contact Sheet (coal) — the proof grid */
 function contact(m: MonthData): string {
-  const ink = 'var(--mustard)', line = 'rgba(244,242,237,.55)'
+  /* Through the ground's own tokens, never literals. Both of these used to be
+     hardcoded here and on C7, which is how Marquee kept cream star outlines
+     across a ground change from velvet to a pale blue: the card's stars were
+     the one thing the ground could not reach. */
+  const ink = 'var(--star)', line = 'var(--star-line)'
   return `<article class="card c1" style="--rot:-.6deg">
     ${patchC(150)}
     ${moHead(m, 'c1')}
@@ -744,10 +864,10 @@ function postmark(m: MonthData): string {
   </article>`
 }
 
-/* C7 · Marquee (coal) — the month as a listings board, one line a film */
+/* C7 · Marquee (electric) — the month as a listings board, one line a film */
 function marquee(m: MonthData): string {
   const cols = listCols(m.books.length, m.wide)
-  const ink = 'var(--mustard)', line = 'rgba(244,242,237,.5)'
+  const ink = 'var(--star)', line = 'var(--star-line)'
   return `<article class="card c7" style="--rot:-.4deg">
     ${patchC(150)}
     ${moHead(m, 'c7')}
@@ -779,6 +899,235 @@ function marquee(m: MonthData): string {
   </article>`
 }
 
+/* The initial a book is filed under — the leading article is not part of the
+   sort, which is why a shelf puts "The Fifth Season" under F. */
+function initial(t: string): string {
+  const s = t.replace(/^(the|a|an)\s+/i, '').trim()
+  return (s[0] || '?').toUpperCase()
+}
+
+/* C8 · Cabinet (mint) — every book mounted on its own sheet, four paper
+   corners a side, and filed with an accession code. The herbarium review card
+   at collage scale. */
+function cabinet(m: MonthData): string {
+  const corners = [0, 1, 2, 3]
+    .map((k) => `<span class="hb-corner hb-corner--sm hb-corner--${k}" aria-hidden="true"></span>`)
+    .join('')
+  return `<article class="card card--mint c8" style="--rot:-.4deg">
+    ${patchC(150)}
+    ${moHead(m, 'c8')}
+    ${moStats(m, 'c8')}
+    <div class="cb-grid" style="--cols:${gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+      ${m.books.map((b, i) => `
+        <div class="cb-cell">
+          <div class="cb-mount">${cov(b)}${corners}</div>
+          <div class="cb-acc lbl">ACC ${String(i + 1).padStart(3, '0')}</div>
+          <div class="cb-t">${escapeHtml(b.title)}</div>
+          <div class="cb-a">${escapeHtml(b.author)}</div>
+          ${tbr(m)
+            ? `<div class="cb-r lbl">Unmounted</div>`
+            : `<div class="cb-r">
+                <span class="r-num">${fmtRating(b.rating)}</span>
+                ${starsS(b.rating, 10, 'var(--star)', 'var(--star-line)')}
+              </div>`}
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C9 · Playbill (newsprint) — the month as a bill, top billing to the book that
+   earned it. The name is set at a size taken from its rating, so the shape of
+   the month is legible from across a room; the cut beside it is what stops the
+   bill being a list of words. */
+function playbill(m: MonthData): string {
+  if (tbr(m))
+    return `<article class="card card--salmon c9" style="--rot:.5deg">
+      ${patchC(170)}
+      ${moHead(m, 'c9')}
+      ${moStats(m, 'c9')}
+      ${hopeGrid(m, 'hg--c9', (b) => `
+        <div class="hg-c">
+          ${cov(b)}
+          <div class="hg-cap">${hopeCap(b)}</div>
+          <div class="hg-end"><span class="lbl">Billed</span></div>
+        </div>`)}
+    </article>`
+
+  const billed = [...m.books].sort((a, b) => b.rating - a.rating)
+  /* Billing size is taken from the rating — that is the whole conceit — but it
+     has to be taken from the COLUMN too. The range used to be a flat 18→34px
+     whatever the layout, and a bill that splits into columns gives each title a
+     fraction of the room the one-column bill gave it, so a long word
+     ("CHRONICLE" at 31.6px) overran its column and broke mid-word, leaving an
+     orphaned letter on a line of its own.
+
+     Two things fix it. First, this style caps at two columns on the standard
+     card where the shared listCols would allow three: every other list style
+     sets its titles at a fixed 15px, and playbill sets them up to 34, so the
+     column that comfortably carries one cannot carry the other — at 688px a
+     third column leaves ~64px of title, which no size fits. Same reasoning as
+     the LIST_MAX_COLS note above, one step earlier, because the type is bigger.
+     Second, the range is derived from the width the title actually gets rather
+     than from a table, so it stays right if any of those figures move. Both
+     figures below are MEASURED off the rendered card, not estimated: the cover,
+     the gaps and the rating column eat a constant 132px of the column (299 - 167
+     at two columns, 288 - 156 at three), and the widest word a book title
+     realistically carries runs about 7.8em at Playfair's uppercase advance
+     (measured: REMEMBRANCE 7.74, INTERPRETER 6.91, CHRONICLE 5.93). An earlier
+     pass used 124 and 6.82 and measured clean only because the longest word in
+     the fixture happens to be CHRONICLE — a month holding REMEMBRANCE would
+     have broken at exactly the sizes that pass. Anything longer than 7.8em
+     still falls through to the hyphens:auto in cards.css, which breaks at a
+     syllable rather than mid-word; that is the fallback, not the plan. */
+  const cols = Math.min(listCols(m.books.length, m.wide), m.wide ? 3 : 2)
+  const colW = ((m.wide ? 988 : 688) - 56 - (cols - 1) * 34) / cols
+  const titleW = Math.max(60, colW - 132) // less cover, gaps and the rating column
+  const hi = Math.max(15, Math.min(34, titleW / 7.8))
+  const lo = Math.max(12, hi * 0.53)
+  /* The size runs across the month's OWN rating spread, not across 0-5. Ratings
+     cluster in the top half of the scale — a shelf of 3.5s and 5s is the normal
+     shape of a year's reading — so interpolating over the full scale spent most
+     of the range on values no real month contains, and measured out at a 1.27x
+     spread between the best book and the worst. Every title came out the same
+     size, which is the one thing this style exists not to do. Relative standing
+     is also what top billing MEANS on a real bill: the name at the top is the
+     biggest because it is the biggest name here, not because it cleared some
+     absolute bar. A month whose books all scored the same has no billing order
+     to draw, so they all take the top size. */
+  const rs = billed.map((b) => b.rating)
+  const rMin = Math.min(...rs), rSpread = Math.max(...rs) - rMin
+  const sizeOf = (r: number) =>
+    (rSpread === 0 ? hi : lo + ((r - rMin) / rSpread) * (hi - lo)).toFixed(1)
+  return `<article class="card card--salmon c9" style="--rot:.5deg">
+    ${patchC(170)}
+    ${moHead(m, 'c9')}
+    ${moStats(m, 'c9')}
+    <div class="pb-bill" style="--cols:${cols}">
+      ${billed.map((b) => `
+        <div class="pb-line">
+          <div class="pb-cov">${cov(b)}</div>
+          <div class="pb-txt">
+            <div class="pb-t" style="font-size:${sizeOf(b.rating)}px">${escapeHtml(b.title)}</div>
+            <div class="pb-a">${meta(escapeHtml(b.author), fmts(b))}</div>
+          </div>
+          <div class="pb-r">
+            <span class="r-num">${fmtRating(b.rating)}</span>
+            <div>${starsS(b.rating, 10, 'var(--star)', 'var(--star-line)')}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C10 · Mixtape (apricot) — the month as a side of tape. Numbered tracks, a
+   run of leader dots to the rating, and the sleeve art of each one at the head
+   of its own line: a tracklist without the record is just handwriting. */
+function mixtape(m: MonthData): string {
+  if (tbr(m))
+    return `<article class="card card--apricot c10" style="--rot:-.6deg">
+      ${patchC(140)}
+      ${moHead(m, 'c10')}
+      ${moStats(m, 'c10')}
+      ${hopeGrid(m, 'hg--c10', (b) => `
+        <div class="hg-c">
+          ${cov(b)}
+          <div class="hg-cap">${hopeCap(b)}</div>
+          <div class="hg-end"><span class="lbl">Queued</span></div>
+        </div>`)}
+    </article>`
+
+  return `<article class="card card--apricot c10" style="--rot:-.6deg">
+    ${patchC(140)}
+    ${moHead(m, 'c10')}
+    ${moStats(m, 'c10')}
+    <div class="mx-list" style="--cols:${listCols(m.books.length, m.wide)}">
+      ${m.books.map((b, i) => `
+        <div class="mx-row">
+          <span class="mx-no">${String(i + 1).padStart(2, '0')}</span>
+          <div class="mx-cov">${cov(b)}</div>
+          <div class="mx-txt">
+            <div class="mx-t">${escapeHtml(b.title)}</div>
+            <div class="mx-a">${meta(escapeHtml(b.author), fmts(b))}</div>
+          </div>
+          <i class="mx-dots" aria-hidden="true"></i>
+          <span class="r-num mx-r">${fmtRating(b.rating)}</span>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C11 · Visa Page (quartz) — the month as the inside of a passport: a security
+   lattice, every book a framed photograph with its own crossing code, and one
+   machine-readable strip closing the page.
+
+   Deliberately NOT a sheet of postage. The round cancellation ring, the
+   perforated stamp and the par-avion bars all belong to Postmark, and a second
+   collage wearing them made the two read as one style with two grounds — which
+   is what was reported. Nothing postal survives here; what a passport and a
+   postmark share is only that both are stamped, and this one is stamped by a
+   border, in rectangles. */
+function visa(m: MonthData): string {
+  const mrz = (s: string, n: number) =>
+    (s.toUpperCase().replace(/[^A-Z0-9]+/g, '<').slice(0, n) + '<'.repeat(n))
+      .slice(0, n)
+      .replace(/</g, '&lt;')
+  const n = m.books.length
+  return `<article class="card card--quartz c11" style="--rot:.4deg">
+    <div class="pp-guilloche" aria-hidden="true"></div>
+    <div class="vp-in">
+      ${patchC(150)}
+      ${moHead(m, 'c11')}
+      ${moStats(m, 'c11')}
+      <div class="vp-sheet" style="--cols:${gridCols(n, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+        ${m.books.map((b, i) => `
+          <div class="vp-cell">
+            <div class="vp-photo">${cov(b)}</div>
+            <div class="vp-code lbl">FP·${String(i + 1).padStart(3, '0')} · ${initial(b.title)}${initial(b.author)}</div>
+            <div class="vp-t">${escapeHtml(b.title)}</div>
+            <div class="vp-a">${escapeHtml(b.author)}</div>
+            ${tbr(m)
+              ? `<div class="vp-r lbl">No entry yet</div>`
+              : `<div class="vp-r">
+                  <span class="r-num">${fmtRating(b.rating)}</span>
+                  ${starsS(b.rating, 10, 'var(--star)', 'var(--star-line)')}
+                </div>`}
+          </div>`).join('')}
+      </div>
+      <div class="pp-mrz vp-mrz">
+        <div>P&lt;FLYPRESS&lt;${mrz(m.name, 30)}</div>
+        <div>${mrz(`${n}${tbr(m) ? 'HOPEFULS' : 'BOOKS'}`, 20)}${mrz(monthKey(m.books[0]?.finished || ''), 14)}</div>
+      </div>
+    </div>
+  </article>`
+}
+
+/* C12 · Character Set (teal) — the month as a case of type. Every book is a
+   sort in its own compartment, filed under the letter it sorts by, with the
+   jacket set into the compartment over that letter. The glyph is painted
+   FIRST in the DOM and the cover after it, both positioned: paint order does
+   the layering, because a negative z-index survives on screen and vanishes in
+   the file. */
+function charset(m: MonthData): string {
+  return `<article class="card card--teal c12" style="--rot:-.3deg">
+    ${patchC(180)}
+    ${moHead(m, 'c12')}
+    ${moStats(m, 'c12')}
+    <div class="cs-grid" style="--cols:${gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+      ${m.books.map((b, i) => `
+        <div class="cs-cell">
+          <span class="cs-back" aria-hidden="true">${escapeHtml(initial(b.title))}</span>
+          <div class="cs-mount">${cov(b)}</div>
+          <div class="cs-line">
+            <span class="lbl">${String(i + 1).padStart(2, '0')}</span>
+            ${tbr(m) ? `<span class="lbl">Uncut</span>` : `<span class="r-num">${fmtRating(b.rating)}</span>`}
+          </div>
+          <div class="cs-t">${escapeHtml(b.title)}</div>
+          <div class="cs-a">${escapeHtml(b.author)}</div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
 export const COLLAGE_RENDERERS: Record<CollageId, (m: MonthData) => string> = {
   contact,
   shelf,
@@ -787,6 +1136,11 @@ export const COLLAGE_RENDERERS: Record<CollageId, (m: MonthData) => string> = {
   ledger,
   postmark,
   marquee,
+  cabinet,
+  playbill,
+  mixtape,
+  visa,
+  charset,
 }
 
 export function renderCollage(m: MonthData, style: CollageId): string {

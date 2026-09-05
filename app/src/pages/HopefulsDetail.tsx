@@ -16,6 +16,11 @@ import { coverToDataUrl, isIsbn, searchBooks, type Candidate, type SearchResult 
 const DEBOUNCE = 350
 const MIN_CHARS = 3
 
+/** The same flattening the Goodreads dedupe uses, for the same reason: two
+    catalogues, or a catalogue and a hand edit, disagree about spacing and case
+    long before they disagree about the book. */
+const flat = (s: string) => (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+
 /* A hopeful stands in for a Review only where the card is concerned. The
    collage renderers are typed on Review because that is what they print for a
    month and a year, and a fourth set of renderers for a list that wants the
@@ -82,6 +87,47 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
     () => db.hopefuls.where('month').equals(key).sortBy('createdAt'),
     [key]
   )
+
+  /* A hopeful stops being a hopeful when the book gets read, and the list has
+     no way of noticing on its own. Writing it up FROM here removes the row —
+     `write()` carries the id and the editor buries it on save — but that is
+     only one of the two ways a book gets reviewed. Search the shelf, add it,
+     write it up, and the hopefuls list is untouched: the row sits there
+     offering to review a book that is already on the shelf, which is the
+     reported fault.
+
+     The match is on content, not on the id, exactly as the sync fold and the
+     Goodreads import match: title and author, flattened, with no date in the
+     key — a hopeful has no finished date, and any review of that book means it
+     has been read.
+
+     It reads the TITLE INDEX KEYS first and fetches only the rows whose title
+     flattens onto one we are asking about. `db.reviews.toArray()` would be the
+     obvious way to write this and is the wrong one: a review row carries its
+     body and its cover as a data URL, so a two-hundred-book shelf is tens of
+     megabytes pulled in order to read two fields off each row, on a page that
+     redraws whenever anything in the database changes. Index keys are strings
+     and nothing else, and the second query is normally nought or one row. */
+  const stamp = (rows ?? []).map((h) => `${h.id}:${flat(h.title)}|${flat(h.author)}`).join('~')
+  const reviewed = useLiveQuery(async () => {
+    const found = new Map<number, number>()
+    const want = rows ?? []
+    if (want.length === 0) return found
+    const wanted = new Set(want.map((h) => flat(h.title)))
+    const keys = (await db.reviews.orderBy('title').keys()) as string[]
+    const hits = [...new Set(keys.filter((t) => wanted.has(flat(t))))]
+    if (hits.length === 0) return found
+    const mine = await db.reviews.where('title').anyOf(hits).toArray()
+    for (const h of want) {
+      if (h.id == null) continue
+      const hit = mine.find(
+        (r) => flat(r.title) === flat(h.title) && flat(r.author) === flat(h.author)
+      )
+      if (hit?.id != null) found.set(h.id, hit.id)
+    }
+    return found
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stamp])
 
   const run = async (term: string) => {
     const mine = ++seq.current
@@ -250,13 +296,23 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
                         <span className="res-a" style={{ display: 'block' }}>{h.author}</span>
                       </span>
                       <span className="hope-acts">
-                        <button
-                          type="button"
-                          className="btn btn--ghost btn--sm"
-                          onClick={() => write(h)}
-                        >
-                          Review it
-                        </button>
+                        {reviewed?.get(h.id!) != null ? (
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => nav(`/review/${reviewed.get(h.id!)}`)}
+                          >
+                            Reviewed
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => write(h)}
+                          >
+                            Review it
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm"
@@ -283,13 +339,13 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
         {tab === 'card' && rows.length > 0 && (
           <>
             <div className="field">
-              <span className="ui-lbl">Collage style</span>
               <StylePicker
                 ids={COLLAGE_IDS}
                 names={COLLAGE_NAMES}
                 grounds={COLLAGE_GROUNDS}
                 value={style}
                 onChange={setStyle}
+                label="Collage style"
               />
             </div>
 

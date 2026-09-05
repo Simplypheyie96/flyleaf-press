@@ -1,13 +1,25 @@
-export type StyleId = 'archive' | 'masthead' | 'catalogue' | 'scrapbook' | 'fieldnotes' | 'jacket' | 'airmail'
-export type CollageId = 'contact' | 'shelf' | 'tickets' | 'pinboard' | 'ledger' | 'postmark' | 'marquee'
+export type StyleId =
+  | 'archive' | 'masthead' | 'catalogue' | 'scrapbook' | 'fieldnotes' | 'jacket' | 'airmail'
+  | 'herbarium' | 'broadside' | 'jcard' | 'passport' | 'specimen'
+export type CollageId =
+  | 'contact' | 'shelf' | 'tickets' | 'pinboard' | 'ledger' | 'postmark' | 'marquee'
+  | 'cabinet' | 'playbill' | 'mixtape' | 'visa' | 'charset'
 
-export const STYLE_IDS: StyleId[] = ['archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes', 'jacket', 'airmail']
-export const COLLAGE_IDS: CollageId[] = ['contact', 'shelf', 'tickets', 'pinboard', 'ledger', 'postmark', 'marquee']
+export const STYLE_IDS: StyleId[] = [
+  'archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes', 'jacket', 'airmail',
+  'herbarium', 'broadside', 'jcard', 'passport', 'specimen',
+]
+export const COLLAGE_IDS: CollageId[] = [
+  'contact', 'shelf', 'tickets', 'pinboard', 'ledger', 'postmark', 'marquee',
+  'cabinet', 'playbill', 'mixtape', 'visa', 'charset',
+]
 /* The styles a YEAR offers. Tickets, Ledger and Marquee draw one row per book,
    which holds a month and runs to a strip nobody can read as an object at two
    hundred rows — a year gets only the styles that PACK: the grids and the
    spine rail. All seven still ship and still serve every month. */
-export const YEAR_COLLAGE_IDS: CollageId[] = ['contact', 'shelf', 'pinboard', 'postmark']
+export const YEAR_COLLAGE_IDS: CollageId[] = [
+  'contact', 'shelf', 'pinboard', 'postmark', 'cabinet', 'visa', 'charset',
+]
 
 export const STYLE_NAMES: Record<StyleId, string> = {
   archive: 'Archive',
@@ -17,6 +29,11 @@ export const STYLE_NAMES: Record<StyleId, string> = {
   fieldnotes: 'Field Notes',
   jacket: 'Dust Jacket',
   airmail: 'Airmail',
+  herbarium: 'Herbarium',
+  broadside: 'Broadside',
+  jcard: 'J-Card',
+  passport: 'Passport',
+  specimen: 'Specimen',
 }
 export const COLLAGE_NAMES: Record<CollageId, string> = {
   contact: 'Contact Sheet',
@@ -26,26 +43,41 @@ export const COLLAGE_NAMES: Record<CollageId, string> = {
   ledger: 'Ledger',
   postmark: 'Postmark',
   marquee: 'Marquee',
+  cabinet: 'Cabinet',
+  playbill: 'Playbill',
+  mixtape: 'Mixtape',
+  visa: 'Visa Page',
+  charset: 'Character Set',
 }
 
 /* the ground each style sits on — used for the little pastel swatch dots */
 export const STYLE_GROUNDS: Record<StyleId, string> = {
   archive: '#DCA94C',
   masthead: '#D9E0D0',
-  catalogue: '#221E1B',
-  scrapbook: '#F3D9DD',
+  catalogue: '#121416',
+  scrapbook: '#BFEBEE',
   fieldnotes: '#DAE4EE',
-  jacket: '#35294F',
+  jacket: '#D8CCEA',
   airmail: '#F6EBD9',
+  herbarium: '#A6CFBB',
+  broadside: '#FDBDB5',
+  jcard: '#F2BC97',
+  passport: '#E5BDD0',
+  specimen: '#1E4645',
 }
 export const COLLAGE_GROUNDS: Record<CollageId, string> = {
-  contact: '#221E1B',
+  contact: '#121416',
   shelf: '#F6EBD9',
-  tickets: '#F3D9DD',
+  tickets: '#BFEBEE',
   pinboard: '#DAE4EE',
   ledger: '#DCA94C',
   postmark: '#E8D5A6',
-  marquee: '#1F2D28',
+  marquee: '#76CADD',
+  cabinet: '#A6CFBB',
+  playbill: '#FDBDB5',
+  mixtape: '#F2BC97',
+  visa: '#E5BDD0',
+  charset: '#1E4645',
 }
 
 export const FORMAT_NAMES = ['Ebook', 'Audiobook', 'Physical'] as const

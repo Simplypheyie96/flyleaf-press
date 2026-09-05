@@ -412,7 +412,6 @@ export function Write() {
         <section className="form-sec">
           <h2 className="ui-lbl form-sec-h">The card</h2>
           <div className="field">
-            <span className="ui-lbl">Style</span>
             <StylePicker ids={STYLE_IDS} names={STYLE_NAMES} grounds={STYLE_GROUNDS} value={style} onChange={setStyle} />
           </div>
         </section>
