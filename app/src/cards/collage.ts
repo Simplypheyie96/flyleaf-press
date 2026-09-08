@@ -395,7 +395,7 @@ function moStats(m: MonthData, id: HeadId): string {
      A label states; a receipt adds up. */
   if (id === 'c8')
     return `<div class="mo-stats mo-stats--label">
-      <div class="mo-lab-head"><span class="lbl">Determination</span><span class="lbl">Flyleaf Press</span></div>
+      <div class="mo-lab-head"><span class="lbl">Summary</span><span class="lbl">Flyleaf Press</span></div>
       <div class="mo-lab-grid">
         ${st.map((x) => `<div class="mo-lab"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
       </div>
@@ -752,7 +752,7 @@ function tickets(m: MonthData): string {
         <div class="hg-c" style="--tr:${leans[i % leans.length] * 0.7}deg">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end"><span class="lbl">Unused</span></div>
+          <div class="hg-end"><span class="lbl">Unread</span></div>
         </div>`)
       : `
     <div class="c3-stack ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
@@ -907,7 +907,7 @@ function initial(t: string): string {
 }
 
 /* C8 · Cabinet (mint) — every book mounted on its own sheet, four paper
-   corners a side, and filed with an accession code. The herbarium review card
+   corners a side, and filed under a plain number. The herbarium review card
    at collage scale. */
 function cabinet(m: MonthData): string {
   const corners = [0, 1, 2, 3]
@@ -921,11 +921,11 @@ function cabinet(m: MonthData): string {
       ${m.books.map((b, i) => `
         <div class="cb-cell">
           <div class="cb-mount">${cov(b)}${corners}</div>
-          <div class="cb-acc lbl">ACC ${String(i + 1).padStart(3, '0')}</div>
+          <div class="cb-acc lbl">Nº ${String(i + 1).padStart(3, '0')}</div>
           <div class="cb-t">${escapeHtml(b.title)}</div>
           <div class="cb-a">${escapeHtml(b.author)}</div>
           ${tbr(m)
-            ? `<div class="cb-r lbl">Unmounted</div>`
+            ? `<div class="cb-r lbl">Not read yet</div>`
             : `<div class="cb-r">
                 <span class="r-num">${fmtRating(b.rating)}</span>
                 ${starsS(b.rating, 10, 'var(--star)', 'var(--star-line)')}
@@ -949,7 +949,7 @@ function playbill(m: MonthData): string {
         <div class="hg-c">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end"><span class="lbl">Billed</span></div>
+          <div class="hg-end"><span class="lbl">Coming soon</span></div>
         </div>`)}
     </article>`
 
@@ -1119,7 +1119,7 @@ function charset(m: MonthData): string {
           <div class="cs-mount">${cov(b)}</div>
           <div class="cs-line">
             <span class="lbl">${String(i + 1).padStart(2, '0')}</span>
-            ${tbr(m) ? `<span class="lbl">Uncut</span>` : `<span class="r-num">${fmtRating(b.rating)}</span>`}
+            ${tbr(m) ? `<span class="lbl">To read</span>` : `<span class="r-num">${fmtRating(b.rating)}</span>`}
           </div>
           <div class="cs-t">${escapeHtml(b.title)}</div>
           <div class="cs-a">${escapeHtml(b.author)}</div>
