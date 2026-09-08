@@ -335,9 +335,11 @@ function airmail(rec: Review): string {
   </article>`
 }
 
-/* ── S8 · Herbarium — the book mounted and determined, the way a pressed
-   specimen is (mint). The frame is the sheet's own ruled border and the
-   determination slip is the thing filled in by hand afterwards. ── */
+/* ── S8 · Herbarium — the book mounted the way a pressed specimen is (mint).
+   The frame is the sheet's own ruled border and the slip below it is the
+   thing filled in by hand afterwards. The slip is headed "The reading" and
+   its rows are Started / Finished / Pages / Rating: the mount, the corners
+   and the frame carry the metaphor, so the facts do not have to. ── */
 function herbarium(rec: Review): string {
   return `<article class="card card--mint hb" style="--rot:-.5deg">
     ${patch(160)}
@@ -359,7 +361,7 @@ function herbarium(rec: Review): string {
     </div>
     <div class="hb-det">
       <div class="hb-det-head">
-        <span class="lbl">Determination</span>
+        <span class="lbl">The reading</span>
         <span class="lbl">Nº ${rec.no}</span>
       </div>
       <div class="hb-det-grid">
@@ -454,7 +456,10 @@ function jcard(rec: Review): string {
   </article>`
 }
 
-/* ── S11 · Passport — the reading as a border crossing (quartz). The stamps are
+/* ── S11 · Passport — the reading as a border crossing (quartz). The stamps
+   say STARTED and FINISHED, not ENTRY and EXIT — the rectangular stamp, the
+   guilloche and the machine-readable strip are the crossing, and a date
+   relabelled is only a date the reader has to translate. They are
    RECTANGULAR entry stamps, never the round cancellation ring: that device
    belongs to the airmail card and to the Postmark collage, and a third card
    wearing it would make all three read as one style. They sit in a wrapping
@@ -511,8 +516,8 @@ function passport(rec: Review): string {
         </div>
       </div>
       <div class="pp-stamps">
-        ${stamp('ENTRY', prettyDate(rec.started), -2)}
-        ${stamp('EXIT', prettyDate(rec.finished), 1.6)}
+        ${stamp('STARTED', prettyDate(rec.started), -2)}
+        ${stamp('FINISHED', prettyDate(rec.finished), 1.6)}
       </div>
       <div class="pp-fmt-row">
         <span class="lbl">Format</span>
@@ -531,8 +536,10 @@ function passport(rec: Review): string {
 
 /* ── S12 · Specimen — the book set as a type specimen sheet (teal). The
    rating is the point size, so the card's own showing gets larger the more
-   the book was liked, and the table is the metadata as a foundry would list
-   it. ── */
+   the book was liked. The table used to be labelled as a foundry would label
+   it — Cut by / Extent / Family — which is the dust jacket's "Extent" fault
+   again: trade language on a card somebody hands to a friend. Plain Author /
+   Started / Finished / Pages / Series; the showings are the metaphor. ── */
 function specimen(rec: Review): string {
   const row = (label: string, value: string) =>
     `<div class="ts-row"><span class="lbl">${label}</span><span class="ts-val">${value}</span></div>`
@@ -557,15 +564,15 @@ function specimen(rec: Review): string {
     <hr class="ts-rule">
     <div class="ts-cols">
       <div class="ts-table">
-        ${row('Cut by', escapeHtml(rec.author))}
+        ${row('Author', escapeHtml(rec.author))}
         ${row('Started', prettyDate(rec.started))}
         ${row('Finished', prettyDate(rec.finished))}
-        ${rec.pages ? row('Extent', String(rec.pages)) : ''}
-        ${rec.series ? row('Family', seriesLine(rec)) : ''}
+        ${rec.pages ? row('Pages', String(rec.pages)) : ''}
+        ${rec.series ? row('Series', seriesLine(rec)) : ''}
       </div>
       <figure class="ts-cut">
         ${cover(rec)}
-        <figcaption class="lbl">Fig. 1</figcaption>
+        <figcaption class="lbl">Cover</figcaption>
       </figure>
     </div>
     <div class="ts-fmt-row">
@@ -573,7 +580,7 @@ function specimen(rec: Review): string {
       ${fmtRow(rec, 'ts-fmt', false)}
     </div>
     <div class="ts-sample">
-      <span class="lbl">In use</span>
+      <span class="lbl">Rating</span>
       ${starRow(rec.rating, 20)}
     </div>
     ${body(rec, 14)}

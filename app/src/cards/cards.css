@@ -553,7 +553,7 @@
   align-items:start;
 }
 .s5-grid .lbl{ padding-top:3px; }
-.s5-grid .val{ min-width:0; overflow-wrap:anywhere; }
+.s5-grid .val{ min-width:0; overflow-wrap:break-word; }
 /* the format run is four words and separators in a column ~200px wide on a
    phone, so it wraps rather than pushing the card sideways */
 .s5-grid .fmt{ flex-wrap:wrap; }
@@ -601,7 +601,7 @@
   align-items:start;
 }
 .s6-grid .lbl{ padding-top:3px; }
-.s6-grid .val{ min-width:0; overflow-wrap:anywhere; }
+.s6-grid .val{ min-width:0; overflow-wrap:break-word; }
 .s6-grid .fmt{ flex-wrap:wrap; }
 /* the printed barcode on the back panel — bars, not an image, so it inherits
    the ink and costs the export nothing */
@@ -654,9 +654,17 @@
 .s7-title{ font-size:31px; margin-top:12px; }
 .s7-from .by{ display:block; margin-top:8px; }
 .s7-addr{ display:grid; gap:9px; margin-top:22px; }
-.s7-addr > div{ display:flex; align-items:baseline; gap:12px; min-width:0; }
+/* A label lane of a fixed width with the value taking whatever is left has
+   no floor: squeeze the card and the value lane goes to nothing, and a date
+   comes apart into "05 Sep" / "2026" while a page count breaks between its
+   own digits. The rows below therefore WRAP — under about 108px of lane the
+   value drops onto its own line and takes the full width instead of being
+   crushed. It is a floor in the stylesheet rather than in `.card-compact`,
+   because the compact class is a measurement made in JavaScript and a card
+   that is handed a narrow box before that lands must still read. */
+.s7-addr > div{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 12px; min-width:0; }
 .s7-addr .lbl{ flex:0 0 74px; }
-.s7-addr .val{ min-width:0; overflow-wrap:anywhere; }
+.s7-addr .val{ flex:1 1 108px; min-width:0; overflow-wrap:break-word; }
 .s7-fmt{ margin-top:18px; }
 /* the stamp — a white margin round the cover with punched perforations,
    struck through by the cancel. The holes are four repeating radial gradients
@@ -1400,9 +1408,10 @@
 .pp-photo .cover{ border:2px solid rgba(27,25,23,.564); border-radius:0; box-shadow:none; }
 .pp-data{ position:relative; min-width:0; }
 .pp-title{ margin:0 0 6px; font-size:24px; line-height:1.14; }
-.pp-line{ display:flex; align-items:baseline; gap:14px; padding:9px 0; border-bottom:1px solid var(--hair); }
+.pp-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 14px; padding:9px 0; border-bottom:1px solid var(--hair); }
 .pp-line .lbl{ flex:none; width:74px; }
 .pp-val{
+  flex:1 1 108px;
   font-family:var(--mono); font-size:13px; line-height:1.45; color:var(--tx);
   display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0;
 }
@@ -1458,9 +1467,9 @@
 }
 .ts-cols{ display:grid; grid-template-columns:1fr 118px; gap:0 30px; align-items:start; }
 .ts-table{ min-width:0; }
-.ts-row{ display:flex; align-items:baseline; gap:16px; padding:9px 0; border-bottom:1px solid var(--hair); }
+.ts-row{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 16px; padding:9px 0; border-bottom:1px solid var(--hair); }
 .ts-row .lbl{ flex:none; width:78px; }
-.ts-val{ min-width:0; font-family:var(--sans); font-size:13.5px; line-height:1.45; color:var(--tx); overflow-wrap:break-word; }
+.ts-val{ flex:1 1 108px; min-width:0; font-family:var(--sans); font-size:13.5px; line-height:1.45; color:var(--tx); overflow-wrap:break-word; }
 .ts-cut{ margin:0; }
 .ts-cut .cover{ border:1px solid var(--hair); border-radius:0; box-shadow:none; }
 .ts-cut figcaption{ margin-top:9px; }
@@ -1492,6 +1501,9 @@
    label goes above its value instead, handing it the whole data column. */
 .card-compact .pp-line{ flex-direction:column; align-items:flex-start; gap:5px; }
 .card-compact .pp-line .lbl{ width:auto; }
+/* stacked, the row's main axis is vertical, so the value's flex basis would
+   be read as a HEIGHT — 108px of empty paper under every fact */
+.card-compact .pp-line .pp-val{ flex:none; align-self:stretch; }
 .card-compact .pp-mrz{ font-size:10px; }
 .card-compact .pp-fmt{ flex-wrap:wrap; }
 .card-compact .pp-fmt .fmt-t{ flex:1 0 44%; border-right:0; }
