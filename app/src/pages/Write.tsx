@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { db, getSettings, nextReviewNo } from '../db'
 import type { Review, StyleId, HandId, FormatName, Plate } from '../types'
-import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, HAND_IDS, HAND_NAMES, FORMAT_NAMES } from '../types'
+import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, HAND_IDS, HAND_NAMES, FORMAT_NAMES, liveHand } from '../types'
 import { HANDS, handProps } from '../fonts'
 import { StarInput } from '../components/StarInput'
 import { DateField } from '../components/DateField'
@@ -169,7 +169,7 @@ export function Write() {
       setPages(r.pages ? String(r.pages) : '')
       setStarted(r.started ?? ''); setFinished(r.finished)
       setFormats(r.formats); setRating(r.rating)
-      setBody(r.body); setStyle(r.style); setHand(r.hand ?? 'kalam'); setPlates(r.plates)
+      setBody(r.body); setStyle(r.style); setHand(liveHand(r.hand)); setPlates(r.plates)
       if (r.cover) { setUploadedCover(r.cover); setCoverIdx('upload') }
       const kept = r.covers ?? []
       setCovers(kept)

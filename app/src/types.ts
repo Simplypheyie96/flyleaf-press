@@ -54,13 +54,17 @@ export const COLLAGE_NAMES: Record<CollageId, string> = {
 
    Kalam carried every review, and one handwriting on every card is one voice
    for everybody's reading — so the hand is now the reader's pick, per review,
-   the same way the card's clothes already are. Six faces, self-hosted beside
+   the same way the card's clothes already are. Three faces, self-hosted beside
    the rest (see `src/fonts.ts`, which holds their files and the size each one
-   needs to read at Kalam's size).
+   needs to read at Kalam's size). It was six; Gloria Hallelujah, Gochi Hand and
+   Schoolbell were cut on sight.
 
    `Review.hand` is OPTIONAL and absent means Kalam: every review written before
    this existed stays exactly as it was printed, and the recorded default is
-   still Kalam rather than something a migration invented.
+   still Kalam rather than something a migration invented. A row still carrying
+   one of the three retired ids is read the same way — `HANDS[id] ?? HANDS.kalam`
+   in both emitters, and the editor coerces it back to `kalam` when the review is
+   next opened — so nothing has to be migrated for a face to leave.
 
    `notes` is the user's OWN face — HandwrittenNotes.ttf out of their Library,
    asked for by name, converted to woff2 and committed to the repo. It is the
@@ -69,15 +73,21 @@ export const COLLAGE_NAMES: Record<CollageId, string> = {
    also the one face with holes in it — no em dash, en dash or ellipsis — which
    is why every hand's family stack falls through to Kalam rather than to the
    generic `cursive` (see `handVars`). */
-export type HandId = 'kalam' | 'notes' | 'shantell' | 'gloria' | 'gochi' | 'bell'
-export const HAND_IDS: HandId[] = ['kalam', 'notes', 'shantell', 'gloria', 'gochi', 'bell']
+export type HandId = 'kalam' | 'notes' | 'shantell'
+export const HAND_IDS: HandId[] = ['kalam', 'notes', 'shantell']
 export const HAND_NAMES: Record<HandId, string> = {
   kalam: 'Kalam',
   notes: 'Handwritten Notes',
   shantell: 'Shantell Sans',
-  gloria: 'Gloria Hallelujah',
-  gochi: 'Gochi Hand',
-  bell: 'Schoolbell',
+}
+
+/** The hand a stored row should be EDITED in. A review saved under a face that
+    has since been retired reads back as Kalam — which is what the card already
+    prints it as, since both emitters fall through to Kalam on an id they do not
+    know. Without this the editor would hold an id no chip matches, show nothing
+    pressed, and write the dead face back on save. */
+export function liveHand(hand?: string): HandId {
+  return HAND_IDS.includes(hand as HandId) ? (hand as HandId) : 'kalam'
 }
 
 /* the ground each style sits on — used for the little pastel swatch dots */
