@@ -21,6 +21,7 @@ export function ExportSheet({
   picker,
   shape,
   onShape,
+  shapes = EXPORT_SHAPES,
   build,
   exportImages,
   printPdf,
@@ -33,6 +34,13 @@ export function ExportSheet({
   picker?: ReactNode
   shape: ExportShape
   onShape: (s: ExportShape) => void
+  /* The shapes this card is actually offered in. A review and a collage
+     compose on either column; the story card has ONE, because its whole
+     definition is a 9:16 frame and the broad column is a different aspect.
+     Where there is one, the picker is replaced by the plain figure — a
+     control with a single option is a control that decides nothing, and a
+     pressed button nobody can unpress reads as broken. */
+  shapes?: readonly ExportShape[]
   /** lays the paper pages out into the host, in the given shape */
   build: (host: HTMLDivElement, shape: ExportShape) => HTMLElement[]
   exportImages: (mode: ExportMode, shape: ExportShape) => Promise<ExportResult>
@@ -74,7 +82,7 @@ export function ExportSheet({
     if (!wrap || !host) return
     const rebuild = () => {
       const measured: Partial<Record<ExportShape, { w: number; h: number; n: number }>> = {}
-      for (const s of EXPORT_SHAPES.filter((s) => s !== shape)) {
+      for (const s of shapes.filter((s) => s !== shape)) {
         measured[s] = pixelSize(build(host, s))
       }
       const built = build(host, shape)
@@ -95,7 +103,7 @@ export function ExportSheet({
     const ro = new ResizeObserver(rebuild)
     ro.observe(wrap)
     return () => ro.disconnect()
-  }, [build, shape])
+  }, [build, shape, shapes])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -143,15 +151,20 @@ export function ExportSheet({
         <div className="field" style={{ marginTop: 18 }}>
           <span className="ui-lbl">Size</span>
           {/* The name says which layout of the card is going out; the figure
-              under it says how big the file is. */}
-          <div className="size-pick">
-            {EXPORT_SHAPES.map((s) => (
-              <button key={s} type="button" aria-pressed={shape === s} onClick={() => onShape(s)}>
-                <span className="size-pick-n">{EXPORT_SHAPE_NAMES[s]}</span>
-                <span className="size-pick-px">{figure(px[s])}</span>
-              </button>
-            ))}
-          </div>
+              under it says how big the file is. With one shape there is
+              nothing to choose, so the figure is simply stated. */}
+          {shapes.length > 1 ? (
+            <div className="size-pick">
+              {shapes.map((s) => (
+                <button key={s} type="button" aria-pressed={shape === s} onClick={() => onShape(s)}>
+                  <span className="size-pick-n">{EXPORT_SHAPE_NAMES[s]}</span>
+                  <span className="size-pick-px">{figure(px[s])}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="share-note size-one">{figure(px[shape])}</p>
+          )}
         </div>
 
         {/* On iOS a saved file goes through the system sheet, which is the only

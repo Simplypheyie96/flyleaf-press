@@ -48,7 +48,9 @@ function HopeRow({ k, count, tag }: { k: string; count: number; tag?: string }) 
       <span>
         <span className="mo-row-t" style={{ display: 'block' }}>{monthName(k)}</span>
         <span className="mo-row-s">
-          {count === 0 ? 'Nothing picked yet' : `${count} hopeful${count === 1 ? '' : 's'}`}
+          {count === 0
+            ? 'Nothing picked yet'
+            : `${count} hopeful${count === 1 ? '' : 's'}`}
         </span>
       </span>
       {tag && <span className="mo-open-tag">{tag}</span>}

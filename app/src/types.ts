@@ -50,6 +50,31 @@ export const COLLAGE_NAMES: Record<CollageId, string> = {
   charset: 'Character Set',
 }
 
+/* THE HAND A REVIEW IS WRITTEN IN.
+
+   Kalam carried every review, and one handwriting on every card is one voice
+   for everybody's reading — so the hand is now the reader's pick, per review,
+   the same way the card's clothes already are. Five faces, all SIL OFL and all
+   self-hosted beside the rest (see `src/fonts.ts`, which holds their files and
+   the size each one needs to read at Kalam's size).
+
+   `Review.hand` is OPTIONAL and absent means Kalam: every review written before
+   this existed stays exactly as it was printed, and the recorded default is
+   still Kalam rather than something a migration invented.
+
+   The user's own `HandwrittenNotes.ttf` was measured and rejected — its name
+   table licenses it for personal use only, which a publicly deployed app is
+   not, and it carries no em dash, en dash or ellipsis, which review prose does. */
+export type HandId = 'kalam' | 'caveat' | 'patrick' | 'architect' | 'indie'
+export const HAND_IDS: HandId[] = ['kalam', 'caveat', 'patrick', 'architect', 'indie']
+export const HAND_NAMES: Record<HandId, string> = {
+  kalam: 'Kalam',
+  caveat: 'Caveat',
+  patrick: 'Patrick Hand',
+  architect: 'Architects Daughter',
+  indie: 'Indie Flower',
+}
+
 /* the ground each style sits on — used for the little pastel swatch dots */
 export const STYLE_GROUNDS: Record<StyleId, string> = {
   archive: '#DCA94C',
@@ -132,6 +157,8 @@ export interface Review {
   plates: Plate[]
   /** the style this review is displayed in; sharing can pick any style */
   style: StyleId
+  /** the handwriting the review body is set in — absent means Kalam */
+  hand?: HandId
   /**
    * Where the row came in from, when it wasn't written here by hand. Set by
    * the Goodreads import so it can be undone as a group — Settings offers

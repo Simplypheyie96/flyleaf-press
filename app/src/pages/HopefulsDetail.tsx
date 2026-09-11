@@ -8,13 +8,25 @@ import { CollapsedCard } from '../components/CollapsedCard'
 import { CoverModal } from '../components/CoverModal'
 import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
+import { faceUri } from '../components/Face'
 import { renderCollage, type MonthData } from '../cards/collage'
-import { shareCollageImage, buildCollagePage, collageBaseName, type ExportMode } from '../share/export'
+import {
+  shareCollageImage, buildCollagePage, collageBaseName,
+  shareStoryImage, buildStoryPage, storyBaseName, type ExportMode,
+} from '../share/export'
 import { monthName, currentMonthKey } from '../format'
 import { coverToDataUrl, isIsbn, searchBooks, type Candidate, type SearchResult } from '../catalog'
 
 const DEBOUNCE = 350
 const MIN_CHARS = 3
+
+/* The story card composes on ONE column and only one: 688px of card on a
+   720px leaf is 1440 x 2560, which is 9:16 to the pixel, and the broad column
+   would be a different aspect and therefore not a story. Module-level because
+   `ExportSheet` measures on a dependency of this array — an inline literal is
+   a new array every render, so the whole card would be rebuilt and remeasured
+   on every keystroke anywhere on the page. */
+const STORY_SHAPES = ['phone'] as const
 
 /** The same flattening the Goodreads dedupe uses, for the same reason: two
     catalogues, or a catalogue and a hand edit, disagree about spacing and case
@@ -82,6 +94,13 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
   /* which row's cover is being changed — an id, so the modal always reads the
      live row rather than a copy taken when it opened */
   const [coverFor, setCoverFor] = useState<number | null>(null)
+  /* and which row is being shared as a story, for the same reason. The style
+     is its own state rather than the collage tab's: a hopefuls list and one
+     book in a portrait frame are two different objects, and the style that
+     suits twelve covers in a grid is not necessarily the one that suits a
+     single cover at 500px. It still OPENS on the same default. */
+  const [storyFor, setStoryFor] = useState<number | null>(null)
+  const [storyStyle, setStoryStyle] = useState<CollageId>(settings.defaultCollage)
 
   const rows = useLiveQuery(
     () => db.hopefuls.where('month').equals(key).sortBy('createdAt'),
@@ -210,6 +229,23 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
     [key, style, rows]
   )
 
+  /* The story is one book, and it is the only card in the app that carries the
+     reader's name — so the face is resolved to a data URI HERE, in React,
+     where the cache lives. The renderer is a template literal and cannot call
+     a hook or hold a cache of its own. */
+  const told = (rows ?? []).find((r) => r.id === storyFor)
+  const story: MonthData = {
+    name: monthName(key),
+    books: told ? [asReview(told)] : [],
+    span: 'reading',
+    reader: { name: settings.name, face: settings.face ? faceUri(settings.face) : undefined },
+  }
+  const storyBuild = useCallback(
+    (host: HTMLDivElement) => buildStoryPage(story, storyStyle, host),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [storyFor, storyStyle, rows, settings.name, settings.face]
+  )
+
   if (!rows) return null
 
   const editing = rows.find((r) => r.id === coverFor)
@@ -313,6 +349,20 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
                             Review it
                           </button>
                         )}
+                        {/* A Share here is not the hopefuls card — that is
+                            the whole list, and it lives on the other tab — it
+                            is THIS book in a portrait frame. It is hidden once
+                            the book has been reviewed, because a finished book
+                            has its own page to share from. */}
+                        {reviewed?.get(h.id!) == null && (
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => setStoryFor(h.id!)}
+                          >
+                            Share
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm"
@@ -366,6 +416,29 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
           onCovers={(next) => db.hopefuls.update(editing.id!, { covers: next })}
           onPick={(cover) => db.hopefuls.update(editing.id!, { cover, editedAt: Date.now() })}
           onClose={() => setCoverFor(null)}
+        />
+      )}
+
+      {told && (
+        <ExportSheet
+          heading={told.title}
+          baseName={storyBaseName(story)}
+          picker={
+            <StylePicker
+              ids={COLLAGE_IDS}
+              names={COLLAGE_NAMES}
+              grounds={COLLAGE_GROUNDS}
+              value={storyStyle}
+              onChange={setStoryStyle}
+              label="Card style"
+            />
+          }
+          build={storyBuild}
+          shape="phone"
+          shapes={STORY_SHAPES}
+          onShape={() => {}}
+          exportImages={(mode: ExportMode) => shareStoryImage(story, storyStyle, mode)}
+          onClose={() => setStoryFor(null)}
         />
       )}
 

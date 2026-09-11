@@ -85,7 +85,12 @@ const BARE = { glassesProbability: 0, earringsProbability: 0, detailsProbability
 
 const cache = new Map<string, string>()
 
-function faceUri(seed: string): string {
+/* Exported because the story card needs it. That card is an HTML STRING, not
+   a React tree — the twelve collage renderers are template literals — so it
+   cannot mount <Face/> and has to embed the same data URI directly. The cache
+   is the reason to share this rather than re-derive it: a face is generated
+   once per seed and the card gets the bytes the picker already made. */
+export function faceUri(seed: string): string {
   const hit = cache.get(seed)
   if (hit) return hit
   const uri = new Rendered(styleSheet(), {

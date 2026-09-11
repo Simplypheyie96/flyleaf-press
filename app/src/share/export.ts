@@ -11,7 +11,7 @@
 import type { Review, StyleId, CollageId, ExportShape } from '../types'
 import { SHAPE_FILE_W, SHAPE_W } from '../types'
 import { renderReviewCard } from '../cards/review'
-import { renderCollage, type MonthData } from '../cards/collage'
+import { renderCollage, renderStory, type MonthData } from '../cards/collage'
 import { paragraphs } from '../format'
 import { fontEmbedCss } from '../fonts'
 import { isIOS } from '../pwa'
@@ -185,6 +185,82 @@ export function buildCollagePage(
   const laid: MonthData = { ...m, wide: shape === 'wide' }
   host.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage(laid, style)}</div></div>`
   return ground([host.querySelector('.share-page') as HTMLElement], shape)
+}
+
+/* Story: one book, on a leaf of a FIXED height. Every other page here grows
+   to whatever it is holding; this one cannot, because the shape is the point —
+   a 688px card 1248px tall on the 720px leaf is 1440 × 2560, which is 9:16 to
+   the pixel. So it is always the phone column — the broad one would be a
+   different aspect and no longer a story — and the card's own fixed height is
+   what the tight leaf then measures. */
+export function buildStoryPage(
+  m: MonthData,
+  style: CollageId,
+  host: HTMLDivElement
+): HTMLElement[] {
+  prepHost(host, 'phone')
+  host.innerHTML = `<div class="share-page share-page--free"><div>${renderStory(m, style)}</div></div>`
+  const pages = ground([host.querySelector('.share-page') as HTMLElement], 'phone')
+  fitStoryCover(pages[0])
+  return pages
+}
+
+/* Give the picture every pixel the type does not want.
+
+   The card is 1248px tall and the head, the book block and the foot are all
+   `flex:none`, so the hero is the remainder — and that remainder does NOT
+   depend on how tall the cover is (measured: identical at a 640px cover and at
+   a 2000px one). That is the whole reason this can be one pass rather than a
+   loop: read the space, subtract the style's own chrome, state the height.
+
+   It is done here rather than in CSS because CSS cannot do it. A percentage
+   `max-height` on the cover resolves against an auto-height frame and is
+   simply inert; making the frame a flex column so the cap could reach the
+   cover by shrinking it clamps the height and then gets the WIDTH wrong,
+   because a `width:fit-content` frame takes its width from the cover's
+   unshrunk contribution — the cabinet's plate measured 608px around a 434px
+   cover, and the board's nested plate lost the aspect transfer altogether.
+   Both were measured before this was written.
+
+   Every export and every preview goes through `buildStoryPage`, so there is no
+   path on which the card is built and this is not run; `--st-cov` in the
+   stylesheet is the value a card would take if one ever were. */
+function fitStoryCover(page: HTMLElement): void {
+  const hero = page.querySelector('.st-hero') as HTMLElement | null
+  const frame = page.querySelector('.st-frame') as HTMLElement | null
+  const cov = page.querySelector('.st-cov') as HTMLElement | null
+  const card = page.querySelector('.card') as HTMLElement | null
+  if (!hero || !frame || !cov || !card) return
+
+  const pad = getComputedStyle(hero)
+  const avail =
+    hero.clientHeight - parseFloat(pad.paddingTop) - parseFloat(pad.paddingBottom)
+
+  /* Everything between the cover's own box and the hero's inner edge: the
+     plate's padding, the frame number above it, the perforated foot — and the
+     bounding boxes of the two things that are rotated, since a tilted plate
+     stands taller than it lays out and would lean into the title. */
+  const lean = (el: HTMLElement): number =>
+    Math.max(0, el.getBoundingClientRect().height - el.offsetHeight)
+  const chrome = frame.offsetHeight - cov.offsetHeight + lean(frame) + lean(cov)
+
+  /* The other ceiling is the column. `.cov` states `aspect-ratio:2/3`, so the
+     cover's width is two thirds of whatever height is set here — on a short
+     card the hero is roomy enough that the 632px of content would run out
+     first, and a compartment 584px wide inside its own border is narrower
+     still. So the widest the cover may be is the hero's inner width less every
+     padding and border between the two, and the tallest it may be is that
+     times three halves. */
+  let room = hero.clientWidth
+  for (let el = cov.parentElement; el && el !== hero; el = el.parentElement) {
+    const cs = getComputedStyle(el)
+    room -=
+      parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) +
+      parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth)
+  }
+
+  const h = Math.floor(Math.min(avail - chrome, room * 1.5))
+  if (h > 0) card.style.setProperty('--st-cov', `${h}px`)
 }
 
 /* `var()` inside an SVG presentation attribute has to be resolved to a literal
@@ -624,7 +700,13 @@ async function pagesToPngs(pages: HTMLElement[]): Promise<Blob[]> {
      walks document.styleSheets and refetches every @font-face it finds, which
      is where the wrong-face bug lived and is also the slowest part of an
      export — and it would repeat the whole search once per page. */
-  const fontEmbedCSS = await fontEmbedCss()
+  /* Which hands are actually on these pages. A review stamps its own onto the
+     card root, so the export embeds that face and no other — asking for all
+     five would put four fonts nobody can see inside every image. */
+  const hands = pages.flatMap((p) =>
+    [...p.querySelectorAll<HTMLElement>('[data-hand]')].map((el) => el.dataset.hand ?? '')
+  )
+  const fontEmbedCSS = await fontEmbedCss(hands)
   await settleImages(pages)
   await bakeImages(pages)
   const blobs: Blob[] = []
@@ -786,6 +868,30 @@ export async function shareCollageImage(
   try {
     const pages = buildCollagePage(m, style, host, shape)
     return await exportPages(pages, collageBaseName(m), mode)
+  } finally {
+    host.remove()
+  }
+}
+
+/* A story card is one book, so it is named for the book and not for the
+   month it happens to sit in — `${slug(m.name)}-reading` would give every
+   currently-reading card of a month the same filename, and the second one to
+   land in a downloads folder would be "(1)". */
+export function storyBaseName(m: MonthData): string {
+  const b = m.books[0]
+  if (!b) return `${slug(m.name)}-reading`
+  return [slug(b.title), slug(b.author), 'reading'].filter(Boolean).join('-')
+}
+
+export async function shareStoryImage(
+  m: MonthData,
+  style: CollageId,
+  mode: ExportMode
+): Promise<ExportResult> {
+  const host = makeHost()
+  try {
+    const pages = buildStoryPage(m, style, host)
+    return await exportPages(pages, storyBaseName(m), mode)
   } finally {
     host.remove()
   }

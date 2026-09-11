@@ -7,6 +7,7 @@
 import type { Plate, Review, StyleId } from '../types'
 import { FORMAT_NAMES } from '../types'
 import { escapeHtml, fmtRating, paragraphs, prettyDate } from '../format'
+import { handVars } from '../fonts'
 import { ART, cancel, mark, patch, pclip, staple, starSvg } from './assets'
 
 function starRow(r: number, size: number): string {
@@ -100,7 +101,7 @@ function seriesLine(rec: Review): string {
 
 /* ── S1 · Archive — the review as a stiff filed object (mustard) ── */
 function archive(rec: Review): string {
-  return `<article class="card card--mustard s1" style="--rot:-1.1deg">
+  return `<article class="card card--mustard s1" style="--rot:-1.1deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(150)}
     <div class="s1-rail">
       ${cover(rec, 's1-cover')}
@@ -127,7 +128,7 @@ function archive(rec: Review): string {
 
 /* ── S2 · Masthead — the review as a printed page (butter) ── */
 function masthead(rec: Review): string {
-  return `<article class="card card--sage s2" style="--rot:.3deg">
+  return `<article class="card card--sage s2" style="--rot:.3deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(170)}
     <div class="s2-head">
       <div class="s2-kicker">
@@ -161,7 +162,7 @@ function masthead(rec: Review): string {
 
 /* ── S3 · Catalogue — the record entry, printed in negative (coal) ── */
 function catalogue(rec: Review): string {
-  return `<article class="card card--coal s3" style="--rot:-.8deg">
+  return `<article class="card card--coal s3" style="--rot:-.8deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(120)}
     <div class="s3-cover-wrap">
       ${pclip(16, -5)}
@@ -187,7 +188,7 @@ function catalogue(rec: Review): string {
 
 /* ── S4 · Scrapbook — pasted, taped, torn (pink) ── */
 function scrapbook(rec: Review): string {
-  return `<article class="card card--seaglass s4" style="--rot:1.3deg">
+  return `<article class="card card--seaglass s4" style="--rot:1.3deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     <span class="s4-washi-1" aria-hidden="true"></span>
     <span class="s4-washi-2" aria-hidden="true"></span>
     ${patch(140)}
@@ -224,7 +225,7 @@ function scrapbook(rec: Review): string {
 
 /* ── S5 · Field Notes — the gridded lab leaf (blue) ── */
 function fieldnotes(rec: Review): string {
-  return `<article class="card card--blue s5" style="--rot:-.5deg">
+  return `<article class="card card--blue s5" style="--rot:-.5deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${staple()}
     ${patch(130)}
     <div class="s5-kicker">
@@ -260,7 +261,7 @@ function fieldnotes(rec: Review): string {
    i.e. purple and yellow, and it was also a second near-black beside
    Catalogue's coal in the style picker — one change answers both. */
 function jacket(rec: Review): string {
-  return `<article class="card card--lilac s6" style="--rot:.6deg">
+  return `<article class="card card--lilac s6" style="--rot:.6deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(150)}
     <div class="s6-band">
       <div class="s6-kick">
@@ -303,7 +304,7 @@ function jacket(rec: Review): string {
    card is rasterized by inlining computed styles, and four plain repeating
    gradients survive that trip where a border-image is a gamble. */
 function airmail(rec: Review): string {
-  return `<article class="card s7" style="--rot:-.7deg">
+  return `<article class="card s7" style="--rot:-.7deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     <span class="s7-edge" aria-hidden="true"><i class="e-t"></i><i class="e-r"></i><i class="e-b"></i><i class="e-l"></i></span>
     ${patch(130)}
     <div class="s7-top">
@@ -341,7 +342,7 @@ function airmail(rec: Review): string {
    its rows are Started / Finished / Pages / Rating: the mount, the corners
    and the frame carry the metaphor, so the facts do not have to. ── */
 function herbarium(rec: Review): string {
-  return `<article class="card card--mint hb" style="--rot:-.5deg">
+  return `<article class="card card--mint hb" style="--rot:-.5deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(160)}
     <div class="hb-frame" aria-hidden="true"></div>
     <div class="hb-top">
@@ -389,7 +390,7 @@ function herbarium(rec: Review): string {
    and the cover is a small cut set into the text rather than a picture the
    words have to work around. ── */
 function broadside(rec: Review): string {
-  return `<article class="card card--salmon bs" style="--rot:.4deg">
+  return `<article class="card card--salmon bs" style="--rot:.4deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(190)}
     <div class="lbl bs-kick">Read and set in type · Nº ${rec.no}</div>
     <hr class="bs-rule bs-rule--fat">
@@ -423,7 +424,7 @@ function broadside(rec: Review): string {
 function jcard(rec: Review): string {
   const track = (label: string, value: string) =>
     `<div class="jc-track"><span class="lbl">${label}</span><i aria-hidden="true"></i><span class="jc-val">${value}</span></div>`
-  return `<article class="card card--apricot jc" style="--rot:-.7deg">
+  return `<article class="card card--apricot jc" style="--rot:-.7deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     <div class="jc-spine">
       <span>${escapeHtml(rec.title)}</span>
       <span class="jc-spine-by">${escapeHtml(rec.author)}</span>
@@ -493,7 +494,7 @@ function passport(rec: Review): string {
   const line = (label: string, value: string) =>
     `<div class="pp-line"><span class="lbl">${label}</span><span class="pp-val">${value}</span></div>`
 
-  return `<article class="card card--quartz pp" style="--rot:.5deg">
+  return `<article class="card card--quartz pp" style="--rot:.5deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     <div class="pp-guilloche" aria-hidden="true"></div>
     <div class="pp-in">
       ${patch(170)}
@@ -545,7 +546,7 @@ function specimen(rec: Review): string {
     `<div class="ts-row"><span class="lbl">${label}</span><span class="ts-val">${value}</span></div>`
   const step = (px: number) =>
     `<div class="ts-step"><span class="ts-pt">${px}</span><span class="ts-spec" style="font-size:${px}px">${escapeHtml(rec.title)}</span></div>`
-  return `<article class="card card--teal ts" style="--rot:-.3deg">
+  return `<article class="card card--teal ts" style="--rot:-.3deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(200)}
     <div class="ts-head">
       <span class="lbl">Specimen sheet · Nº ${rec.no}</span>

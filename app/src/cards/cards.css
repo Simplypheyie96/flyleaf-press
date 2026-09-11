@@ -188,16 +188,23 @@
   font-size:34px; line-height:1.12; letter-spacing:-.012em;
 }
 .card .by{ font-family:var(--serif); font-style:italic; font-size:17px; line-height:1.35; color:var(--meta); }
+/* The writing. The face, its size and its leading all come off the card root,
+   which `handVars` stamps per review — the fallbacks here are Kalam's own
+   figures, so a card rendered without a stamp is exactly what it always was.
+   Size travels with the face because handwriting faces disagree about how much
+   of the em they use; see HANDS in src/fonts.ts for the measured numbers. */
 .card .body{
-  font-family:var(--hand); font-weight:400;
-  font-size:17px; line-height:1.72;
+  font-family:var(--hand-fam,var(--hand)); font-weight:400;
+  font-size:var(--hand-size,17px); line-height:var(--hand-lh,1.72);
   /* no measure cap — the writing runs the full padded width of the card */
   color:var(--tx);
 }
 .card .body p{ margin:0 0 15px; }
 .card .body > :last-child{ margin-bottom:0; }
 .card-compact .card .title{ font-size:27px; line-height:1.15; }
-.card-compact .card .body{ font-size:16.5px; line-height:1.74; }
+.card-compact .card .body{
+  font-size:calc(var(--hand-size,17px) * .97); line-height:calc(var(--hand-lh,1.72) + .02);
+}
 
 /* Format — every style marks the chosen ones in its OWN clothing.
    Never an underline. The underline was the one element that looked
@@ -364,12 +371,12 @@
 .card-compact .plate{ width:158px; }
 .plate-photo{ display:block; width:100%; height:auto; aspect-ratio:1; border-radius:1px; object-fit:cover; background:var(--paper); }
 .plate-cap{
-  font-family:var(--hand); font-size:13.5px; line-height:1.25;
+  font-family:var(--hand-fam,var(--hand)); font-size:calc(var(--hand-size,17px) * .794); line-height:1.25;
   color:var(--ink-soft);
   min-height:44px; display:flex; align-items:center;
   padding:5px 1px 6px;
 }
-.card-compact .plate-cap{ font-size:12.5px; min-height:40px; }
+.card-compact .plate-cap{ font-size:calc(var(--hand-size,17px) * .735); min-height:40px; }
 
 /* Washi tape — translucent, torn ends */
 .tape{
@@ -1079,6 +1086,7 @@
   color:var(--meta); margin-top:4px;
 }
 .hg-end{ margin-top:7px; }
+
 .card-compact .hg{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:20px 13px; --gx:13px; }
 .card-compact .hg-name{ font-size:12px; }
 
@@ -1685,6 +1693,176 @@
 .card-compact .cs-grid{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); }
 .card-compact .cs-cell{ padding:12px 8px 11px; }
 .card-compact .cs-back{ font-size:82px; }
+
+
+/* ═════════════════════════════════════════════════════════════
+   THE STORY CARD · one book, currently being read
+
+   A hopefuls card is a list that grows; this one is a frame that does not.
+   With a single book there is nothing to pack, so the card takes a FIXED
+   height and lets the cover have the slack — which is also what makes it a
+   9:16 object rather than a short collage. The arithmetic is the phone
+   shape's, unchanged: card 688 + 16 mat a side = a 720 leaf, and 1248 + 16
+   top and bottom = 1280, so the file is 1440 × 2560 and scales clean to
+   1080 × 1920. Nothing here invents a width; the only novelty is a height
+   that is set rather than measured.
+
+   Every style keeps its own clothes. The hero is not the hopefuls grid at
+   one column — `.hg` caps its cells at `--cap`, which would hold the cover
+   to 220px and defeat the whole shape — so each style gets a frame of its
+   own that mirrors, at hero scale, the chrome its cells already wear.
+   ═════════════════════════════════════════════════════════════ */
+.card--story{
+  height:1248px;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  --st-cov:640px; /* nominal; fitStoryCover states the real one */
+}
+/* the passport lays everything inside its own page, so the column is there */
+.card--story.c11{ display:block; }
+.card--story .st-in{ display:flex; flex-direction:column; height:100%; }
+.card--story .mo-head{ flex:none; }
+/* The head's single line is the card naming itself, so it takes the weight a
+   masthead takes — 600 is the heaviest Playfair the cards embed, and a 700
+   would be synthesised on screen and drawn differently in the file. The
+   cabinet sets its month in a light italic, which is right for a date written
+   onto a sheet and wrong for the sheet's own title. */
+.card--story .mo-title{ font-weight:600; font-style:normal; }
+
+/* The hero takes every pixel the type does not, so a long title and a long
+   note cost the cover height rather than the card its shape. */
+.st-hero{
+  flex:1 1 auto; min-height:0;
+  display:flex; align-items:center;
+  padding:2px 0 6px;
+}
+/* the two styles whose heads are centred keep the axis all the way down */
+.c3 .st-hero, .c7 .st-hero{ justify-content:center; }
+/* The cover is sized in ONE place and nothing downstream renegotiates it.
+   Two constructions were measured and rejected before this one. `max-height`
+   on the cover is inert — a percentage against an auto-height frame resolves
+   to `none`, so the cover kept its stated height and a long title pushed the
+   picture through the bottom of the card (probed at 2000px: eleven of twelve
+   styles overflowed by ~900px with the clamp supposedly on). Making the frame
+   a column flex container so the cap could reach the cover by shrinking it
+   DID clamp the height — and broke the width, because a frame at
+   `width:fit-content` takes its width from the cover's UNSHRUNK contribution:
+   the cabinet's plate came out 608px wide around a 434px cover, and the
+   board's nested plate lost the aspect transfer entirely (a 754px-tall cover
+   measured 1351 wide, 708px outside the card). So the cover keeps a plain
+   stated height and `fitStoryCover` in `share/export.ts` states it, having
+   measured the hero the card actually built. The value below is what a card
+   would take if it were ever rendered without going through that door. */
+.st-frame{ position:relative; width:fit-content; max-width:100%; }
+.card--story .st-cov{
+  display:block; width:auto; height:var(--st-cov); margin:0;
+}
+.st-no{ display:block; }
+
+/* c1 · a frame on a proof sheet is a number and the cover under it */
+.st-frame--c1 .st-no{ margin-bottom:9px; }
+
+/* c2 · the cover stands on the same shelf edge the rail is built from */
+.st-frame--c2{ padding-bottom:4px; }
+.st-frame--c2 .st-cov{ transform:rotate(-1.2deg); transform-origin:bottom center; }
+
+/* c3 · an unpunched stub, plate and perforated foot at hero scale */
+.st-frame--c3{
+  background:var(--card-w); box-shadow:var(--sh-plate); border-radius:2px;
+  padding:15px 15px 26px; transform:rotate(-.7deg);
+}
+.st-perf{ position:absolute; left:11px; right:11px; bottom:11px; border-top:2px dashed var(--rule); }
+
+/* c4 · one photo, tacked to the board */
+.st-frame--c4{ transform:rotate(-1.4deg); }
+.st-photo{ display:block; background:var(--card-w); padding:13px 13px 15px;
+  box-shadow:var(--sh-plate); border-radius:2px; }
+.st-tack{ top:-10px; margin-left:-10px; }
+
+/* c5 · a register entry — the heavy rule over it, the hairline under */
+.st-frame--c5{
+  width:100%; padding:20px 0;
+  border-top:1.5px solid rgba(27,25,23,.55);
+  border-bottom:1px solid rgba(27,25,23,.22);
+}
+
+/* c6 · franked and stuck to the sheet, punched edge and all */
+.st-frame--c6{ padding:13px; background:var(--card-w); box-shadow:var(--sh-plate);
+  transform:rotate(.8deg); }
+.st-frame--c6 .st-cov{ border-radius:0; box-shadow:none; }
+.st-frame--c6 .c6-perf{ inset:-4px; }
+
+/* c7 · the feature keeps its number, the board its rule */
+.st-frame--c7{ width:100%; text-align:center; border-top:1px solid rgba(27,25,23,.30); padding-top:16px; }
+.st-frame--c7 .st-no{ margin-bottom:11px; }
+.st-frame--c7 .st-cov{ margin-inline:auto; }
+
+/* c8 · mounted on its sheet, held by four paper corners */
+.st-frame--c8{ padding:17px; background:rgba(252,251,248,.62); border:1px solid rgba(27,25,23,.22); }
+.st-frame--c8 .hb-corner{ border-top-width:19px; border-right-width:19px; }
+
+/* c9 · top billing, between the bill's own rules */
+.st-frame--c9{ width:100%; padding:19px 0; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); }
+
+/* c10 · side A, one track */
+.st-frame--c10{ width:100%; padding:17px 0; border-top:2px solid var(--tx); border-bottom:1px dotted rgba(27,25,23,.35); }
+
+/* c11 · the photo page, ruled the way a passport rules one */
+.st-frame--c11{ padding:7px; border:1px solid rgba(27,25,23,.535); }
+.st-frame--c11 .st-cov{ border-radius:0; box-shadow:none; }
+
+/* c12 · one sort in its compartment, filed under its own letter */
+.st-frame--c12{ position:relative; overflow:hidden; width:100%; padding:24px;
+  border:1px solid var(--hair); display:flex; justify-content:center; }
+.st-back{ font-size:330px; top:50%; }
+/* The ghost initial is absolutely positioned, so with `z-index:auto` it paints
+   ABOVE every static sibling — on a collage cell that never showed, because the
+   cell lifts each of its own parts (`.cs-mount`, `.cs-line`, `.cs-t`, `.cs-a`)
+   with `position:relative` for exactly this reason. The story frame holds one
+   part, 450px of jacket, and it had been left static: a 330px letter at 13%
+   cream printed straight across the cover. Same cure, and not a negative
+   `z-index` — a mark pushed behind its own parent survives on screen and
+   vanishes in the file. */
+.st-frame--c12 .st-cov{ position:relative; }
+
+/* ── The book, set large because there is only one ── */
+/* The card's height is fixed, the picture's height is stated, and the type is
+   the only thing left that can vary — so the type is what carries the bound.
+   Every block here is capped at a whole number of its own lines and clips the
+   rest: three lines of title, two of author, two of the series-and-pages line.
+   `max-height` in `em` against a stated `line-height` crops
+   BETWEEN lines, never through one, and it is two standard properties —
+   `-webkit-line-clamp` would give a nicer ellipsis and depends on
+   `-webkit-box-orient` surviving a computed-style copy into the rasterizer's
+   clone, which is exactly the class of bet this card cannot take.
+   The clamps are not what makes the cover fit — the fit is measured — they are
+   what stops a catalogue title of sixty words from taking the whole card and
+   leaving the picture a stripe. */
+.st-book{ flex:none; }
+.card--story .st-title{
+  font-size:40px; line-height:1.06; max-height:3.18em; overflow:hidden;
+}
+.card--story .st-by{
+  font-size:18px; line-height:1.35; margin-top:9px; max-height:2.7em;
+  overflow:hidden;
+}
+.st-facts{ margin-top:13px; }
+.card--story .st-facts .lbl{
+  display:block; line-height:1.5; max-height:3em; overflow:hidden;
+}
+
+/* ── Who is reading it ── */
+.st-foot{
+  flex:none; display:flex; align-items:center; justify-content:space-between;
+  gap:16px; margin-top:26px; padding-top:16px; border-top:1px solid var(--hair);
+}
+.st-who{ display:flex; align-items:center; gap:11px; min-width:0; }
+.st-face{
+  display:block; flex:none; width:36px; height:36px; border-radius:50%;
+  background:var(--card-w); box-shadow:var(--sh-plate);
+}
+.st-name{ font-family:var(--serif); font-weight:600; font-size:16px; color:var(--tx); }
+.card--story .st-colo{ margin-top:0; padding-top:0; border-top:0; }
 
 /* ─────────────────────────────────────────────────────────────
    Share pages — fixed 720×1018 (1:√2) leaves the export rasterizes.

@@ -25,7 +25,13 @@ export interface MonthData {
      yet has no rating, and printing 0.0 under a row of empty stars would be
      inventing an opinion, which is the one thing the review form refuses to
      do. Each style says "not yet" in its own words instead. */
-  span?: 'month' | 'year' | 'hopefuls'
+  /* And a fourth span, which is the only one that is not a LIST: one book,
+     the one currently in hand, on a card shaped to be posted as a story. It
+     earns a span rather than a flag because every branch that asks "is there
+     a verdict here?" has to answer no for exactly the same reason hopefuls
+     does, and because the head's count line has something else to say when
+     the count is always one. */
+  span?: 'month' | 'year' | 'hopefuls' | 'reading'
   /* Whether this card is being composed on the BROAD column (Large card,
      988px) rather than the standard 688px one every screen shows.
 
@@ -36,12 +42,30 @@ export interface MonthData {
      column the same column count and simply inflates every cover. That was the
      complaint. `wide` is the one fact that lets the count move. */
   wide?: boolean
+  /* Who is reading it. Only the story card prints this, and only because a
+     card somebody posts to their own feed is the one card in the app that is
+     ABOUT its reader as much as about the book — every other card is a record
+     of the reading and signs itself with the colophon alone. Optional
+     throughout: a reader who never set a name gets a card that simply closes
+     on the mark, which is what every other card does. */
+  /* `face` is the drawn face as a DATA URI, already resolved — not the seed.
+     The card is a template-literal string and cannot mount <Face/>, and
+     reaching from a card renderer into a component to generate one would put
+     the avatar library in this module's import graph for the sake of eleven
+     characters. The page that builds the card already holds the settings row,
+     so it does the lookup and hands over bytes. */
+  reader?: { name: string; face?: string }
 }
 
 /* Whether this card is a list of intentions rather than a record of reading.
    Read at every site that would otherwise print a rating. */
 function tbr(m: MonthData): boolean {
-  return m.span === 'hopefuls'
+  return m.span === 'hopefuls' || m.span === 'reading'
+}
+
+/* One book, on a card with a fixed frame rather than a list that grows. */
+function solo(m: MonthData): boolean {
+  return m.span === 'reading'
 }
 
 function starsS(r: number, size: number, fillCol: string, lineCol: string): string {
@@ -82,7 +106,18 @@ type HeadId =
 
 function moHead(m: MonthData, id: HeadId): string {
   const n = m.books.length
-  const t = escapeHtml(m.name)
+  /* A story card is headed by what it IS, not by when it is. The month is the
+     subject of a collage — twelve covers under "September 2026" is a period of
+     reading — and it is beside the point on a card carrying one book somebody
+     is in the middle of: the useful line is that they are reading it now, and
+     the date is already in the card's own arrival. So the masthead slot says
+     so plainly, in every style, and the count line under it is dropped
+     entirely, since the count is always one. Each style still names ITSELF
+     above the line — that is the locked exemption — but none of them invents a
+     reading word of its own, which would be a second phrase saying the same
+     thing in language the reader has to translate back. */
+  const one = solo(m)
+  const t = one ? 'Currently reading' : escapeHtml(m.name)
   /* A hopefuls card counts hopefuls. The per-style nouns below describe the
      OBJECT the count is printed on — frames on a contact sheet, spines on a
      shelf — and a frame is still a frame whether the book behind it has been
@@ -91,6 +126,11 @@ function moHead(m: MonthData, id: HeadId): string {
      count phrase carries it, in every style. */
   const hope = `${n} hopeful${n === 1 ? '' : 's'}`
   const num = (noun: string) => (tbr(m) ? hope : noun)
+  /* The count's whole element, so a story card drops the line rather than
+     printing an empty one — each head hangs its own rule, border or margin off
+     it, and a blank `.mo-sub` would leave that chrome standing over nothing.
+     The rosette is not lost with it: every card signs off with the colophon. */
+  const cnt = (el: string) => (one ? '' : el)
 
   /* C1 · a contact sheet is labelled on its own edge, so the kicker sits above
      the month and the count is in frames */
@@ -98,7 +138,7 @@ function moHead(m: MonthData, id: HeadId): string {
     return `<div class="mo-head mo-head--c1">
       <div class="mo-kick">Contact sheet · Flyleaf Press</div>
       <div class="mo-title">${t}</div>
-      <div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} frame${n === 1 ? '' : 's'}`)}</span></div>
+      ${cnt(`<div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} frame${n === 1 ? '' : 's'}`)}</span></div>`)}
     </div>`
 
   /* C2 · the mark leads, and the head closes on a drawn shelf edge with the
@@ -106,7 +146,7 @@ function moHead(m: MonthData, id: HeadId): string {
   if (id === 'c2')
     return `<div class="mo-head mo-head--c2">
       <div class="mo-line">${mark(15)}<div class="mo-title">${t}</div></div>
-      <div class="mo-edge"><span class="lbl">${num(`${n} spine${n === 1 ? '' : 's'}`)}</span></div>
+      <div class="mo-edge">${cnt(`<span class="lbl">${num(`${n} spine${n === 1 ? '' : 's'}`)}</span>`)}</div>
     </div>`
 
   /* C3 · centred and perforated, like the top of a stub book */
@@ -115,7 +155,7 @@ function moHead(m: MonthData, id: HeadId): string {
       <div class="mo-kick">Box office · Flyleaf Press</div>
       <div class="mo-title">${t}</div>
       <div class="mo-perf"></div>
-      <div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} stub${n === 1 ? '' : 's'}`)}</span></div>
+      ${cnt(`<div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} stub${n === 1 ? '' : 's'}`)}</span></div>`)}
     </div>`
 
   /* C4 · a board has a card pinned to it rather than a masthead printed on it,
@@ -128,7 +168,7 @@ function moHead(m: MonthData, id: HeadId): string {
           <circle cx="5.4" cy="5.4" r="1.7" fill="rgba(255,255,255,.55)"/>
         </svg>
         <div class="mo-title">${t}</div>
-        <div class="mo-sub">${mark(12)}<span class="lbl">${num(`${n} pinned`)}</span></div>
+        ${cnt(`<div class="mo-sub">${mark(12)}<span class="lbl">${num(`${n} pinned`)}</span></div>`)}
       </div>
     </div>`
 
@@ -139,7 +179,7 @@ function moHead(m: MonthData, id: HeadId): string {
       <div class="mo-air"><span class="lbl">Par avion</span><span class="lbl">By air mail</span></div>
       <span class="mo-bars" aria-hidden="true"></span>
       <div class="mo-line">${mark(14)}<div class="mo-title">${t}</div></div>
-      <div class="mo-sub"><span class="lbl">${num(`${n} stamp${n === 1 ? '' : 's'} affixed`)}</span></div>
+      ${cnt(`<div class="mo-sub"><span class="lbl">${num(`${n} stamp${n === 1 ? '' : 's'} affixed`)}</span></div>`)}
     </div>`
 
   /* C7 · a listings board is lit from its own frame, so the head sits between
@@ -149,7 +189,7 @@ function moHead(m: MonthData, id: HeadId): string {
       <div class="mo-lamps" aria-hidden="true"></div>
       <div class="mo-kick">Now showing · Flyleaf Press</div>
       <div class="mo-title">${t}</div>
-      <div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} feature${n === 1 ? '' : 's'}`)}</span></div>
+      ${cnt(`<div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} feature${n === 1 ? '' : 's'}`)}</span></div>`)}
       <div class="mo-lamps" aria-hidden="true"></div>
     </div>`
 
@@ -161,7 +201,7 @@ function moHead(m: MonthData, id: HeadId): string {
       <div class="mo-label">
         <div class="mo-kick">Cabinet of read things · Flyleaf Press</div>
         <div class="mo-title">${t}</div>
-        <div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} sheet${n === 1 ? '' : 's'}`)}</span></div>
+        ${cnt(`<div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} sheet${n === 1 ? '' : 's'}`)}</span></div>`)}
       </div>
     </div>`
 
@@ -172,7 +212,7 @@ function moHead(m: MonthData, id: HeadId): string {
   if (id === 'c9')
     return `<div class="mo-head mo-head--c9">
       <hr class="mo-bill-rule">
-      <div class="mo-kick">${num(`${n} turn${n === 1 ? '' : 's'}`)} · Flyleaf Press presents</div>
+      <div class="mo-kick">${cnt(`${num(`${n} turn${n === 1 ? '' : 's'}`)} · `)}Flyleaf Press presents</div>
       <div class="mo-title">${t}</div>
       <div class="mo-sub">${mark(13)}<span class="lbl">One night only</span></div>
       <hr class="mo-bill-rule">
@@ -186,7 +226,7 @@ function moHead(m: MonthData, id: HeadId): string {
       <div class="mo-shell">
         <span class="mo-hub" aria-hidden="true"></span>
         <div class="mo-shell-mid">
-          <div class="mo-kick">Side A · ${num(`${n} track${n === 1 ? '' : 's'}`)}</div>
+          <div class="mo-kick">Side A${cnt(` · ${num(`${n} track${n === 1 ? '' : 's'}`)}`)}</div>
           <div class="mo-title">${t}</div>
         </div>
         <span class="mo-hub" aria-hidden="true"></span>
@@ -201,7 +241,7 @@ function moHead(m: MonthData, id: HeadId): string {
     return `<div class="mo-head mo-head--c11">
       <div class="mo-doc">
         <span class="lbl">Type P · Flyleaf Press</span>
-        <span class="lbl">${num(`${n} entr${n === 1 ? 'y' : 'ies'}`)}</span>
+        ${cnt(`<span class="lbl">${num(`${n} entr${n === 1 ? 'y' : 'ies'}`)}</span>`)}
       </div>
       <hr class="mo-doc-rule">
       <div class="mo-line">${mark(14)}<div class="mo-title">${t}</div></div>
@@ -215,7 +255,7 @@ function moHead(m: MonthData, id: HeadId): string {
       <div class="mo-kick">Specimen sheet · Flyleaf Press</div>
       <div class="mo-set">
         <div class="mo-title">${t}</div>
-        <span class="lbl">${num(`${n} sort${n === 1 ? '' : 's'}`)}</span>
+        ${cnt(`<span class="lbl">${num(`${n} sort${n === 1 ? '' : 's'}`)}</span>`)}
       </div>
       <hr class="mo-set-rule">
     </div>`
@@ -225,7 +265,7 @@ function moHead(m: MonthData, id: HeadId): string {
      stats strip drops its own bottom border on this style */
   return `<div class="mo-head mo-head--c5">
     <div class="mo-line">${mark(13)}<div class="mo-title">${t}</div></div>
-    <span class="lbl">${num(`Entries 01–${String(n).padStart(2, '0')}`)}</span>
+    ${cnt(`<span class="lbl">${num(`Entries 01–${String(n).padStart(2, '0')}`)}</span>`)}
   </div>`
 }
 
@@ -243,6 +283,17 @@ type Stat = { label: string; value: string }
 function monthStats(m: MonthData): Stat[] {
   const books = m.books
   if (!books.length) return []
+
+  /* A story card carries no strip. Every figure in here is a figure ABOUT a
+     list — how many books, how many pages across them, which is longest — and
+     with one book each of those is the same number said twice: "Pages · 300"
+     over "Longest · 300 pages" over a cover whose own line already reads 300
+     pages. The one book's facts belong beside the book, which is where the
+     story card prints them, and a strip of restatements between the head and
+     the cover is exactly the band the contact sheet's comment above complains
+     about. */
+  if (solo(m)) return []
+
   const isYear = m.span === 'year'
 
   /* The count is the head's, not the strip's. Every style's count line already
@@ -673,6 +724,33 @@ function hopeGrid(m: MonthData, cls: string, cell: (b: Review, i: number) => str
   </div>`
 }
 
+/* The hopefuls word, one per style, in one place — the grid cell prints it and
+   nothing else does. Each style saying it in its own words is the locked rule
+   that kept Pending, Soon, Queued and "No entry yet" from being flattened into
+   one Unread, and none of them is jargon a reader has to translate back, which
+   is the other half of that rule.
+
+   Four styles are absent, and that is the fact rather than an oversight: the
+   contact sheet, the shelf rail, the pinboard and the frank print NOTHING
+   under a hopeful. They suppress the verdict rather than replacing it, and a
+   word on every cell there would be a line of identical text repeated across
+   the whole sheet. */
+const HOPE_WORDS: Partial<Record<HeadId, string>> = {
+  c3: 'Unread',
+  c5: 'Pending',
+  c7: 'Soon',
+  c8: 'Not read yet',
+  c9: 'Coming soon',
+  c10: 'Queued',
+  c11: 'No entry yet',
+  c12: 'To read',
+}
+
+/* What a hopefuls cell says under the book it is carrying. */
+function hopeSay(id: HeadId): string {
+  return `<span class="lbl">${HOPE_WORDS[id] ?? ''}</span>`
+}
+
 /* the two lines every hopefuls cell carries under its cover — the title, and
    whatever else is actually known. A hopeful has no formats, so the byline is
    the author and the length when a catalogue knew it. */
@@ -752,7 +830,7 @@ function tickets(m: MonthData): string {
         <div class="hg-c" style="--tr:${leans[i % leans.length] * 0.7}deg">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end"><span class="lbl">Unread</span></div>
+          <div class="hg-end">${hopeSay('c3')}</div>
         </div>`)
       : `
     <div class="c3-stack ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
@@ -808,7 +886,7 @@ function ledger(m: MonthData): string {
         <div class="hg-c">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end"><span class="lbl">Pending</span></div>
+          <div class="hg-end">${hopeSay('c5')}</div>
         </div>`)
       : `
     <div class="c5-tbl ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
@@ -878,7 +956,7 @@ function marquee(m: MonthData): string {
           <div class="hg-no">${String(i + 1).padStart(2, '0')}</div>
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end"><span class="lbl">Soon</span></div>
+          <div class="hg-end">${hopeSay('c7')}</div>
         </div>`)
       : `
     <div class="c7-board ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
@@ -925,7 +1003,7 @@ function cabinet(m: MonthData): string {
           <div class="cb-t">${escapeHtml(b.title)}</div>
           <div class="cb-a">${escapeHtml(b.author)}</div>
           ${tbr(m)
-            ? `<div class="cb-r lbl">Not read yet</div>`
+            ? `<div class="cb-r">${hopeSay('c8')}</div>`
             : `<div class="cb-r">
                 <span class="r-num">${fmtRating(b.rating)}</span>
                 ${starsS(b.rating, 10, 'var(--star)', 'var(--star-line)')}
@@ -949,7 +1027,7 @@ function playbill(m: MonthData): string {
         <div class="hg-c">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end"><span class="lbl">Coming soon</span></div>
+          <div class="hg-end">${hopeSay('c9')}</div>
         </div>`)}
     </article>`
 
@@ -1032,7 +1110,7 @@ function mixtape(m: MonthData): string {
         <div class="hg-c">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end"><span class="lbl">Queued</span></div>
+          <div class="hg-end">${hopeSay('c10')}</div>
         </div>`)}
     </article>`
 
@@ -1086,7 +1164,7 @@ function visa(m: MonthData): string {
             <div class="vp-t">${escapeHtml(b.title)}</div>
             <div class="vp-a">${escapeHtml(b.author)}</div>
             ${tbr(m)
-              ? `<div class="vp-r lbl">No entry yet</div>`
+              ? `<div class="vp-r">${hopeSay('c11')}</div>`
               : `<div class="vp-r">
                   <span class="r-num">${fmtRating(b.rating)}</span>
                   ${starsS(b.rating, 10, 'var(--star)', 'var(--star-line)')}
@@ -1119,13 +1197,153 @@ function charset(m: MonthData): string {
           <div class="cs-mount">${cov(b)}</div>
           <div class="cs-line">
             <span class="lbl">${String(i + 1).padStart(2, '0')}</span>
-            ${tbr(m) ? `<span class="lbl">To read</span>` : `<span class="r-num">${fmtRating(b.rating)}</span>`}
+            ${tbr(m) ? hopeSay('c12') : `<span class="r-num">${fmtRating(b.rating)}</span>`}
           </div>
           <div class="cs-t">${escapeHtml(b.title)}</div>
           <div class="cs-a">${escapeHtml(b.author)}</div>
         </div>`).join('')}
     </div>
   </article>`
+}
+
+/* ─────────────────────────────────────────────────────────────
+   THE STORY CARD — one book, currently in hand, on a portrait sheet.
+
+   Everything else this file makes is a list that GROWS: a month of six books
+   and a year of two hundred are the same renderer at two lengths, and the leaf
+   simply gets taller. This one is the opposite and has to be, because it is
+   made to be posted as a story — a shape with a fixed frame, where what varies
+   is how much paper is left around the cover rather than how long the card is.
+
+   It falls out of constants that already exist. The standard card is 688px and
+   the mat is 16 a side, so the leaf is 720; at a card height of 1248 the leaf
+   is 1280, and 720 × 1280 doubled is 1440 × 2560 — exactly 9:16, and exactly
+   what the Small card option already exports at. So no new column width, no
+   new type scale, and every size on it is a size these twelve styles are
+   already tuned for. The one genuinely new thing is that the height is FIXED.
+
+   There are twelve of these rather than one because the twelve are twelve
+   printed objects and a reader who has picked the ledger for their months
+   should not be handed a contact sheet the moment the card is about one book.
+   The shell, the head and the ornament around the cover are the style's own;
+   the block under it is shared, because a title, an author and a line about
+   why you picked it are the same three facts in every one of them. */
+
+const HEAD_OF: Record<CollageId, HeadId> = {
+  contact: 'c1', shelf: 'c2', tickets: 'c3', pinboard: 'c4',
+  ledger: 'c5', postmark: 'c6', marquee: 'c7', cabinet: 'c8',
+  playbill: 'c9', mixtape: 'c10', visa: 'c11', charset: 'c12',
+}
+
+/* The shell each style wears, lifted from its own renderer so the story card
+   and the collage card are the same object — same ground modifier, same lean,
+   same rosette size. The lean is kept even though the export flattens every
+   card to 0deg, because the sheet's live preview does not. */
+const STORY_SHELL: Record<CollageId, { cls: string; rot: string; patch: number }> = {
+  contact: { cls: 'c1', rot: '-.6', patch: 150 },
+  shelf: { cls: 'c2', rot: '.5', patch: 140 },
+  tickets: { cls: 'c3', rot: '-.8', patch: 150 },
+  pinboard: { cls: 'c4', rot: '.7', patch: 130 },
+  ledger: { cls: 'c5', rot: '-.5', patch: 140 },
+  postmark: { cls: 'c6', rot: '.6', patch: 140 },
+  marquee: { cls: 'c7', rot: '-.4', patch: 150 },
+  cabinet: { cls: 'card--mint c8', rot: '-.4', patch: 150 },
+  playbill: { cls: 'card--salmon c9', rot: '.5', patch: 170 },
+  mixtape: { cls: 'card--apricot c10', rot: '-.6', patch: 140 },
+  visa: { cls: 'card--quartz c11', rot: '.4', patch: 150 },
+  charset: { cls: 'card--teal c12', rot: '-.3', patch: 150 },
+}
+
+/* The cover at hero scale, in each style's own chrome. Every class here is one
+   the style already uses on its grid cells — the tack and the plate are the
+   pinboard's, the paper corners are the cabinet's, the punched edge is the
+   frank's — so nothing new is invented for the story card, it is the same
+   ornament given room. `.st-frame` is the only addition, and it exists solely
+   to hold the width the cover's own aspect ratio decides. */
+function storyHero(b: Review, id: HeadId): string {
+  const art = cov(b, 'st-cov')
+  if (id === 'c1')
+    return `<figure class="st-frame st-frame--c1">
+      <figcaption class="c1-no st-no">FR 01A · ${escapeHtml(initial(b.title))}${escapeHtml(initial(b.author))}</figcaption>
+      ${art}
+    </figure>`
+  if (id === 'c2')
+    return `<figure class="st-frame st-frame--c2">${art}<i class="c2-edge" aria-hidden="true"></i></figure>`
+  if (id === 'c3')
+    return `<figure class="st-frame st-frame--c3">${art}<i class="st-perf" aria-hidden="true"></i></figure>`
+  if (id === 'c4')
+    return `<figure class="st-frame st-frame--c4">
+      <svg class="c4-tack st-tack" width="20" height="20" viewBox="0 0 14 14" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.4" fill="var(--accent)"/>
+        <circle cx="5.4" cy="5.4" r="1.7" fill="rgba(255,255,255,.55)"/>
+      </svg>
+      <span class="st-photo">${art}</span>
+    </figure>`
+  if (id === 'c5') return `<figure class="st-frame st-frame--c5">${art}</figure>`
+  if (id === 'c6')
+    return `<figure class="st-frame st-frame--c6">${art}<span class="c6-perf" aria-hidden="true"></span></figure>`
+  if (id === 'c7')
+    return `<figure class="st-frame st-frame--c7">
+      <figcaption class="hg-no st-no">Feature 01</figcaption>
+      ${art}
+    </figure>`
+  if (id === 'c8')
+    return `<figure class="st-frame st-frame--c8">
+      ${art}
+      ${[0, 1, 2, 3].map((k) => `<span class="hb-corner hb-corner--${k}" aria-hidden="true"></span>`).join('')}
+    </figure>`
+  if (id === 'c9') return `<figure class="st-frame st-frame--c9">${art}</figure>`
+  if (id === 'c10') return `<figure class="st-frame st-frame--c10">${art}</figure>`
+  if (id === 'c11') return `<figure class="st-frame st-frame--c11">${art}</figure>`
+  return `<figure class="st-frame st-frame--c12">
+    <span class="cs-back st-back" aria-hidden="true">${escapeHtml(initial(b.title))}</span>
+    ${art}
+  </figure>`
+}
+
+export function renderStory(m: MonthData, style: CollageId): string {
+  const b = m.books[0]
+  if (!b) return ''
+  const id = HEAD_OF[style]
+  const sh = STORY_SHELL[style]
+  const r = m.reader
+  /* The one place in the app a card carries a name. Every other card signs
+     itself with the colophon alone, and that is right for a record of reading
+     — but this one is posted to a feed, where the interesting fact is not that
+     Flyleaf Press made the card, it is who is reading the book. The colophon
+     still closes it; the name simply gets there first. */
+  const sig = r && (r.name || r.face)
+    ? `<div class="st-who">
+        ${r.face ? `<img class="st-face" src="${r.face}" alt="">` : ''}
+        ${r.name ? `<span class="st-name">${escapeHtml(r.name)}</span>` : ''}
+      </div>`
+    : ''
+  const series = b.series ? escapeHtml(b.series) : ''
+  const pages = b.pages ? `${b.pages.toLocaleString()} pages` : ''
+  const facts = meta(series, pages)
+  const inner = `
+    ${patchC(sh.patch)}
+    ${moHead(m, id)}
+    <div class="st-hero">${storyHero(b, id)}</div>
+    <div class="st-book">
+      <div class="title st-title">${escapeHtml(b.title)}</div>
+      <div class="by st-by">${escapeHtml(b.author)}</div>
+      ${facts ? `<div class="st-facts"><span class="lbl">${facts}</span></div>` : ''}
+    </div>
+    <div class="st-foot">
+      ${sig}
+      <div class="colo st-colo">${mark(13)}<span>Flyleaf Press</span></div>
+    </div>`
+
+  /* The passport lays everything inside its own security page, so the story
+     card has to go in there too or the guilloche would sit over the cover. */
+  if (id === 'c11')
+    return `<article class="card ${sh.cls} card--story" style="--rot:${sh.rot}deg">
+      <div class="pp-guilloche" aria-hidden="true"></div>
+      <div class="vp-in st-in">${inner}</div>
+    </article>`
+
+  return `<article class="card ${sh.cls} card--story" style="--rot:${sh.rot}deg">${inner}</article>`
 }
 
 export const COLLAGE_RENDERERS: Record<CollageId, (m: MonthData) => string> = {

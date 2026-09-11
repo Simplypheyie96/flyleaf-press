@@ -506,8 +506,14 @@ body::before{
    text field and invites a sentence */
 .field input.inp-num{ width:132px; }
 .field textarea{ resize:vertical; min-height:220px; line-height:1.6; }
+/* The writing canvas takes the review's own hand, stamped on the element by
+   `handProps` — same fallbacks and same .97 / +.02 compact trim the card's
+   body uses, so what is typed here is what gets printed. Every hand's size
+   clears the 16px floor iOS charges for, so nothing here zooms the page. */
 .field textarea.hand{
-  font-family:var(--hand); font-size:16.5px; line-height:1.74; min-height:300px;
+  font-family:var(--hand-fam,var(--hand));
+  font-size:calc(var(--hand-size,17px) * .97); line-height:calc(var(--hand-lh,1.72) + .02);
+  min-height:300px;
 }
 /* the writing canvas opens as its own full page on request — a small
    control pinned inside the inline canvas takes you there */
@@ -531,7 +537,8 @@ body::before{
 .write-focus textarea.hand{
   flex:1; width:100%; min-height:0; resize:none; outline:none;
   border:1px solid var(--rule); border-radius:var(--r-md); background:var(--card-w);
-  color:var(--ink); font-family:var(--hand); font-size:16.5px; line-height:1.74;
+  color:var(--ink); font-family:var(--hand-fam,var(--hand));
+  font-size:calc(var(--hand-size,17px) * .97); line-height:calc(var(--hand-lh,1.72) + .02);
   padding:16px 18px;
   transition:border-color 160ms var(--ease);
 }
@@ -633,6 +640,28 @@ body::before{
   transition:color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
 }
 .fmt-pick button[aria-pressed="true"]{
+  background:var(--ink); border-color:var(--ink); color:var(--paper);
+}
+
+/* The hand picker. Chips like the format ones, except the label is a SAMPLE —
+   each name is drawn in the face it names, at that face's own size, because
+   five identical words in one font are five choices nobody can tell apart.
+   The chip height is FIXED at 40 rather than padded, because the label's own
+   line box scales with the sample: Caveat's 21.6px sample made its chip 40.8px
+   against Kalam's 40, so the row of five had one chip visibly out of line for
+   no reason the reader could see. Measured after: 40px on all five. The names
+   are `nowrap` — "Architects Daughter" broke to two lines in a narrow column
+   and that chip was 53px tall beside 40px neighbours. It wraps to the next ROW
+   instead, which is what the flex container is for. */
+.hand-pick{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.hand-pick button{
+  padding:0 16px; height:40px; cursor:pointer;
+  display:flex; align-items:center;
+  border:1px solid var(--rule); border-radius:999px; background:var(--card-w);
+  line-height:1.15; white-space:nowrap; color:var(--ink-soft);
+  transition:color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
+}
+.hand-pick button[aria-pressed="true"]{
   background:var(--ink); border-color:var(--ink); color:var(--paper);
 }
 
@@ -924,6 +953,9 @@ body::before{
    the name now that the "for a camera roll" prose is gone, since either shape
    sits in a camera roll and either one prints */
 .size-pick-px{ font-family:var(--sans); font-size:12.5px; color:var(--ink); }
+/* one shape, so there is nothing to press — the figure alone, set where the
+   picker would have been rather than as a note hanging under an empty slot */
+.size-one{ margin-top:8px; color:var(--ink); font-size:12.5px; }
 /* the filename is data, not prose — set it in mono so it reads as the literal
    string that will appear in the downloads folder */
 .dl-name code{ font-family:var(--mono); font-size:11.5px; color:var(--ink); word-break:break-all; }

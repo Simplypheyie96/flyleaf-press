@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { db, getSettings, nextReviewNo } from '../db'
-import type { Review, StyleId, FormatName, Plate } from '../types'
-import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, FORMAT_NAMES } from '../types'
+import type { Review, StyleId, HandId, FormatName, Plate } from '../types'
+import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, HAND_IDS, HAND_NAMES, FORMAT_NAMES } from '../types'
+import { HANDS, handProps } from '../fonts'
 import { StarInput } from '../components/StarInput'
 import { DateField } from '../components/DateField'
 import { StylePicker } from '../components/StylePicker'
@@ -59,6 +60,9 @@ export function Write() {
   const [rating, setRating] = useState(0)
   const [body, setBody] = useState('')
   const [style, setStyle] = useState<StyleId>('archive')
+  /* Kalam is the default and stays the recorded one — this is the seed, not a
+     migration, and a review saved in it carries no `hand` at all. */
+  const [hand, setHand] = useState<HandId>('kalam')
   const [plates, setPlates] = useState<Plate[]>([])
 
   /* cover: candidate index, an uploaded dataURL, or explicitly none.
@@ -165,7 +169,7 @@ export function Write() {
       setPages(r.pages ? String(r.pages) : '')
       setStarted(r.started ?? ''); setFinished(r.finished)
       setFormats(r.formats); setRating(r.rating)
-      setBody(r.body); setStyle(r.style); setPlates(r.plates)
+      setBody(r.body); setStyle(r.style); setHand(r.hand ?? 'kalam'); setPlates(r.plates)
       if (r.cover) { setUploadedCover(r.cover); setCoverIdx('upload') }
       const kept = r.covers ?? []
       setCovers(kept)
@@ -220,6 +224,9 @@ export function Write() {
         body: body.trim(),
         plates: plates.map((p) => ({ ...p, caption: p.caption.trim() })),
         style,
+        /* absent means Kalam, which is what every row written before the hand
+           was a choice already says — so the default writes nothing */
+        hand: hand === 'kalam' ? undefined : hand,
         createdAt: existing?.createdAt ?? Date.now(),
         /* stamped on every save, edits included — this is how a sync knows
            whose copy of a review is the current one */
@@ -353,7 +360,7 @@ export function Write() {
           <div className="field">
           <label className="ui-lbl" htmlFor="w-body">Your note — optional</label>
           <div className="canvas-wrap">
-            <textarea id="w-body" className="hand"
+            <textarea id="w-body" className="hand" style={handProps(hand)}
               value={body} onChange={(e) => setBody(e.target.value)}
               placeholder="Blank lines make paragraphs." />
             <button type="button" className="canvas-expand" onClick={() => setFocusWrite(true)}>
@@ -369,12 +376,31 @@ export function Write() {
                   Done
                 </button>
               </header>
-              <textarea className="hand" autoFocus
+              <textarea className="hand" autoFocus style={handProps(hand)}
                 value={body} onChange={(e) => setBody(e.target.value)}
                 placeholder="Blank lines make paragraphs."
                 aria-label="The review" />
             </div>
           )}
+          </div>
+
+          {/* The hand is part of the writing, not part of the card's clothes,
+              so it sits here rather than in "The card" — and the canvas above
+              is already set in it, so the review is written in the face it
+              gets printed in. Each name is drawn in its own face at its own
+              size: the sample IS the label, and a list of five identical words
+              in one font would be five choices nobody could tell apart. */}
+          <div className="field">
+            <span className="ui-lbl">The hand</span>
+            <div className="hand-pick">
+              {HAND_IDS.map((h) => (
+                <button key={h} type="button" aria-pressed={hand === h}
+                  onClick={() => setHand(h)}
+                  style={{ fontFamily: `"${HANDS[h].family}", cursive`, fontSize: HANDS[h].size * 0.88 }}>
+                  {HAND_NAMES[h]}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
