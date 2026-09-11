@@ -26,9 +26,6 @@ import serif400i from '@fontsource/playfair-display/files/playfair-display-latin
 import serif500 from '@fontsource/playfair-display/files/playfair-display-latin-500-normal.woff2?url'
 import serif600 from '@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff2?url'
 import shantell400 from '@fontsource/shantell-sans/files/shantell-sans-latin-400-normal.woff2?url'
-import gloria400 from '@fontsource/gloria-hallelujah/files/gloria-hallelujah-latin-400-normal.woff2?url'
-import gochi400 from '@fontsource/gochi-hand/files/gochi-hand-latin-400-normal.woff2?url'
-import bell400 from '@fontsource/schoolbell/files/schoolbell-latin-400-normal.woff2?url'
 import notes400 from './fonts/handwritten-notes-400-normal.woff2?url'
 import sans400 from '@fontsource/archivo/files/archivo-latin-400-normal.woff2?url'
 import sans500 from '@fontsource/archivo/files/archivo-latin-500-normal.woff2?url'
@@ -70,27 +67,28 @@ const CHROME_FACES: Face[] = [
    actually use, and what the eye reads as "size" is the x-height, not the
    font-size. Measured in the browser at 100px (the `1ex` trick — fontkit's
    sxHeight and a canvas probe both lied here, the canvas one by silently
-   falling back on every face): Kalam .511, Gloria Hallelujah .525, Shantell
-   Sans .503, Gochi Hand .490, Handwritten Notes .490, Schoolbell .474. Set
-   them all at 17px and they read as six different sizes.
+   falling back on every face): Kalam .511, Shantell Sans .503, Handwritten
+   Notes .490. Set them all at 17px and they read as three different sizes.
 
    So each hand carries its OWN size and line-height, derived rather than
    guessed. The size matches Kalam's x-height at 17px (8.69px), rounded to the
    nearest half pixel. The line-height is Kalam's absolute leading (29.24px)
-   over that size, with the face's own default line box as a FLOOR — Gloria
-   Hallelujah writes on a bouncing baseline and asks for 1.98 of its own
-   accord, and an even-leading figure alone would have set it tighter than the
-   face itself wants, which is where lines start touching.
+   over that size, with the face's own default line box as a FLOOR, since a
+   face that writes on a bouncing baseline asks for more leading than even
+   spacing gives it and that is where lines start touching. Neither survivor
+   needs the floor; the rule stays because the next face added might.
 
-   Gloria is the one size that is not the x-height figure: 16.5 is what the
-   rule gives, and the editor's textarea trims by .97, which lands on 16.005 —
-   a rounding error away from the 16px floor under which iOS zooms the whole
-   page in and never zooms back out. 17px buys the margin and costs 3%.
+   Every size here clears 16px after the editor textarea's .97 compact trim,
+   under which iOS zooms the whole page in and never zooms back out.
+
+   It was six hands. Gloria Hallelujah, Gochi Hand and Schoolbell were cut on
+   sight, and their @fontsource packages came out of package.json with them —
+   a dependency nothing imports is still 40KB somebody has to install.
 
    Kalam is the default, and its faces stay in CARD_FACES rather than moving
    here: the 700 cut is the pinboard collage's rating numeral, which has
    nothing to do with a review body and must ship whatever hand is chosen. The
-   other five are installed for the screen but reach a PNG only when the review
+   other two are installed for the screen but reach a PNG only when the review
    being exported is actually written in one — see fontEmbedCss. */
 type Hand = { family: string; size: number; lh: number; faces: Face[] }
 
@@ -104,28 +102,22 @@ export const HANDS: Record<HandId, Hand> = {
     family: 'Shantell Sans', size: 17.5, lh: 1.67,
     faces: [{ family: 'Shantell Sans', weight: 400, style: 'normal', url: shantell400 }],
   },
-  gloria: {
-    family: 'Gloria Hallelujah', size: 17, lh: 1.98,
-    faces: [{ family: 'Gloria Hallelujah', weight: 400, style: 'normal', url: gloria400 }],
-  },
-  gochi: {
-    family: 'Gochi Hand', size: 17.5, lh: 1.67,
-    faces: [{ family: 'Gochi Hand', weight: 400, style: 'normal', url: gochi400 }],
-  },
-  bell: {
-    family: 'Schoolbell', size: 18.5, lh: 1.58,
-    faces: [{ family: 'Schoolbell', weight: 400, style: 'normal', url: bell400 }],
-  },
 }
 
 /* Every hand falls through to KALAM, never to the generic `cursive`.
 
-   Handwritten Notes has no em dash, no en dash and no ellipsis — three
-   characters review prose uses constantly — and a missing glyph is drawn by
-   the next family in the stack. Left at `cursive` that is whatever the device
-   calls cursive (Apple Chancery on a Mac), i.e. a copperplate script dropped
-   into the middle of a sentence. Kalam is already embedded in every export, so
-   the substitute costs no bytes and looks like a hand. */
+   A missing glyph is drawn by the next family in the stack, and left at
+   `cursive` that is whatever the device calls cursive — Apple Chancery on a
+   Mac, i.e. a copperplate script dropped into the middle of a sentence. Kalam
+   is already embedded in every export, so the substitute costs no bytes and at
+   least looks like a hand.
+
+   The em dash, en dash and ellipsis USED to be what this caught, and they are
+   no longer missing: they were drawn into the face itself (see
+   scripts/patch-handwritten-notes.py). What remains for it is the rest of
+   Handwritten Notes' 179-glyph inventory — no ·, •, ½, ™, ©, ®, °, − or soft
+   hyphen — which is rarer in review prose and not worth forging by hand. So
+   the rule stays, with less to do. */
 const FALLBACK = "'Kalam',cursive"
 
 const HAND_FACES: Face[] = Object.values(HANDS).flatMap((h) => h.faces)
@@ -174,8 +166,8 @@ export function installFonts(): void {
    It is keyed by the HANDS the pages being exported actually use, not built
    once for everything: the shared card faces are always in, and a review's own
    hand joins them only if it is not Kalam. Shantell Sans is 41KB, which is
-   55KB of base64 inside every PNG — six hands embedded unconditionally would
-   put five fonts nobody can see into every image the app hands out. Cached per key
+   55KB of base64 inside every PNG — both hands embedded unconditionally would
+   put a font nobody can see into every image the app hands out. Cached per key
    rather than globally, because a share of a three-page review would otherwise
    pay for the fetches three times over. */
 const embedded = new Map<string, Promise<string>>()
