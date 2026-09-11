@@ -54,25 +54,30 @@ export const COLLAGE_NAMES: Record<CollageId, string> = {
 
    Kalam carried every review, and one handwriting on every card is one voice
    for everybody's reading — so the hand is now the reader's pick, per review,
-   the same way the card's clothes already are. Five faces, all SIL OFL and all
-   self-hosted beside the rest (see `src/fonts.ts`, which holds their files and
-   the size each one needs to read at Kalam's size).
+   the same way the card's clothes already are. Six faces, self-hosted beside
+   the rest (see `src/fonts.ts`, which holds their files and the size each one
+   needs to read at Kalam's size).
 
    `Review.hand` is OPTIONAL and absent means Kalam: every review written before
    this existed stays exactly as it was printed, and the recorded default is
    still Kalam rather than something a migration invented.
 
-   The user's own `HandwrittenNotes.ttf` was measured and rejected — its name
-   table licenses it for personal use only, which a publicly deployed app is
-   not, and it carries no em dash, en dash or ellipsis, which review prose does. */
-export type HandId = 'kalam' | 'caveat' | 'patrick' | 'architect' | 'indie'
-export const HAND_IDS: HandId[] = ['kalam', 'caveat', 'patrick', 'architect', 'indie']
+   `notes` is the user's OWN face — HandwrittenNotes.ttf out of their Library,
+   asked for by name, converted to woff2 and committed to the repo. It is the
+   one face here that is not SIL OFL: its name table licenses it for personal
+   use, and it ships on the owner's own app at the owner's instruction. It is
+   also the one face with holes in it — no em dash, en dash or ellipsis — which
+   is why every hand's family stack falls through to Kalam rather than to the
+   generic `cursive` (see `handVars`). */
+export type HandId = 'kalam' | 'notes' | 'shantell' | 'gloria' | 'gochi' | 'bell'
+export const HAND_IDS: HandId[] = ['kalam', 'notes', 'shantell', 'gloria', 'gochi', 'bell']
 export const HAND_NAMES: Record<HandId, string> = {
   kalam: 'Kalam',
-  caveat: 'Caveat',
-  patrick: 'Patrick Hand',
-  architect: 'Architects Daughter',
-  indie: 'Indie Flower',
+  notes: 'Handwritten Notes',
+  shantell: 'Shantell Sans',
+  gloria: 'Gloria Hallelujah',
+  gochi: 'Gochi Hand',
+  bell: 'Schoolbell',
 }
 
 /* the ground each style sits on — used for the little pastel swatch dots */

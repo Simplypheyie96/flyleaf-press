@@ -647,12 +647,12 @@ body::before{
    each name is drawn in the face it names, at that face's own size, because
    five identical words in one font are five choices nobody can tell apart.
    The chip height is FIXED at 40 rather than padded, because the label's own
-   line box scales with the sample: Caveat's 21.6px sample made its chip 40.8px
-   against Kalam's 40, so the row of five had one chip visibly out of line for
-   no reason the reader could see. Measured after: 40px on all five. The names
-   are `nowrap` — "Architects Daughter" broke to two lines in a narrow column
-   and that chip was 53px tall beside 40px neighbours. It wraps to the next ROW
-   instead, which is what the flex container is for. */
+   line box scales with the sample: Gloria Hallelujah asks for a 1.98 line box
+   of its own accord, so its chip stood taller than Kalam's for no reason the
+   reader could see. Measured after: 40px on all six. The names are `nowrap` —
+   "Gloria Hallelujah" broke to two lines in a narrow column and that chip was
+   53px tall beside 40px neighbours. It wraps to the next ROW instead, which is
+   what the flex container is for. */
 .hand-pick{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .hand-pick button{
   padding:0 16px; height:40px; cursor:pointer;

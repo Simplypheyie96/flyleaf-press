@@ -25,10 +25,11 @@ import serif400 from '@fontsource/playfair-display/files/playfair-display-latin-
 import serif400i from '@fontsource/playfair-display/files/playfair-display-latin-400-italic.woff2?url'
 import serif500 from '@fontsource/playfair-display/files/playfair-display-latin-500-normal.woff2?url'
 import serif600 from '@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff2?url'
-import caveat400 from '@fontsource/caveat/files/caveat-latin-400-normal.woff2?url'
-import patrick400 from '@fontsource/patrick-hand/files/patrick-hand-latin-400-normal.woff2?url'
-import architect400 from '@fontsource/architects-daughter/files/architects-daughter-latin-400-normal.woff2?url'
-import indie400 from '@fontsource/indie-flower/files/indie-flower-latin-400-normal.woff2?url'
+import shantell400 from '@fontsource/shantell-sans/files/shantell-sans-latin-400-normal.woff2?url'
+import gloria400 from '@fontsource/gloria-hallelujah/files/gloria-hallelujah-latin-400-normal.woff2?url'
+import gochi400 from '@fontsource/gochi-hand/files/gochi-hand-latin-400-normal.woff2?url'
+import bell400 from '@fontsource/schoolbell/files/schoolbell-latin-400-normal.woff2?url'
+import notes400 from './fonts/handwritten-notes-400-normal.woff2?url'
 import sans400 from '@fontsource/archivo/files/archivo-latin-400-normal.woff2?url'
 import sans500 from '@fontsource/archivo/files/archivo-latin-500-normal.woff2?url'
 import sans600 from '@fontsource/archivo/files/archivo-latin-600-normal.woff2?url'
@@ -69,46 +70,63 @@ const CHROME_FACES: Face[] = [
    actually use, and what the eye reads as "size" is the x-height, not the
    font-size. Measured in the browser at 100px (the `1ex` trick — fontkit's
    sxHeight and a canvas probe both lied here, the canvas one by silently
-   falling back on every face): Kalam .511, Architects Daughter .469, Patrick
-   Hand .468, Indie Flower .389, Caveat .357. Set all five at 17px and Caveat
-   looks like a mistake — a third smaller than the face beside it.
+   falling back on every face): Kalam .511, Gloria Hallelujah .525, Shantell
+   Sans .503, Gochi Hand .490, Handwritten Notes .490, Schoolbell .474. Set
+   them all at 17px and they read as six different sizes.
 
    So each hand carries its OWN size and line-height, derived rather than
-   guessed. The size matches Kalam's x-height at 17px (8.69px). The
-   line-height is Kalam's absolute leading (29.24px) over that size, with the
-   face's own default line box as a FLOOR — Caveat and Indie Flower have long
-   ascenders and deep descenders, and an even-leading figure alone would set
-   them tighter than the face itself asks for, which is where lines start
-   touching. Measured on a real 415-character paragraph in a 600px column:
-   Kalam 6 lines / 175px, Patrick Hand 5 / 146, Architects Daughter 7 / 205,
-   Caveat 7 / 215, Indie Flower 7 / 228. Nothing runs the card away.
+   guessed. The size matches Kalam's x-height at 17px (8.69px), rounded to the
+   nearest half pixel. The line-height is Kalam's absolute leading (29.24px)
+   over that size, with the face's own default line box as a FLOOR — Gloria
+   Hallelujah writes on a bouncing baseline and asks for 1.98 of its own
+   accord, and an even-leading figure alone would have set it tighter than the
+   face itself wants, which is where lines start touching.
+
+   Gloria is the one size that is not the x-height figure: 16.5 is what the
+   rule gives, and the editor's textarea trims by .97, which lands on 16.005 —
+   a rounding error away from the 16px floor under which iOS zooms the whole
+   page in and never zooms back out. 17px buys the margin and costs 3%.
 
    Kalam is the default, and its faces stay in CARD_FACES rather than moving
    here: the 700 cut is the pinboard collage's rating numeral, which has
    nothing to do with a review body and must ship whatever hand is chosen. The
-   other four are installed for the screen but reach a PNG only when the review
+   other five are installed for the screen but reach a PNG only when the review
    being exported is actually written in one — see fontEmbedCss. */
 type Hand = { family: string; size: number; lh: number; faces: Face[] }
 
 export const HANDS: Record<HandId, Hand> = {
   kalam: { family: 'Kalam', size: 17, lh: 1.72, faces: [] },
-  caveat: {
-    family: 'Caveat', size: 24.5, lh: 1.26,
-    faces: [{ family: 'Caveat', weight: 400, style: 'normal', url: caveat400 }],
+  notes: {
+    family: 'Handwritten Notes', size: 18.5, lh: 1.58,
+    faces: [{ family: 'Handwritten Notes', weight: 400, style: 'normal', url: notes400 }],
   },
-  patrick: {
-    family: 'Patrick Hand', size: 18.5, lh: 1.58,
-    faces: [{ family: 'Patrick Hand', weight: 400, style: 'normal', url: patrick400 }],
+  shantell: {
+    family: 'Shantell Sans', size: 17.5, lh: 1.67,
+    faces: [{ family: 'Shantell Sans', weight: 400, style: 'normal', url: shantell400 }],
   },
-  architect: {
-    family: 'Architects Daughter', size: 18.5, lh: 1.58,
-    faces: [{ family: 'Architects Daughter', weight: 400, style: 'normal', url: architect400 }],
+  gloria: {
+    family: 'Gloria Hallelujah', size: 17, lh: 1.98,
+    faces: [{ family: 'Gloria Hallelujah', weight: 400, style: 'normal', url: gloria400 }],
   },
-  indie: {
-    family: 'Indie Flower', size: 22.5, lh: 1.46,
-    faces: [{ family: 'Indie Flower', weight: 400, style: 'normal', url: indie400 }],
+  gochi: {
+    family: 'Gochi Hand', size: 17.5, lh: 1.67,
+    faces: [{ family: 'Gochi Hand', weight: 400, style: 'normal', url: gochi400 }],
+  },
+  bell: {
+    family: 'Schoolbell', size: 18.5, lh: 1.58,
+    faces: [{ family: 'Schoolbell', weight: 400, style: 'normal', url: bell400 }],
   },
 }
+
+/* Every hand falls through to KALAM, never to the generic `cursive`.
+
+   Handwritten Notes has no em dash, no en dash and no ellipsis — three
+   characters review prose uses constantly — and a missing glyph is drawn by
+   the next family in the stack. Left at `cursive` that is whatever the device
+   calls cursive (Apple Chancery on a Mac), i.e. a copperplate script dropped
+   into the middle of a sentence. Kalam is already embedded in every export, so
+   the substitute costs no bytes and looks like a hand. */
+const FALLBACK = "'Kalam',cursive"
 
 const HAND_FACES: Face[] = Object.values(HANDS).flatMap((h) => h.faces)
 
@@ -122,7 +140,7 @@ const HAND_FACES: Face[] = Object.values(HANDS).flatMap((h) => h.faces)
     to `--hand-fam:` and dropped the card's body back to the chrome face. */
 export function handVars(hand?: HandId): string {
   const h = HANDS[hand ?? 'kalam'] ?? HANDS.kalam
-  return `--hand-fam:'${h.family}',cursive;--hand-size:${h.size}px;--hand-lh:${h.lh}`
+  return `--hand-fam:'${h.family}',${FALLBACK};--hand-size:${h.size}px;--hand-lh:${h.lh}`
 }
 
 /** The same three, for a React `style` — the editor's own writing canvas takes
@@ -130,7 +148,7 @@ export function handVars(hand?: HandId): string {
 export function handProps(hand?: HandId): Record<string, string> {
   const h = HANDS[hand ?? 'kalam'] ?? HANDS.kalam
   return {
-    '--hand-fam': `"${h.family}",cursive`,
+    '--hand-fam': `"${h.family}",${FALLBACK}`,
     '--hand-size': `${h.size}px`,
     '--hand-lh': String(h.lh),
   }
@@ -155,9 +173,9 @@ export function installFonts(): void {
 
    It is keyed by the HANDS the pages being exported actually use, not built
    once for everything: the shared card faces are always in, and a review's own
-   hand joins them only if it is not Kalam. Caveat is 48KB, which is 64KB of
-   base64 inside every PNG — five hands embedded unconditionally would put four
-   fonts nobody can see into every image the app ever hands out. Cached per key
+   hand joins them only if it is not Kalam. Shantell Sans is 41KB, which is
+   55KB of base64 inside every PNG — six hands embedded unconditionally would
+   put five fonts nobody can see into every image the app hands out. Cached per key
    rather than globally, because a share of a three-page review would otherwise
    pay for the fetches three times over. */
 const embedded = new Map<string, Promise<string>>()

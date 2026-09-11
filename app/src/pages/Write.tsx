@@ -388,15 +388,15 @@ export function Write() {
               so it sits here rather than in "The card" — and the canvas above
               is already set in it, so the review is written in the face it
               gets printed in. Each name is drawn in its own face at its own
-              size: the sample IS the label, and a list of five identical words
-              in one font would be five choices nobody could tell apart. */}
+              size: the sample IS the label, and a list of six identical words
+              in one font would be six choices nobody could tell apart. */}
           <div className="field">
             <span className="ui-lbl">The hand</span>
             <div className="hand-pick">
               {HAND_IDS.map((h) => (
                 <button key={h} type="button" aria-pressed={hand === h}
                   onClick={() => setHand(h)}
-                  style={{ fontFamily: `"${HANDS[h].family}", cursive`, fontSize: HANDS[h].size * 0.88 }}>
+                  style={{ fontFamily: `"${HANDS[h].family}", 'Kalam', cursive`, fontSize: HANDS[h].size * 0.88 }}>
                   {HAND_NAMES[h]}
                 </button>
               ))}
