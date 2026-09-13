@@ -15,6 +15,22 @@ function nextMonthKey(): string {
 
 interface Span { key: string; label: string; count: number; avg: number }
 
+/* What each tab actually holds, in one line under the control.
+
+   Three words — Months, Years, Hopefuls — name three different objects and
+   describe none of them, and the first two are the ambiguous ones: "Months"
+   could as easily be a filter on the shelf as a card per month, and a reader
+   who has never opened one has no way to find out except by pressing it.
+   Hopefuls says what it is because the word is unusual enough to be a name;
+   the other two are ordinary words doing a specific job. So the line says what
+   the tab makes, not what the tab contains — the page is a set of cards you
+   hand out, and the count in the header already reports how many there are. */
+const TAB_NOTE = {
+  months: 'One card for each month, holding every book you finished in it.',
+  years: 'A whole year on one card — the books, and the month you read most.',
+  hopefuls: 'Books you mean to read, listed by the month you mean to read them.',
+}
+
 /* Group finished reviews by a key derived from their finish date, newest
    first. One function for months and years, because the only difference
    between the two lists is how much of the ISO date the key keeps. */
@@ -66,8 +82,9 @@ function HopeRow({ k, count, tag }: { k: string; count: number; tag?: string }) 
    list grows without a ceiling — two years of reading is ~24 rows, five is 60,
    all in one scroll with the year list riding on top of it. A tab shows one
    kind of span at a time, and inside the Months tab the rows sit under year
-   headings once there is more than one year, so a long history reads as
-   chapters instead of a single column. The Years tab appears only once a year
+   headings once there is more than one year — FOLDED, all but the newest, so a
+   long history reads as chapters instead of a single column and a new year
+   clears the page behind it. The Years tab appears only once a year
    qualifies — before that it would be an empty tab — but the control itself is
    always up, because HOPEFULS is always offered: every month has a list of
    books somebody means to read, including the one that has not started yet.
@@ -81,6 +98,14 @@ export function Months() {
   const reviews = useLiveQuery(() => db.reviews.orderBy('finished').reverse().toArray(), [])
   const hopefuls = useLiveQuery(() => db.hopefuls.toArray(), [])
   const [tab, setTab] = useState<'months' | 'years' | 'hopefuls'>('months')
+  /* Which year sections have been opened or shut BY HAND. Only the exceptions
+     are held, never the whole state — the default is a rule (the newest year
+     is open, every earlier one is a single line), and a Set seeded once from
+     the data would be a copy of that rule that stops following it the moment
+     the newest year changes underneath it. Which is exactly the case this is
+     for: the first book finished in January makes a new year the newest one,
+     and nothing here has to be told. */
+  const [flipped, setFlipped] = useState<Record<string, boolean>>({})
   if (!reviews || !hopefuls) return null
 
   const months = group(reviews, monthKey, monthName)
@@ -105,6 +130,16 @@ export function Months() {
      that already says the year, the row says only the month. */
   const monthYears = [...new Set(months.map((m) => m.key.slice(0, 4)))]
   const grouped = monthYears.length > 1
+  /* …and every year but the newest is FOLDED SHUT. A month list has no ceiling
+     — two years of reading is ~24 rows, five is 60 — and the rows a reader
+     wants are almost always this year's, so the tab opens on this year alone
+     and the rest of the reading is one line each. The moment a book is
+     finished in January, that new year is `monthYears[0]` and the old one
+     closes behind it on its own, which is the "start afresh" this is for.
+     Nothing is hidden: a shut year says how many months and how many books it
+     holds, and opens on one press. */
+  const openYear = (y: string) => flipped[y] ?? y === monthYears[0]
+  const flip = (y: string) => setFlipped((f) => ({ ...f, [y]: !openYear(y) }))
 
   return (
     <div className="page">
@@ -128,13 +163,15 @@ export function Months() {
           </div>
         )}
 
-        <div className="seg mo-seg" role="group" aria-label="Collage span">
+        <div className="seg mo-seg mo-seg--noted" role="group" aria-label="Collage span">
           <button aria-pressed={tab === 'months'} onClick={() => setTab('months')}>Months</button>
           {tabbed && (
             <button aria-pressed={tab === 'years'} onClick={() => setTab('years')}>Years</button>
           )}
           <button aria-pressed={tab === 'hopefuls'} onClick={() => setTab('hopefuls')}>Hopefuls</button>
         </div>
+
+        <p className="mo-note">{TAB_NOTE[tab]}</p>
 
         {tab === 'hopefuls' && (
           <div className="field">
@@ -161,16 +198,31 @@ export function Months() {
 
         {tab === 'months' && months.length > 0 && (
           grouped ? (
-            monthYears.map((y) => (
-              <div className="field" key={y}>
-                <span className="ui-lbl">{y}</span>
-                <div className="mo-list">
-                  {months.filter((m) => m.key.startsWith(y)).map((m) => (
-                    <SpanRow key={m.key} s={{ ...m, label: m.label.replace(` ${y}`, '') }} open={m.key === currentMonthKey()} />
-                  ))}
+            monthYears.map((y) => {
+              const mine = months.filter((m) => m.key.startsWith(y))
+              const books = mine.reduce((n, m) => n + m.count, 0)
+              const open = openYear(y)
+              return (
+                <div className="field" key={y}>
+                  <button type="button" className="disclose" aria-expanded={open} onClick={() => flip(y)}>
+                    <span className="ui-lbl">{y}</span>
+                    <span className="disclose-right">
+                      <span className="disclose-val">
+                        {mine.length} month{mine.length === 1 ? '' : 's'} · {books} book{books === 1 ? '' : 's'}
+                      </span>
+                      <span className="disclose-chev" aria-hidden="true">{open ? '▲' : '▼'}</span>
+                    </span>
+                  </button>
+                  {open && (
+                    <div className="mo-list mo-list-fold">
+                      {mine.map((m) => (
+                        <SpanRow key={m.key} s={{ ...m, label: m.label.replace(` ${y}`, '') }} open={m.key === currentMonthKey()} />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))
+              )
+            })
           ) : (
             <div className="field">
               <div className="mo-list">

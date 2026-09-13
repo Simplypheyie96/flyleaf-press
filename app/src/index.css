@@ -1157,6 +1157,13 @@ body::before{
 /* months grid */
 .mo-list{ display:flex; flex-direction:column; gap:12px; }
 .mo-seg{ margin-bottom:18px; }
+/* a control that has a caption under it keeps the caption close — 18px of air
+   between a tab and the line describing it reads as two unrelated things */
+.mo-seg--noted{ margin-bottom:10px; }
+.mo-note{ font-size:12.5px; line-height:1.6; color:var(--ink-soft); margin-bottom:22px; }
+/* the year fold's own list: .disclose leaves 4px, which is right under a
+   picker grid and too tight above cards a row tall */
+.mo-list-fold{ margin-top:10px; }
 .mo-row{
   display:flex; align-items:center; justify-content:space-between; gap:14px;
   background:var(--card-w); border-radius:var(--r-md); border:1px solid var(--rule);

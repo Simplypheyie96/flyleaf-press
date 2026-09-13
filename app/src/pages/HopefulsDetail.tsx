@@ -148,6 +148,29 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stamp])
 
+  /* A REVIEWED HOPEFUL SINKS. The list is read from the top, and the top is
+     where the books still to be read belong: a row whose only remaining
+     control says "Reviewed" is a receipt, and a month's worth of receipts
+     above the one book you have not started is the list failing at its one
+     job. They are not removed — the book was picked for this month and it
+     belongs on the month's card — they simply go last.
+
+     The sort is by that flag alone, so it is Array#sort's stability that keeps
+     the order the query asked for (createdAt, oldest first) inside each half.
+     Stability is guaranteed by the spec, not luck.
+
+     `reviewed` resolves a tick after `rows`, so the first paint is unsorted
+     and the reviewed rows drop on the next one. That is preferred to holding
+     the whole list back on every database change for a reorder that touches
+     only the rows already marked. */
+  const done = (h: Hopeful) => h.id != null && reviewed?.get(h.id) != null
+  const ordered = [...(rows ?? [])].sort((a, b) => Number(done(a)) - Number(done(b)))
+  const unread = ordered.filter((h) => !done(h)).length
+  /* a string rather than the Map, because the Map is a new object on every
+     live-query pass and the card would be rebuilt for an order that had not
+     changed */
+  const doneKey = ordered.map((h) => `${h.id}${done(h) ? '!' : ''}`).join(',')
+
   const run = async (term: string) => {
     const mine = ++seq.current
     setBusy(true)
@@ -219,14 +242,16 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
       },
     })
 
-  const books = (rows ?? []).map(asReview)
+  /* the card takes the list's order, so what you hand out is arranged the way
+     the page you built it on is */
+  const books = ordered.map(asReview)
   const data: MonthData = { name: monthName(key), books, span: 'hopefuls' }
 
   const build = useCallback(
     (host: HTMLDivElement, shape: ExportShape) =>
       buildCollagePage({ name: monthName(key), books, span: 'hopefuls' }, style, host, shape),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [key, style, rows]
+    [key, style, rows, doneKey]
   )
 
   /* The story is one book, and it is the only card in the app that carries the
@@ -320,9 +345,10 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
               <div className="field">
                 <span className="ui-lbl">
                   {rows.length} hopeful{rows.length === 1 ? '' : 's'}
+                  {unread < rows.length && ` · ${unread} still to read`}
                 </span>
                 <div className="mo-list">
-                  {rows.map((h) => (
+                  {ordered.map((h) => (
                     <div className="hope-row" key={h.id}>
                       {h.cover
                         ? <img src={h.cover} alt="" />
