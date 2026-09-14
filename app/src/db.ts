@@ -38,7 +38,7 @@ const SETTINGS_DEFAULTS: Settings = {
   face: '',
   onboarded: false,
   defaultStyle: 'archive',
-  defaultCollage: 'ledger',
+  defaultCollage: 'archive',
   pdfEnabled: false,
   theme: 'system',
   shelfView: 'list',

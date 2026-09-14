@@ -30,15 +30,19 @@ export function Write() {
      hopeful arrives carrying a cover it already holds as BYTES — somebody
      chose that picture on the hopefuls page, and going back to a URL to
      arrive at the same one is a way to lose it — so it rides the same slot an
-     upload does. `hopeful` is the row's id: that list is books you mean to
-     read, so writing one up moves it onto the shelf rather than leaving the
-     hopefuls card advertising a book you have finished. Nothing is lost in
-     the move — every fact the row held is on this form. */
+     upload does.
+
+     It does NOT carry the hopeful's id any more, because nothing here is
+     entitled to remove that row. A book picked for a month belongs on that
+     month's card whether or not it has been read — the hopefuls list marks a
+     reviewed row and sinks it, it never deletes it — and writing one up used
+     to delete it from under the reader, who then had to add it back by hand.
+     Reviewing from the shelf never did that, so the same act had two
+     different outcomes depending on which button you started from. */
   const sent = location.state as
-    { candidate?: Candidate; cover?: string; hopeful?: number } | null
+    { candidate?: Candidate; cover?: string } | null
   const candidate = sent?.candidate
   const held = sent?.cover
-  const fromHopeful = sent?.hopeful
 
   const editing = id != null
   const [loaded, setLoaded] = useState(!editing)
@@ -233,9 +237,6 @@ export function Write() {
         editedAt: Date.now(),
       }
       const savedId = editing ? (await db.reviews.put({ ...rec, id: Number(id) }), Number(id)) : await db.reviews.add(rec as Review)
-      /* the hopeful has become the review — after the write, so an abandoned
-         form leaves the list exactly as it was */
-      if (fromHopeful != null && !editing) await db.hopefuls.delete(fromHopeful)
       nav(`/review/${savedId}`, { replace: true })
     } finally {
       setSaving(false)

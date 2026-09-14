@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import type { CollageId, ExportShape, Hopeful, Review, Settings } from '../types'
-import { COLLAGE_IDS, COLLAGE_NAMES, COLLAGE_GROUNDS } from '../types'
+import type { ExportShape, Hopeful, Review, Settings, StyleId } from '../types'
+import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, liveStyle } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
 import { CoverModal } from '../components/CoverModal'
 import { ExportSheet } from '../components/ExportSheet'
@@ -82,7 +82,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
   /* three catalogues answering at their own pace can land out of order */
   const seq = useRef(0)
 
-  const [style, setStyle] = useState<CollageId>(settings.defaultCollage)
+  const [style, setStyle] = useState<StyleId>(liveStyle(settings.defaultCollage))
   /* The page does two jobs — building the list, and handing the card out — and
      they are not done at the same time. Stacked, the second is pushed off the
      bottom by the first: a twenty-book month puts the style picker and the
@@ -100,7 +100,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
      suits twelve covers in a grid is not necessarily the one that suits a
      single cover at 500px. It still OPENS on the same default. */
   const [storyFor, setStoryFor] = useState<number | null>(null)
-  const [storyStyle, setStoryStyle] = useState<CollageId>(settings.defaultCollage)
+  const [storyStyle, setStoryStyle] = useState<StyleId>(liveStyle(settings.defaultCollage))
 
   const rows = useLiveQuery(
     () => db.hopefuls.where('month').equals(key).sortBy('createdAt'),
@@ -223,8 +223,10 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
      the series, the ISBN, the length and the jacket are all sitting on the
      row. Writing it up should therefore cost nothing that has already been
      paid for — the editor opens on the second step, filled in, with the
-     cover you chose here already chosen there. The row's id travels too, so
-     a saved review takes the book off this list. */
+     cover you chose here already chosen there. The row's id deliberately does
+     NOT travel: saving a review never removes a hopeful. The row is matched
+     by content and sunk to the bottom instead, which is also what happens
+     when the same book is reviewed from the shelf. */
   const write = (h: Hopeful) =>
     nav('/write', {
       state: {
@@ -238,7 +240,6 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
           source: 'openlibrary',
         } satisfies Candidate,
         cover: h.cover,
-        hopeful: h.id,
       },
     })
 
@@ -416,9 +417,9 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
           <>
             <div className="field">
               <StylePicker
-                ids={COLLAGE_IDS}
-                names={COLLAGE_NAMES}
-                grounds={COLLAGE_GROUNDS}
+                ids={STYLE_IDS}
+                names={STYLE_NAMES}
+                grounds={STYLE_GROUNDS}
                 value={style}
                 onChange={setStyle}
                 label="Collage style"
@@ -451,9 +452,9 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
           baseName={storyBaseName(story)}
           picker={
             <StylePicker
-              ids={COLLAGE_IDS}
-              names={COLLAGE_NAMES}
-              grounds={COLLAGE_GROUNDS}
+              ids={STYLE_IDS}
+              names={STYLE_NAMES}
+              grounds={STYLE_GROUNDS}
               value={storyStyle}
               onChange={setStoryStyle}
               label="Card style"

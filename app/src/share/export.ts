@@ -8,7 +8,7 @@
    scaled copy of the small one. The compact class is on-screen sizing and
    never enters an export. */
 
-import type { Review, StyleId, CollageId, ExportShape } from '../types'
+import type { Review, StyleId, ExportShape } from '../types'
 import { SHAPE_FILE_W, SHAPE_W } from '../types'
 import { renderReviewCard } from '../cards/review'
 import { renderCollage, renderStory, type MonthData } from '../cards/collage'
@@ -172,7 +172,7 @@ export function paginateReview(
 /* Collage: one free-height page (a short month still fills one paper leaf) */
 export function buildCollagePage(
   m: MonthData,
-  style: CollageId,
+  style: StyleId,
   host: HTMLDivElement,
   shape: ExportShape
 ): HTMLElement[] {
@@ -195,7 +195,7 @@ export function buildCollagePage(
    what the tight leaf then measures. */
 export function buildStoryPage(
   m: MonthData,
-  style: CollageId,
+  style: StyleId,
   host: HTMLDivElement
 ): HTMLElement[] {
   prepHost(host, 'phone')
@@ -314,53 +314,155 @@ function resolveSvgVars(root: HTMLElement): void {
    The whole wait is capped at 10s. Failures are swallowed on purpose: a cover
    that will not decode is not a reason to refuse to export the review, and the
    leaf is read back afterwards anyway. */
-async function settleImages(pages: HTMLElement[]): Promise<void> {
-  const imgs = pages.flatMap((p) => [...p.querySelectorAll('img')])
-  await Promise.all(
-    imgs.map(async (img) => {
-      try {
-        img.fetchPriority = 'high'
-        img.loading = 'eager'
-        await Promise.race([
-          (async () => {
-            if (!img.complete)
-              await new Promise<void>((r) => {
-                img.addEventListener('load', () => r(), { once: true })
-                img.addEventListener('error', () => r(), { once: true })
-              })
-            if (img.naturalWidth) (await createImageBitmap(img)).close()
-          })(),
-          new Promise<void>((r) => setTimeout(r, 10_000)),
-        ])
-      } catch {
-        /* undecodable — let it render as whatever it renders as */
-      }
-    })
-  )
+async function settleOne(img: HTMLImageElement, budget: number): Promise<void> {
+  try {
+    img.fetchPriority = 'high'
+    img.loading = 'eager'
+    await Promise.race([
+      (async () => {
+        if (!img.complete)
+          await new Promise<void>((r) => {
+            img.addEventListener('load', () => r(), { once: true })
+            img.addEventListener('error', () => r(), { once: true })
+          })
+        if (img.naturalWidth) (await createImageBitmap(img)).close()
+      })(),
+      new Promise<void>((r) => setTimeout(r, budget)),
+    ])
+  } catch {
+    /* undecodable — let it render as whatever it renders as */
+  }
 }
 
-/* Is every pixel in this region the same colour? Used on both ends of the
-   trip — on the way in to note which pictures carry ink, and on the way out to
-   catch one that arrived as an empty rectangle. The tolerance is for JPEG:
-   flat paper does not survive a quantizer perfectly flat. It returns on the
-   first pixel that differs, so a healthy photograph costs a handful of reads
-   and only a genuinely blank region is scanned to the end. */
-function isFlat(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): boolean {
-  if (w < 4 || h < 4) return true
+async function settleImages(pages: HTMLElement[]): Promise<void> {
+  const imgs = pages.flatMap((p) => [...p.querySelectorAll('img')])
+  await Promise.all(imgs.map((img) => settleOne(img, 10_000)))
+}
+
+/* HOW FAR this region's pixels actually range, per channel, widest of the
+   three — or -1 when the question could not be asked at all, which is a
+   tainted canvas or a sample too small to mean anything. Used on both ends of
+   the trip: on the way in to record what each picture carries, and on the way
+   out to catch one that arrived as an empty rectangle.
+
+   It used to be a yes/no — "is every pixel within 8 of the first one" — and
+   that test was blind on exactly the card the fault was reported on. The coal
+   sheets paint the `--tooth` hatch under their ground, so the paper behind a
+   MISSING cover is not flat. Measured on a Contact Sheet story leaf with the
+   cover stripped out of the serialized DOM, the hero box read min 15,17,19 /
+   max 31,33,35 — a range of 16 per channel against a tolerance of 8. "Not
+   flat" was taken to mean "not missing", so the safety net never fired on the
+   one style the reader said came back blank, while firing correctly on all
+   four pale grounds beside it.
+
+   Amplitude is the honest quantity, and it only means anything RELATIVE to
+   what the picture itself carries: paper tooth is a few units wide, a cover is
+   hundreds. There is no early exit to have — a maximum is not known until the
+   end — but this is read once per picture, not once per pixel of the leaf. */
+function spread(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): number {
+  const t = tiles(g, x, y, w, h, 1)
+  return t ? t[0] : -1
+}
+
+/* The same measurement, taken n × n times across the region instead of once —
+   and taken from ONE read, because the expensive part is `getImageData`, not
+   the arithmetic.
+
+   A single figure for the whole box is the widest possible reading of "is
+   there anything here", and that is precisely wrong when something ELSE is
+   printed over the picture's box. Airmail is the case: its cancellation mark
+   sits at `left:-54px` on the stamp and clips the cover's top-left corner, so
+   with the cover blanked out entirely the box still measured a range of 145
+   and read as present. Tiled 4 × 4, the same leaf reads [145, 145, 0 × 14] —
+   the two corner tiles the cancel touches, and fourteen tiles of bare paper.
+   The healthy leaf reads 134–244 across all sixteen. */
+function tiles(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  n: number
+): number[] | null {
+  if (w < 4 || h < 4) return null
+  const cw = Math.round(w)
+  const ch = Math.round(h)
   let d: Uint8ClampedArray
   try {
-    d = g.getImageData(x, y, Math.round(w), Math.round(h)).data
+    d = g.getImageData(x, y, cw, ch).data
   } catch {
     /* tainted, so unreadable. "Cannot verify" must mean "carry on", never a
        thrown export — a check that can refuse to hand over the file is worse
        than the fault it was added to catch. */
-    return false
+    return null
   }
-  const r = d[0], gr = d[1], b = d[2]
-  for (let i = 4; i < d.length; i += 4) {
-    if (Math.abs(d[i] - r) > 8 || Math.abs(d[i + 1] - gr) > 8 || Math.abs(d[i + 2] - b) > 8) return false
+  const out: number[] = []
+  for (let ty = 0; ty < n; ty++) {
+    const py0 = Math.floor((ty * ch) / n)
+    const py1 = Math.floor(((ty + 1) * ch) / n)
+    for (let tx = 0; tx < n; tx++) {
+      const px0 = Math.floor((tx * cw) / n)
+      const px1 = Math.floor(((tx + 1) * cw) / n)
+      let rl = 255, gl = 255, bl = 255, rh = 0, gh = 0, bh = 0
+      for (let py = py0; py < py1; py++) {
+        let i = (py * cw + px0) * 4
+        for (let px = px0; px < px1; px++, i += 4) {
+          const r = d[i], g2 = d[i + 1], b = d[i + 2]
+          if (r < rl) rl = r
+          if (r > rh) rh = r
+          if (g2 < gl) gl = g2
+          if (g2 > gh) gh = g2
+          if (b < bl) bl = b
+          if (b > bh) bh = b
+        }
+      }
+      out.push(Math.max(rh - rl, gh - gl, bh - bl))
+    }
   }
-  return true
+  return out
+}
+
+/* Under this, a region is flat within JPEG's rounding — flat paper does not
+   survive a quantizer perfectly flat. */
+const FLAT = 8
+
+/* And over this ratio, the picture's own detail has gone: what is on the leaf
+   carries a small fraction of the range the picture carries, which is what a
+   cover replaced by bare paper looks like. Four is deliberately generous in
+   the direction of repairing, because the two mistakes do not cost the same —
+   redrawing a picture that was in fact there is one `drawImage` of the same
+   art into the same box, and missing one is the blank the reader reported. */
+const DETAIL = 4
+
+/* What the picture ITSELF carries, measured once and remembered on the
+   element. `bakeImages` stamps this on the way past for every picture it could
+   draw; this covers the one it could not — an image that had not decoded in
+   time for the bake and decoded during the re-settle that follows it, which is
+   precisely the picture most likely to come out blank. Capped at 96px, since a
+   maximum barely moves under a clean downscale and what is wanted here is the
+   order of magnitude, not the figure. */
+const SCRATCH = 96
+function ampOf(img: HTMLImageElement): number {
+  const stamped = Number(img.dataset.amp)
+  if (Number.isFinite(stamped)) return stamped
+  let amp = -1
+  try {
+    const k = Math.min(1, SCRATCH / img.naturalWidth, SCRATCH / img.naturalHeight)
+    const w = Math.max(1, Math.round(img.naturalWidth * k))
+    const h = Math.max(1, Math.round(img.naturalHeight * k))
+    const c = document.createElement('canvas')
+    c.width = w
+    c.height = h
+    const s = c.getContext('2d')!
+    s.fillStyle = PAPER
+    s.fillRect(0, 0, w, h)
+    s.drawImage(img, 0, 0, w, h)
+    amp = spread(s, 0, 0, w, h)
+  } catch {
+    /* undrawable — the same "cannot verify, carry on" the read-back takes */
+  }
+  img.dataset.amp = String(amp)
+  return amp
 }
 
 /* And then re-drawn, at the size the file will actually use them.
@@ -393,6 +495,15 @@ async function bakeImages(pages: HTMLElement[]): Promise<void> {
   const scale = scaleOf(page)
   for (const img of page.querySelectorAll('img')) {
     try {
+      /* A picture that has not decoded is the ONE the bake most needs to
+         reach: it keeps its original oversized src, which is the length
+         ceiling this whole function exists to stay under. settleImages gave
+         every image ten seconds from one starting gun, so a slow one lost
+         that race while the machine was busy with the others; asking again
+         now, alone, is a different question rather than a retry of the same
+         one. If it still has no picture, skipping is right — there is
+         nothing to draw, and drawCover could not help either. */
+      if (!img.naturalWidth || !img.naturalHeight) await settleOne(img, 5_000)
       if (!img.naturalWidth || !img.naturalHeight) continue
       const box = img.getBoundingClientRect()
       const w = Math.max(1, Math.round(box.width * scale))
@@ -411,11 +522,20 @@ async function bakeImages(pages: HTMLElement[]): Promise<void> {
       g.fillStyle = PAPER
       g.fillRect(0, 0, cw, ch)
       g.drawImage(img, 0, 0, cw, ch)
-      /* Remember whether this picture has anything in it. It is the only
-         honest way to check the rasterized leaf afterwards: a cover that came
-         out blank and a cover that is genuinely a flat grey rectangle look
-         identical in the output and can only be told apart by what went in. */
-      img.dataset.ink = isFlat(g, 0, 0, cw, ch) ? '0' : '1'
+      /* Remember what this picture has in it. It is the only honest way to
+         check the rasterized leaf afterwards: a cover that came out blank and
+         a cover that is genuinely a flat grey rectangle look identical in the
+         output and can only be told apart by what went in — and on a textured
+         ground, only by HOW MUCH went in.
+
+         An unreadable canvas lands at -1 and therefore at ink '0', i.e. never
+         repaired. That is the right answer rather than a shrug: the only way
+         to be drawable and unreadable here is to be cross-origin, and drawing
+         one of those onto the leaf would taint it and take `toBlob` down with
+         it — turning a blank cover into no file at all. */
+      const amp = spread(g, 0, 0, cw, ch)
+      img.dataset.amp = String(amp)
+      img.dataset.ink = amp > FLAT ? '1' : '0'
       const baked = c.toDataURL('image/jpeg', 0.92)
       if (baked.length > 32 && baked.length < img.src.length) img.src = baked
     } catch {
@@ -533,19 +653,56 @@ async function svgImage(svg: string): Promise<HTMLImageElement> {
   return img
 }
 
-/* Where each picture sits on the leaf, and whether it had anything in it —
-   the map the check below reads. Only pictures `bakeImages` could measure are
-   listed: a cross-origin one it could not draw is one it cannot vouch for
-   either, and guessing there would mean retrying an export forever over an
-   image that was never going to arrive. */
+/* Can this picture be drawn onto a canvas we still intend to READ BACK or
+   encode? A data: URI always can. So can anything served from our own origin —
+   which is not a production case (every cover, plate and face is a data: URI by
+   construction, via `coverToDataUrl` and `faceUri`) but is exactly what the dev
+   fixture's /covers/*.jpg are, and a repair that silently skipped them would be
+   untested in the one place it can be tested. Everything else is refused: a
+   malformed src throws in the URL constructor and lands in the same `false`. */
+function canvasSafe(img: HTMLImageElement): boolean {
+  if (img.src.startsWith('data:')) return true
+  try {
+    return new URL(img.src, location.href).origin === location.origin
+  } catch {
+    return false
+  }
+}
+
 /* Where each picture that carries ink sits on the leaf, in the leaf's own
    coordinates. Share pages force `rotate(0deg)` on the card, so these boxes are
-   axis-aligned and can be drawn back into without any transform. */
+   axis-aligned and can be drawn back into without any transform.
+
+   An explicit '0' is excluded: the bake looked and found a genuinely flat
+   rectangle, which is the one thing the read-back cannot tell apart from a
+   picture that vanished.
+
+   NO stamp at all used to be excluded too, and that was the hole. An image the
+   bake could not measure is an image that had not decoded — which is precisely
+   the picture most likely to come out blank, and it also keeps its original
+   oversized src, which is the length ceiling the bake exists to stay under. So
+   the safety net was blind on exactly the case it was added for, and the report
+   was always "sometimes", on the biggest cover the app prints. An unstamped
+   image is admitted on two conditions: it has decoded SINCE (settleImages runs
+   again at the end of the bake), and it is safe to draw onto a canvas.
+
+   That second condition is not fussiness. The other way to reach this function
+   with no stamp is a CROSS-ORIGIN picture: the bake drew it fine and then threw
+   reading it back. Repairing one of those would draw it onto the leaf canvas,
+   taint it, and take `toBlob` down with it — turning a blank cover into no file
+   at all, which is the failure this whole path refuses to make. `canvasSafe`
+   is therefore the admission test rather than a guess about where the picture
+   came from. */
 type InkBox = { el: HTMLImageElement; x: number; y: number; w: number; h: number }
 function inkedBoxes(page: HTMLElement): InkBox[] {
   const pr = page.getBoundingClientRect()
   return [...page.querySelectorAll('img')]
-    .filter((i) => i.dataset.ink === '1')
+    .filter(
+      (i) =>
+        i.naturalWidth > 0 &&
+        i.naturalHeight > 0 &&
+        (i.dataset.ink === '1' || (!i.dataset.ink && canvasSafe(i)))
+    )
     .map((i) => {
       const r = i.getBoundingClientRect()
       return { el: i, x: r.left - pr.left, y: r.top - pr.top, w: r.width, h: r.height }
@@ -572,6 +729,18 @@ function drawCover(g: CanvasRenderingContext2D, b: InkBox, k: number, dy = 0): v
   )
 }
 
+/* How much of a picture's box has to read as bare paper before the picture is
+   taken to be missing. Not "all of it": a card is entitled to print something
+   OVER a picture, and airmail does — its cancellation mark clips the cover's
+   top-left corner, which is two tiles of sixteen. Not "any of it" either, or a
+   cover with a broad flat band of its own colour would be redrawn on every
+   export, and on airmail that redraw would land on top of the cancel.
+   Seven-eighths sits between the two with room on both sides: the measured
+   blank reads 14/16 flat, and a picture would have to be three quarters bare
+   to be mistaken for one. */
+const GRID = 4
+const GONE = 0.7
+
 /* Sampled well inside each box, so a plate's white border and the rounding at
    its corners can't be mistaken for the photograph. The sample is clipped to
    the canvas rather than abandoned when it runs off it: on the banded path a
@@ -583,8 +752,25 @@ function isMissing(g: CanvasRenderingContext2D, b: InkBox, k: number, dy = 0): b
   const y0 = Math.max(0, Math.round((b.y + b.h * inset) * k) + dy)
   const x1 = Math.min(g.canvas.width, Math.round((b.x + b.w * (1 - inset)) * k))
   const y1 = Math.min(g.canvas.height, Math.round((b.y + b.h * (1 - inset)) * k) + dy)
-  if (x1 - x0 < 4 || y1 - y0 < 4) return false
-  return isFlat(g, x0, y0, x1 - x0, y1 - y0)
+  const w = x1 - x0
+  const h = y1 - y0
+  if (w < 4 || h < 4) return false
+  /* a tile below 4px a side means nothing, so a small box is read whole —
+     which is exactly the single-figure test this grew out of */
+  const n = Math.max(1, Math.min(GRID, Math.floor(w / 4), Math.floor(h / 4)))
+  const t = tiles(g, x0, y0, w, h, n)
+  /* cannot verify → carry on */
+  if (!t) return false
+  const amp = ampOf(b.el)
+  const bare = t.filter(
+    (s) =>
+      /* an empty rectangle, on a ground with no texture to speak of */
+      s <= FLAT ||
+      /* and an empty rectangle on a ground that HAS texture, which reads as a
+         little variation where the picture's own is a great deal of it */
+      (amp > FLAT && s * DETAIL < amp)
+  ).length
+  return bare >= t.length * GONE
 }
 
 /* Every fix above removes a *cause* of a blank picture. This removes the
@@ -860,7 +1046,7 @@ export async function shareReviewImages(
 
 export async function shareCollageImage(
   m: MonthData,
-  style: CollageId,
+  style: StyleId,
   mode: ExportMode,
   shape: ExportShape
 ): Promise<ExportResult> {
@@ -885,7 +1071,7 @@ export function storyBaseName(m: MonthData): string {
 
 export async function shareStoryImage(
   m: MonthData,
-  style: CollageId,
+  style: StyleId,
   mode: ExportMode
 ): Promise<ExportResult> {
   const host = makeHost()

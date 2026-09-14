@@ -1,25 +1,54 @@
+/* ONE set of twelve styles, and every card in the app answers to it — the
+   review, the monthly collage, and the currently-reading card alike.
+
+   It used to be two sets of twelve with two vocabularies, so the same idea
+   had a different name depending on which page you were standing on: the
+   register card was Archive on a review and Ledger on a month, the proof grid
+   was Catalogue here and Contact Sheet there. Twelve clothes, twenty-four
+   names, and no way to tell from a picker that any of them were the same
+   thing. The review styles are the ones with the names, so they are the set.
+
+   The collage stylesheet is POSITIONAL (.c1-.c12), so the classes did not
+   have to move; what moved is which style id points at which class. Ten of
+   the twelve already sat on the same ground as the review style they now
+   are. The two that did not — the franked sheet on manila and the listings
+   board on electric — took the ground of the style they became (Dust Jacket's
+   lilac and Masthead's sage), because a swatch dot that disagrees with the
+   card under it is the fault this whole change is about. */
 export type StyleId =
   | 'archive' | 'masthead' | 'catalogue' | 'scrapbook' | 'fieldnotes' | 'jacket' | 'airmail'
   | 'herbarium' | 'broadside' | 'jcard' | 'passport' | 'specimen'
-export type CollageId =
-  | 'contact' | 'shelf' | 'tickets' | 'pinboard' | 'ledger' | 'postmark' | 'marquee'
-  | 'cabinet' | 'playbill' | 'mixtape' | 'visa' | 'charset'
 
 export const STYLE_IDS: StyleId[] = [
   'archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes', 'jacket', 'airmail',
   'herbarium', 'broadside', 'jcard', 'passport', 'specimen',
 ]
-export const COLLAGE_IDS: CollageId[] = [
-  'contact', 'shelf', 'tickets', 'pinboard', 'ledger', 'postmark', 'marquee',
-  'cabinet', 'playbill', 'mixtape', 'visa', 'charset',
+
+/* The styles a YEAR offers. Scrapbook, Archive and Broadside draw one row per
+   book as a collage, which holds a month and runs to a strip nobody can read
+   as an object at two hundred rows — a year gets only the styles that PACK:
+   the grids and the spine rail. All twelve still ship and still serve every
+   month, and every one of them is still a review style. */
+export const YEAR_COLLAGE_IDS: StyleId[] = [
+  'catalogue', 'airmail', 'fieldnotes', 'jacket', 'herbarium', 'passport', 'specimen',
 ]
-/* The styles a YEAR offers. Tickets, Ledger and Marquee draw one row per book,
-   which holds a month and runs to a strip nobody can read as an object at two
-   hundred rows — a year gets only the styles that PACK: the grids and the
-   spine rail. All seven still ship and still serve every month. */
-export const YEAR_COLLAGE_IDS: CollageId[] = [
-  'contact', 'shelf', 'pinboard', 'postmark', 'cabinet', 'visa', 'charset',
-]
+
+/* The twelve ids a collage or a story card used to be saved under, mapped onto
+   the style each one now is. A stored pick is a pick the reader made and it
+   survives the rename — `settings.defaultCollage` of 'ledger' reads back as
+   Archive, which is the same card it always drew. Same shape as `liveHand()`,
+   and for the same reason: coerce on read rather than migrate the table. */
+const RETIRED: Record<string, StyleId> = {
+  ledger: 'archive', marquee: 'masthead', contact: 'catalogue', tickets: 'scrapbook',
+  pinboard: 'fieldnotes', postmark: 'jacket', shelf: 'airmail', cabinet: 'herbarium',
+  playbill: 'broadside', mixtape: 'jcard', visa: 'passport', charset: 'specimen',
+}
+
+/** Coerce a stored collage style onto the unified set. */
+export function liveStyle(id: string | undefined): StyleId {
+  if (id && STYLE_IDS.includes(id as StyleId)) return id as StyleId
+  return (id && RETIRED[id]) || 'archive'
+}
 
 export const STYLE_NAMES: Record<StyleId, string> = {
   archive: 'Archive',
@@ -34,20 +63,6 @@ export const STYLE_NAMES: Record<StyleId, string> = {
   jcard: 'J-Card',
   passport: 'Passport',
   specimen: 'Specimen',
-}
-export const COLLAGE_NAMES: Record<CollageId, string> = {
-  contact: 'Contact Sheet',
-  shelf: 'Shelf',
-  tickets: 'Tickets',
-  pinboard: 'Pinboard',
-  ledger: 'Ledger',
-  postmark: 'Postmark',
-  marquee: 'Marquee',
-  cabinet: 'Cabinet',
-  playbill: 'Playbill',
-  mixtape: 'Mixtape',
-  visa: 'Visa Page',
-  charset: 'Character Set',
 }
 
 /* THE HAND A REVIEW IS WRITTEN IN.
@@ -104,20 +119,6 @@ export const STYLE_GROUNDS: Record<StyleId, string> = {
   jcard: '#F2BC97',
   passport: '#E5BDD0',
   specimen: '#1E4645',
-}
-export const COLLAGE_GROUNDS: Record<CollageId, string> = {
-  contact: '#121416',
-  shelf: '#F6EBD9',
-  tickets: '#BFEBEE',
-  pinboard: '#DAE4EE',
-  ledger: '#DCA94C',
-  postmark: '#E8D5A6',
-  marquee: '#76CADD',
-  cabinet: '#A6CFBB',
-  playbill: '#FDBDB5',
-  mixtape: '#F2BC97',
-  visa: '#E5BDD0',
-  charset: '#1E4645',
 }
 
 export const FORMAT_NAMES = ['Ebook', 'Audiobook', 'Physical'] as const
@@ -285,7 +286,7 @@ export interface Settings {
   face: string
   onboarded: boolean
   defaultStyle: StyleId
-  defaultCollage: CollageId
+  defaultCollage: StyleId
   /** PDF export is a settings thing — off by default, sharing is images only */
   pdfEnabled: boolean
   /** chrome theme only — the cards are printed objects and never go dark */

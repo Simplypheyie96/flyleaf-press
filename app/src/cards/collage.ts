@@ -2,7 +2,7 @@
    month's finished reviews. Flexible to any month size; a month can be viewed
    (and shared) at any point, not only at its end. */
 
-import type { CollageId, Review } from '../types'
+import type { Review, StyleId } from '../types'
 import { SHAPE_CARD_W } from '../types'
 import { escapeHtml, fmtRating, monthKey, monthName } from '../format'
 import { mark, starSvg } from './assets'
@@ -759,8 +759,8 @@ function hopeCap(b: Review): string {
     <div class="hg-by">${meta(escapeHtml(b.author), b.pages ? `${b.pages} pages` : '')}</div>`
 }
 
-/* C1 · Contact Sheet (coal) — the proof grid */
-function contact(m: MonthData): string {
+/* C1 · Catalogue (coal) — the month as a proof grid */
+function catalogue(m: MonthData): string {
   /* Through the ground's own tokens, never literals. Both of these used to be
      hardcoded here and on C7, which is how Marquee kept cream star outlines
      across a ground change from velvet to a pale blue: the card's stars were
@@ -784,8 +784,8 @@ function contact(m: MonthData): string {
   </article>`
 }
 
-/* C2 · Shelf (butter) — front-facing covers on drawn rails, three to a rail */
-function shelf(m: MonthData): string {
+/* C2 · Airmail (butter) — front-facing covers on drawn rails, three to a rail */
+function airmail(m: MonthData): string {
   const per = gridCols(m.books.length, m.wide)
   const rows: Review[][] = []
   for (let i = 0; i < m.books.length; i += per) rows.push(m.books.slice(i, i + per))
@@ -818,8 +818,8 @@ function shelf(m: MonthData): string {
   </article>`
 }
 
-/* C3 · Tickets (pink) — admission stubs */
-function tickets(m: MonthData): string {
+/* C3 · Scrapbook (sea-glass) — the month as a run of admission stubs */
+function scrapbook(m: MonthData): string {
   const cols = listCols(m.books.length, m.wide)
   return `<article class="card c3" style="--rot:-.8deg">
     ${patchC(150)}
@@ -850,8 +850,8 @@ function tickets(m: MonthData): string {
   </article>`
 }
 
-/* C4 · Pinboard (blue) — pinned prints, no cover ever hidden */
-function pinboard(m: MonthData): string {
+/* C4 · Field Notes (blue) — pinned prints, no cover ever hidden */
+function fieldnotes(m: MonthData): string {
   return `<article class="card c4" style="--rot:.7deg">
     ${patchC(130)}
     ${moHead(m, 'c4')}
@@ -872,8 +872,8 @@ function pinboard(m: MonthData): string {
   </article>`
 }
 
-/* C5 · Ledger (mustard) — the reading register */
-function ledger(m: MonthData): string {
+/* C5 · Archive (mustard) — the reading register */
+function archive(m: MonthData): string {
   const cols = listCols(m.books.length, m.wide)
   const avg = m.books.reduce((s, b) => s + b.rating, 0) / (m.books.length || 1)
   const pages = m.books.reduce((s, b) => s + (b.pages || 0), 0)
@@ -918,8 +918,8 @@ function ledger(m: MonthData): string {
   </article>`
 }
 
-/* C6 · Postmark (manila) — each book franked and stuck down */
-function postmark(m: MonthData): string {
+/* C6 · Dust Jacket (lilac) — each book franked and stuck down */
+function jacket(m: MonthData): string {
   return `<article class="card c6" style="--rot:.6deg">
     ${patchC(140)}
     ${moHead(m, 'c6')}
@@ -942,8 +942,8 @@ function postmark(m: MonthData): string {
   </article>`
 }
 
-/* C7 · Marquee (electric) — the month as a listings board, one line a film */
-function marquee(m: MonthData): string {
+/* C7 · Masthead (sage) — the month as a listings board, one line a film */
+function masthead(m: MonthData): string {
   const cols = listCols(m.books.length, m.wide)
   const ink = 'var(--star)', line = 'var(--star-line)'
   return `<article class="card c7" style="--rot:-.4deg">
@@ -984,10 +984,10 @@ function initial(t: string): string {
   return (s[0] || '?').toUpperCase()
 }
 
-/* C8 · Cabinet (mint) — every book mounted on its own sheet, four paper
+/* C8 · Herbarium (mint) — every book mounted on its own sheet, four paper
    corners a side, and filed under a plain number. The herbarium review card
    at collage scale. */
-function cabinet(m: MonthData): string {
+function herbarium(m: MonthData): string {
   const corners = [0, 1, 2, 3]
     .map((k) => `<span class="hb-corner hb-corner--sm hb-corner--${k}" aria-hidden="true"></span>`)
     .join('')
@@ -1013,11 +1013,11 @@ function cabinet(m: MonthData): string {
   </article>`
 }
 
-/* C9 · Playbill (newsprint) — the month as a bill, top billing to the book that
+/* C9 · Broadside (salmon) — the month as a bill, top billing to the book that
    earned it. The name is set at a size taken from its rating, so the shape of
    the month is legible from across a room; the cut beside it is what stops the
    bill being a list of words. */
-function playbill(m: MonthData): string {
+function broadside(m: MonthData): string {
   if (tbr(m))
     return `<article class="card card--salmon c9" style="--rot:.5deg">
       ${patchC(170)}
@@ -1097,10 +1097,10 @@ function playbill(m: MonthData): string {
   </article>`
 }
 
-/* C10 · Mixtape (apricot) — the month as a side of tape. Numbered tracks, a
+/* C10 · J-Card (apricot) — the month as a side of tape. Numbered tracks, a
    run of leader dots to the rating, and the sleeve art of each one at the head
    of its own line: a tracklist without the record is just handwriting. */
-function mixtape(m: MonthData): string {
+function jcard(m: MonthData): string {
   if (tbr(m))
     return `<article class="card card--apricot c10" style="--rot:-.6deg">
       ${patchC(140)}
@@ -1134,7 +1134,7 @@ function mixtape(m: MonthData): string {
   </article>`
 }
 
-/* C11 · Visa Page (quartz) — the month as the inside of a passport: a security
+/* C11 · Passport (quartz) — the month as the inside of a passport: a security
    lattice, every book a framed photograph with its own crossing code, and one
    machine-readable strip closing the page.
 
@@ -1144,7 +1144,7 @@ function mixtape(m: MonthData): string {
    is what was reported. Nothing postal survives here; what a passport and a
    postmark share is only that both are stamped, and this one is stamped by a
    border, in rectangles. */
-function visa(m: MonthData): string {
+function passport(m: MonthData): string {
   const mrz = (s: string, n: number) =>
     (s.toUpperCase().replace(/[^A-Z0-9]+/g, '<').slice(0, n) + '<'.repeat(n))
       .slice(0, n)
@@ -1179,13 +1179,13 @@ function visa(m: MonthData): string {
   </article>`
 }
 
-/* C12 · Character Set (teal) — the month as a case of type. Every book is a
+/* C12 · Specimen (teal) — the month as a case of type. Every book is a
    sort in its own compartment, filed under the letter it sorts by, with the
    jacket set into the compartment over that letter. The glyph is painted
    FIRST in the DOM and the cover after it, both positioned: paint order does
    the layering, because a negative z-index survives on screen and vanishes in
    the file. */
-function charset(m: MonthData): string {
+function specimen(m: MonthData): string {
   return `<article class="card card--teal c12" style="--rot:-.3deg">
     ${patchC(180)}
     ${moHead(m, 'c12')}
@@ -1229,29 +1229,29 @@ function charset(m: MonthData): string {
    the block under it is shared, because a title, an author and a line about
    why you picked it are the same three facts in every one of them. */
 
-const HEAD_OF: Record<CollageId, HeadId> = {
-  contact: 'c1', shelf: 'c2', tickets: 'c3', pinboard: 'c4',
-  ledger: 'c5', postmark: 'c6', marquee: 'c7', cabinet: 'c8',
-  playbill: 'c9', mixtape: 'c10', visa: 'c11', charset: 'c12',
+const HEAD_OF: Record<StyleId, HeadId> = {
+  catalogue: 'c1', airmail: 'c2', scrapbook: 'c3', fieldnotes: 'c4',
+  archive: 'c5', jacket: 'c6', masthead: 'c7', herbarium: 'c8',
+  broadside: 'c9', jcard: 'c10', passport: 'c11', specimen: 'c12',
 }
 
 /* The shell each style wears, lifted from its own renderer so the story card
    and the collage card are the same object — same ground modifier, same lean,
    same rosette size. The lean is kept even though the export flattens every
    card to 0deg, because the sheet's live preview does not. */
-const STORY_SHELL: Record<CollageId, { cls: string; rot: string; patch: number }> = {
-  contact: { cls: 'c1', rot: '-.6', patch: 150 },
-  shelf: { cls: 'c2', rot: '.5', patch: 140 },
-  tickets: { cls: 'c3', rot: '-.8', patch: 150 },
-  pinboard: { cls: 'c4', rot: '.7', patch: 130 },
-  ledger: { cls: 'c5', rot: '-.5', patch: 140 },
-  postmark: { cls: 'c6', rot: '.6', patch: 140 },
-  marquee: { cls: 'c7', rot: '-.4', patch: 150 },
-  cabinet: { cls: 'card--mint c8', rot: '-.4', patch: 150 },
-  playbill: { cls: 'card--salmon c9', rot: '.5', patch: 170 },
-  mixtape: { cls: 'card--apricot c10', rot: '-.6', patch: 140 },
-  visa: { cls: 'card--quartz c11', rot: '.4', patch: 150 },
-  charset: { cls: 'card--teal c12', rot: '-.3', patch: 150 },
+const STORY_SHELL: Record<StyleId, { cls: string; rot: string; patch: number }> = {
+  catalogue: { cls: 'c1', rot: '-.6', patch: 150 },
+  airmail: { cls: 'c2', rot: '.5', patch: 140 },
+  scrapbook: { cls: 'c3', rot: '-.8', patch: 150 },
+  fieldnotes: { cls: 'c4', rot: '.7', patch: 130 },
+  archive: { cls: 'c5', rot: '-.5', patch: 140 },
+  jacket: { cls: 'c6', rot: '.6', patch: 140 },
+  masthead: { cls: 'c7', rot: '-.4', patch: 150 },
+  herbarium: { cls: 'card--mint c8', rot: '-.4', patch: 150 },
+  broadside: { cls: 'card--salmon c9', rot: '.5', patch: 170 },
+  jcard: { cls: 'card--apricot c10', rot: '-.6', patch: 140 },
+  passport: { cls: 'card--quartz c11', rot: '.4', patch: 150 },
+  specimen: { cls: 'card--teal c12', rot: '-.3', patch: 150 },
 }
 
 /* The cover at hero scale, in each style's own chrome. Every class here is one
@@ -1301,7 +1301,7 @@ function storyHero(b: Review, id: HeadId): string {
   </figure>`
 }
 
-export function renderStory(m: MonthData, style: CollageId): string {
+export function renderStory(m: MonthData, style: StyleId): string {
   const b = m.books[0]
   if (!b) return ''
   const id = HEAD_OF[style]
@@ -1346,21 +1346,21 @@ export function renderStory(m: MonthData, style: CollageId): string {
   return `<article class="card ${sh.cls} card--story" style="--rot:${sh.rot}deg">${inner}</article>`
 }
 
-export const COLLAGE_RENDERERS: Record<CollageId, (m: MonthData) => string> = {
-  contact,
-  shelf,
-  tickets,
-  pinboard,
-  ledger,
-  postmark,
-  marquee,
-  cabinet,
-  playbill,
-  mixtape,
-  visa,
-  charset,
+export const COLLAGE_RENDERERS: Record<StyleId, (m: MonthData) => string> = {
+  archive,
+  masthead,
+  catalogue,
+  scrapbook,
+  fieldnotes,
+  jacket,
+  airmail,
+  herbarium,
+  broadside,
+  jcard,
+  passport,
+  specimen,
 }
 
-export function renderCollage(m: MonthData, style: CollageId): string {
+export function renderCollage(m: MonthData, style: StyleId): string {
   return COLLAGE_RENDERERS[style](m)
 }

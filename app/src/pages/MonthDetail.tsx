@@ -2,8 +2,8 @@ import { useCallback, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import type { Settings, CollageId, ExportShape } from '../types'
-import { COLLAGE_IDS, YEAR_COLLAGE_IDS, COLLAGE_NAMES, COLLAGE_GROUNDS } from '../types'
+import type { Settings, StyleId, ExportShape } from '../types'
+import { STYLE_IDS, YEAR_COLLAGE_IDS, STYLE_NAMES, STYLE_GROUNDS, liveStyle } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
 import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
@@ -32,11 +32,11 @@ export function MonthDetail({ settings }: { settings: Settings }) {
      books belong to them */
   const keyOf = isYear ? yearKey : monthKey
   const nameOf = isYear ? yearName : monthName
-  const [style, setStyle] = useState<CollageId>(settings.defaultCollage)
+  const [style, setStyle] = useState<StyleId>(liveStyle(settings.defaultCollage))
   /* A year offers only the styles that PACK — the row-per-book ones run to a
      strip at a hundred books. Derived rather than clamped in state, so walking
      month → year → month in one mounted page never loses the picked style. */
-  const ids = isYear ? YEAR_COLLAGE_IDS : COLLAGE_IDS
+  const ids = isYear ? YEAR_COLLAGE_IDS : STYLE_IDS
   const shown = ids.includes(style) ? style : ids[0]
   /* one way out — the sheet shows the collage, its shape, and both
      destinations */
@@ -94,7 +94,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
         ) : (
           <>
             <div className="field">
-              <StylePicker ids={ids} names={COLLAGE_NAMES} grounds={COLLAGE_GROUNDS} value={shown} onChange={setStyle} label="Collage style" />
+              <StylePicker ids={ids} names={STYLE_NAMES} grounds={STYLE_GROUNDS} value={shown} onChange={setStyle} label="Collage style" />
             </div>
 
             {/* a twenty-book month — let alone a hundred-book year — is taller
@@ -125,8 +125,8 @@ export function MonthDetail({ settings }: { settings: Settings }) {
           picker={
             <StylePicker
               ids={ids}
-              names={COLLAGE_NAMES}
-              grounds={COLLAGE_GROUNDS}
+              names={STYLE_NAMES}
+              grounds={STYLE_GROUNDS}
               value={shown}
               onChange={setStyle}
               label="Collage style"

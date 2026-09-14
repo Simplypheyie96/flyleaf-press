@@ -460,18 +460,40 @@
 .card-compact .s2-meta-row{ gap:20px; }
 
 /* ── S3 · Catalogue (coal) ──────────────────────────────────── */
-/* the cover straddles the card edge, but shallowly: the export mat is 16px
-   and the clip on top of this block is the tallest thing on any card, so the
-   block pokes 8 and the clip 13 — nothing may reach past ~14. */
+/* The jacket is IN THE FLOW, beside the entry it belongs to, and nearly twice
+   the width it was — it used to be a 112px block absolutely positioned at the
+   top right, half off the card's own edge and floating ABOVE the title rather
+   than next to it. Nothing here reaches past the card any more: the block starts
+   inside the padding and the only thing that leaves it is the clip, 13px up into
+   the card's own 28px of headroom, which the 16px export mat never sees.
+
+   It is a grid of named areas rather than a flex row, because at 320px the
+   jacket and the record set cannot share a line: 276px of content minus a 104px
+   jacket left a 64px value lane, and a date came apart across two of them. Areas
+   are what let the table drop to full width under the jacket on a compact card
+   while the jacket still stands beside the title at every other width.
+
+   The second row is `1fr`, and that is load-bearing. The jacket is taller than
+   what it stands beside, and the rows it spans grow to hold it — but an item
+   spanning a FLEXIBLE track is skipped while the intrinsic tracks are sized, so
+   the slack lands in the bottom row instead of opening a hole between the title
+   and the byline, which is exactly what `min-content min-content` did. */
+.s3-top{
+  display:grid;
+  grid-template-columns:1fr 210px;
+  grid-template-rows:min-content 1fr;
+  grid-template-areas:"id cov" "tbl cov";
+  gap:0 28px; align-items:start;
+}
+.s3-id{ grid-area:id; min-width:0; }
 .s3-cover-wrap{
-  position:absolute; top:-8px; right:30px; width:112px; z-index:4;
-  transform:rotate(2.4deg);
+  position:relative; grid-area:cov; z-index:4;
+  transform:rotate(1.6deg);
 }
 .s3-cover-wrap .cover{ box-shadow:none; }
-.s3-headroom{ padding-right:150px; }
 .s3 .title{ font-size:30px; }
 .s3 .by{ display:block; margin-top:8px; }
-.s3-tbl{ border-top:1px solid var(--hair); margin-top:22px; }
+.s3-tbl{ grid-area:tbl; border-top:1px solid var(--hair); margin-top:22px; }
 .s3-row{
   display:grid; grid-template-columns:104px 1fr;
   gap:0 16px; align-items:start;
@@ -481,9 +503,18 @@
 .s3-rate-row{ display:flex; align-items:center; gap:18px; padding:14px 0; border-bottom:1px solid var(--hair); }
 .s3-rate-row .rate-num{ font-size:40px; }
 .s3 .body{ margin-top:24px; }
-.s3 .patch{ right:14px; top:150px; opacity:.08; }
-.card-compact .s3-cover-wrap{ width:88px; right:18px; top:-8px; }
-.card-compact .s3-headroom{ padding-right:100px; }
+/* the mark used to sit at top:150px on the right, which is now the middle of
+   the jacket — it goes to the paper below the entry instead */
+.s3 .patch{ left:-46px; bottom:-40px; opacity:.08; }
+/* Compact is on-screen sizing only and never exports. The jacket comes down to
+   104px and keeps the title company; the table goes under both at the card's
+   full 276px, where a 104px label lane still leaves 156px of value against the
+   ~82px a full date measures. */
+.card-compact .s3-top{
+  grid-template-columns:1fr 104px;
+  grid-template-areas:"id cov" "tbl tbl";
+  gap:0 20px;
+}
 .card-compact .s3 .title{ font-size:26px; }
 .card-compact .s3-rate-row{ flex-wrap:wrap; gap:10px 18px; }
 
@@ -1025,7 +1056,7 @@
 .card-compact .c4-board, .card-compact .c6-sheet, .card-compact .hg,
 .card-compact .cb-grid, .card-compact .vp-sheet, .card-compact .cs-grid{ --cap:130px; }
 
-/* C1 · Contact Sheet (coal) */
+/* C1 · Catalogue (coal) */
 .c1{
   background:var(--tooth), var(--coal);
   --tx:var(--cream); --meta:rgba(244,242,237,.6);
@@ -1046,7 +1077,7 @@
    this width" is the only way to say it in CSS. */
 .card-compact .c1-grid{ grid-template-columns:repeat(auto-fit, minmax(84px, 1fr)); gap:14px 12px; --gx:12px; }
 
-/* C2 · Shelf (butter) */
+/* C2 · Airmail (butter) */
 .c2{ background:var(--butter); }
 .c2-rail{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:0 20px; --gx:20px;
   align-items:end; padding:0 4px; }
@@ -1110,7 +1141,7 @@
 }
 .hg--c7 .hg-name{ letter-spacing:.02em; text-transform:uppercase; }
 
-/* C3 · Tickets (pink) */
+/* C3 · Scrapbook (sea-glass) */
 .c3{ background:var(--seaglass); }
 /* one column by default; a long month splits into two so the card stays a
    card rather than a receipt */
@@ -1149,7 +1180,7 @@
 .card-compact .c3-t .cov{ width:38px; }
 .card-compact .c3-name{ font-size:13.5px; }
 
-/* C4 · Pinboard (blue) */
+/* C4 · Field Notes (blue) */
 .c4{ background:var(--blue);
   background-image:
     repeating-linear-gradient(0deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px),
@@ -1164,7 +1195,7 @@
 .c4 .patch{ left:50%; bottom:-30px; margin-left:-60px; opacity:.08; }
 .card-compact .c4-board{ grid-template-columns:repeat(auto-fit, minmax(92px, 1fr)); gap:22px 14px; --gx:14px; }
 
-/* C5 · Ledger (mustard) */
+/* C5 · Archive (mustard) */
 .c5{ background:var(--mustard); --meta:rgba(27,25,23,.72); }
 .c5-tbl{ border-top:1.5px solid rgba(27,25,23,.55); }
 /* the register runs in two columns once the month is long — each column keeps
@@ -1187,8 +1218,12 @@
 .c5 .lbl{ font-family:var(--mono); font-size:10.5px; font-weight:500;
   letter-spacing:.14em; text-transform:uppercase; color:var(--meta); }
 
-/* C6 · Postmark (manila) — every book franked and stuck to the sheet */
-.c6{ background:var(--manila); --meta:rgba(27,25,23,.72); --air-r:#B3312A; --air-b:#2B4C8C; }
+/* C6 · Dust Jacket (lilac) — every book franked and stuck to the sheet.
+   The ground was manila, a colour no review style used; it is lilac now,
+   because the style is Dust Jacket on both objects and the swatch dot has
+   to be telling the truth about the card under it. Ink 12.0:1 on lilac, and
+   --meta already steps to ink at 72% here as it does on every pale ground. */
+.c6{ background:var(--lilac); --meta:rgba(27,25,23,.72); --air-r:#B3312A; --air-b:#2B4C8C; }
 .c6-sheet{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:28px 18px; --gx:18px; }
 .c6-stamp{ transform:rotate(var(--sr,0deg)); min-width:0; }
 .c6-face{ position:relative; padding:8px; background:var(--card-w); box-shadow:var(--sh-plate); }
@@ -1199,10 +1234,10 @@
 .c6-perf{
   position:absolute; inset:-3px; pointer-events:none;
   background:
-    radial-gradient(circle at center, var(--manila) 2.4px, transparent 2.9px) left top / 9px 6px repeat-x,
-    radial-gradient(circle at center, var(--manila) 2.4px, transparent 2.9px) left bottom / 9px 6px repeat-x,
-    radial-gradient(circle at center, var(--manila) 2.4px, transparent 2.9px) left top / 6px 9px repeat-y,
-    radial-gradient(circle at center, var(--manila) 2.4px, transparent 2.9px) right top / 6px 9px repeat-y;
+    radial-gradient(circle at center, var(--lilac) 2.4px, transparent 2.9px) left top / 9px 6px repeat-x,
+    radial-gradient(circle at center, var(--lilac) 2.4px, transparent 2.9px) left bottom / 9px 6px repeat-x,
+    radial-gradient(circle at center, var(--lilac) 2.4px, transparent 2.9px) left top / 6px 9px repeat-y,
+    radial-gradient(circle at center, var(--lilac) 2.4px, transparent 2.9px) right top / 6px 9px repeat-y;
 }
 .c6-val{
   position:absolute; right:11px; top:11px; z-index:2;
@@ -1221,7 +1256,7 @@
 .card-compact .c6-name{ font-size:12px; }
 .card-compact .c6-val{ right:9px; top:9px; font-size:11px; }
 
-/* C7 · Marquee (electric) — the month as a listings board, one line a feature.
+/* C7 · Masthead (sage) — the month as a listings board, one line a feature.
    The card was dark twice and is now light. Moss was a second near-black
    beside Contact Sheet's coal; velvet #48222A cleared that and was disliked;
    every remaining dark that would have cleared coal collided with Specimen's
@@ -1229,13 +1264,14 @@
    way round anyway — a marquee IS a lit sheet with black letters set on it,
    which is what the board below now draws.
 
-   Ink 9.40:1. ink-soft fails here at 3.09:1, as it does on sage and lilac, so
-   metadata steps to ink at 72% (4.98:1). Mustard is 1.15:1 on this ground —
-   invisible — so the stars take ink like every other pale ground, and the
-   numerals take ink rather than terracotta (2.78:1 at 16px), which is the
-   black letter the metaphor wanted. */
+   The ground was electric, a colour no review style used; it is Masthead's
+   sage now, so the style is one style on both objects. ink-soft fails on sage
+   at 3.6:1, so metadata steps to ink at 72%, exactly as it already did here.
+   Mustard was 1.15:1 on the old ground and is no better on this one, so the
+   stars take ink like every other pale ground and the numerals take ink
+   rather than terracotta — the black letter the metaphor wanted. */
 .c7{
-  background:var(--electric);
+  background:var(--sage);
   --meta:rgba(27,25,23,.72);
   --hair:rgba(27,25,23,.16);
   --star:var(--ink); --star-line:rgba(27,25,23,.55);
@@ -1391,8 +1427,12 @@
 .jc-fmt{ column-gap:10px; }
 .jc-fmt .fmt-t{ padding:4px 10px 4px 9px; border-left:4px solid transparent; }
 .jc-fmt .fmt-t[data-on="true"]{ border-left-color:var(--tx); }
-/* liner notes set in two columns — the move nothing else in the set makes */
-.jc-body{ column-count:2; column-gap:28px; column-rule:1px solid var(--hair); }
+/* The liner notes used to be set in two columns, on the argument that a
+   cassette insert is printed that way. It was the wrong thing to borrow: a
+   review is one continuous piece of writing, and two columns make the reader
+   go down the card and back up it again — on a shared image, which is often
+   read at a size where the second column is a guess. Every other style in the
+   set runs one column and this one does now too. */
 
 /* ── S11 · Passport (quartz) ──
    The lattice and the frames are INK. They were cream for as long as this card
@@ -1467,12 +1507,6 @@
   font-size:66px; line-height:.98; letter-spacing:-.026em; color:var(--tx);
   min-width:0; overflow-wrap:break-word;
 }
-.ts-steps{ margin-top:22px; display:flex; flex-direction:column; gap:14px; }
-.ts-step{ display:flex; align-items:baseline; gap:16px; }
-.ts-spec{
-  font-family:var(--serif); font-weight:500; line-height:1.1;
-  letter-spacing:-.012em; color:var(--tx); min-width:0; overflow-wrap:break-word;
-}
 .ts-cols{ display:grid; grid-template-columns:1fr 118px; gap:0 30px; align-items:start; }
 .ts-table{ min-width:0; }
 .ts-row{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 16px; padding:9px 0; border-bottom:1px solid var(--hair); }
@@ -1503,7 +1537,6 @@
 .card-compact .bs-title{ font-size:42px; }
 .card-compact .bs-facts{ grid-template-columns:1fr; min-width:0; }
 .card-compact .bs-cut{ width:104px; margin-right:18px; }
-.card-compact .jc-body{ column-count:1; }
 /* Beside the label the value column is 51px at 360 and the star row is a
    101px flex item that cannot break, so the rating ran off the page. The
    label goes above its value instead, handing it the whole data column. */
@@ -1590,7 +1623,7 @@
 .mo-sort b{ display:block; }
 .mo-sort .lbl{ display:block; margin-top:4px; }
 
-/* C8 · Cabinet (mint) — every book mounted on its own sheet and filed */
+/* C8 · Herbarium (mint) — every book mounted on its own sheet and filed */
 .c8{ padding:calc(var(--pad) + 12px); }
 .c8 .patch{ right:-46px; bottom:-52px; opacity:.06; }
 .cb-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
@@ -1605,7 +1638,7 @@
 .card-compact .cb-grid{ grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:14px 12px; --gx:12px; }
 .card-compact .cb-cell{ padding:9px 9px 10px; }
 
-/* C9 · Playbill (newsprint) — top billing to the book that earned it, and the
+/* C9 · Broadside (salmon) — top billing to the book that earned it, and the
    cut beside each name is what stops the bill being a list of words */
 .c9 .patch{ left:-52px; bottom:-64px; opacity:.07; }
 .pb-bill{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:34px; border-top:1px solid var(--hair); }
@@ -1627,7 +1660,7 @@
 .hg--c9{ border-top:1px solid var(--hair); padding-top:20px; }
 .hg--c9 .hg-c{ padding-bottom:11px; border-bottom:1px solid var(--hair); }
 
-/* C10 · Mixtape (apricot) — numbered tracks, a run of leader dots to the
+/* C10 · J-Card (apricot) — numbered tracks, a run of leader dots to the
    rating, and the sleeve art at the head of each line */
 .c10 .patch{ right:-36px; top:-44px; opacity:.07; }
 .mx-list{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:32px; }
@@ -1645,7 +1678,7 @@
 .hg--c10{ border-top:2px solid var(--tx); padding-top:20px; }
 .hg--c10 .hg-c{ padding-bottom:10px; border-bottom:1px dotted rgba(27,25,23,.35); }
 
-/* C11 · Visa Page (quartz) — the inside of a passport, not a sheet of postage.
+/* C11 · Passport (quartz) — the inside of a passport, not a sheet of postage.
    The round cancellation ring, the perforation and the par-avion bars all
    belong to Postmark; a second collage wearing them made the two read as one
    style with two grounds. What a passport and a postmark share is only that
@@ -1667,7 +1700,7 @@
 .card-compact .vp-t{ font-size:12px; }
 .card-compact .vp-mrz{ font-size:10px; }
 
-/* C12 · Character Set (teal) — every book a sort in its own compartment,
+/* C12 · Specimen (teal) — every book a sort in its own compartment,
    filed under the letter it sorts by. The glyph is painted FIRST in the DOM
    and the cover after it, both positioned: paint order does the layering,
    because a negative z-index survives on screen and vanishes in the file. */

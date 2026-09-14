@@ -160,25 +160,36 @@ function masthead(rec: Review): string {
   </article>`
 }
 
-/* ── S3 · Catalogue — the record entry, printed in negative (coal) ── */
+/* ── S3 · Catalogue — the record entry, printed in negative (coal).
+
+   The jacket used to be a small absolutely-positioned block pinned to the top
+   right, straddling the card's own edge — 112px of cover floating above the
+   title with the whole record set underneath it. It read as a thumbnail that
+   had come loose, and it was the smallest cover in the set on the one card
+   whose metaphor is a catalogue entry, where the plate belongs beside the
+   entry. It is now in the flow and nearly twice the width: one row, the
+   identification and the table on the left, the jacket on the right, top
+   aligned with the title. ── */
 function catalogue(rec: Review): string {
   return `<article class="card card--coal s3" style="--rot:-.8deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(120)}
-    <div class="s3-cover-wrap">
-      ${pclip(16, -5)}
-      ${cover(rec)}
-    </div>
-    <div class="s3-headroom">
-      <h2 class="title">${escapeHtml(rec.title)}</h2>
-      <span class="by">${escapeHtml(rec.author)}</span>
-    </div>
-    <div class="s3-tbl">
-      <div class="s3-rate-row">${ratingBlock(rec.rating, 22)}</div>
-      <div class="s3-row"><span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span></div>
-      <div class="s3-row"><span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span></div>
-      ${rec.pages ? `<div class="s3-row"><span class="lbl">Pages</span><span class="val">${rec.pages}</span></div>` : ''}
-      ${rec.series ? `<div class="s3-row"><span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
-      <div class="s3-row"><span class="lbl lbl--fmt">Format</span>${fmtLine(rec)}</div>
+    <div class="s3-top">
+      <div class="s3-id">
+        <h2 class="title">${escapeHtml(rec.title)}</h2>
+        <span class="by">${escapeHtml(rec.author)}</span>
+      </div>
+      <div class="s3-cover-wrap">
+        ${pclip(14)}
+        ${cover(rec)}
+      </div>
+      <div class="s3-tbl">
+        <div class="s3-rate-row">${ratingBlock(rec.rating, 22)}</div>
+        <div class="s3-row"><span class="lbl">Started</span><span class="val">${prettyDate(rec.started)}</span></div>
+        <div class="s3-row"><span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span></div>
+        ${rec.pages ? `<div class="s3-row"><span class="lbl">Pages</span><span class="val">${rec.pages}</span></div>` : ''}
+        ${rec.series ? `<div class="s3-row"><span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
+        <div class="s3-row"><span class="lbl lbl--fmt">Format</span>${fmtLine(rec)}</div>
+      </div>
     </div>
     ${body(rec, 24)}
     ${plateRow(rec)}
@@ -450,7 +461,7 @@ function jcard(rec: Review): string {
         <span class="lbl">Format</span>
         ${fmtRow(rec, 'jc-fmt', false)}
       </div>
-      ${body(rec, 24, 'jc-body')}
+      ${body(rec, 24)}
       ${plateRow(rec)}
       ${colophon(rec)}
     </div>
@@ -540,12 +551,16 @@ function passport(rec: Review): string {
    the book was liked. The table used to be labelled as a foundry would label
    it — Cut by / Extent / Family — which is the dust jacket's "Extent" fault
    again: trade language on a card somebody hands to a friend. Plain Author /
-   Started / Finished / Pages / Series; the showings are the metaphor. ── */
+   Started / Finished / Pages / Series.
+
+   The showing is the metaphor, and there is exactly ONE of it. The card used
+   to print the title four times — once at display size and again at 30, 19
+   and 13px as a waterfall — which is what a foundry does to show a face at
+   every size, and is nonsense when the thing being set is the name of a book.
+   It read as a bug, not as a specimen. ── */
 function specimen(rec: Review): string {
   const row = (label: string, value: string) =>
     `<div class="ts-row"><span class="lbl">${label}</span><span class="ts-val">${value}</span></div>`
-  const step = (px: number) =>
-    `<div class="ts-step"><span class="ts-pt">${px}</span><span class="ts-spec" style="font-size:${px}px">${escapeHtml(rec.title)}</span></div>`
   return `<article class="card card--teal ts" style="--rot:-.3deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     ${patch(200)}
     <div class="ts-head">
@@ -556,11 +571,6 @@ function specimen(rec: Review): string {
     <div class="ts-showing">
       <span class="ts-pt ts-pt--big">72</span>
       <div class="ts-display">${escapeHtml(rec.title)}</div>
-    </div>
-    <div class="ts-steps">
-      ${step(30)}
-      ${step(19)}
-      ${step(13)}
     </div>
     <hr class="ts-rule">
     <div class="ts-cols">
