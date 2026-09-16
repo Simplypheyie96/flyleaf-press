@@ -40,14 +40,24 @@ function fmtLine(rec: Review, stack?: boolean): string {
   return fmtRow(rec, stack ? 'fmt--stack' : '')
 }
 
-function meta(label: string, value: string): string {
-  return `<div><div class="lbl">${label}</div><div class="val">${value}</div></div>`
+function meta(label: string, value: string, cls = ''): string {
+  return `<div${cls ? ` class="${cls}"` : ''}><div class="lbl">${label}</div><div class="val">${value}</div></div>`
 }
 
 /* The extent of the book, in the card's own register. Omitted entirely when
    nothing knew the length — the card never prints a guess or a dash. */
 function pagesMeta(rec: Review): string {
   return rec.pages ? meta('Pages', String(rec.pages)) : ''
+}
+/* What the book is about, in the catalogues' own words. The separator binds to
+   the phrase BEFORE it with a non-breaking space, so a lane narrow enough to
+   wrap can never start a line with a dot. Omitted whole when nothing came
+   back — the same rule the page count takes. */
+function tagsText(rec: Review): string {
+  return (rec.tags ?? []).map(escapeHtml).join('&nbsp;· ')
+}
+function tagsMeta(rec: Review, cls = ''): string {
+  return rec.tags?.length ? meta('Tags', tagsText(rec), cls) : ''
 }
 
 /* Real cover or nothing — no generated placeholder, ever. */
@@ -110,6 +120,7 @@ function archive(rec: Review): string {
       ${pagesMeta(rec)}
       <div><div class="lbl">Format</div><div style="margin-top:9px">${fmtLine(rec, true)}</div></div>
       ${rec.series ? meta('Series', `${escapeHtml(rec.series)}${rec.seriesNo ? '<br>' + escapeHtml(rec.seriesNo) : ''}`) : ''}
+      ${tagsMeta(rec)}
     </div>
     <div class="s1-main">
       <div class="s1-head">
@@ -152,6 +163,7 @@ function masthead(rec: Review): string {
           ${pagesMeta(rec)}
         </div>
         <div><div class="lbl">Format</div><div style="margin-top:8px">${fmtLine(rec)}</div></div>
+        ${tagsMeta(rec)}
       </div>
     </div>
     ${body(rec, 30)}
@@ -189,6 +201,7 @@ function catalogue(rec: Review): string {
         ${rec.pages ? `<div class="s3-row"><span class="lbl">Pages</span><span class="val">${rec.pages}</span></div>` : ''}
         ${rec.series ? `<div class="s3-row"><span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
         <div class="s3-row"><span class="lbl lbl--fmt">Format</span>${fmtLine(rec)}</div>
+        ${rec.tags?.length ? `<div class="s3-row"><span class="lbl">Tags</span><span class="val">${tagsText(rec)}</span></div>` : ''}
       </div>
     </div>
     ${body(rec, 24)}
@@ -226,6 +239,7 @@ function scrapbook(rec: Review): string {
           ${rec.series ? meta('Series', seriesLine(rec)) : ''}
         </div>
         <div><div class="lbl">Format</div><div style="margin-top:8px">${fmtLine(rec)}</div></div>
+        ${tagsMeta(rec)}
       </div>
     </div>
     ${body(rec, 28)}
@@ -253,6 +267,7 @@ function fieldnotes(rec: Review): string {
           <span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span>
           ${rec.pages ? `<span class="lbl">Pages</span><span class="val">${rec.pages}</span>` : ''}
           <span class="lbl lbl--fmt">Format</span>${fmtLine(rec)}
+          ${rec.tags?.length ? `<span class="lbl">Tags</span><span class="val">${tagsText(rec)}</span>` : ''}
         </div>
         <div class="s5-rate">${ratingBlock(rec.rating, 22)}</div>
       </div>
@@ -292,6 +307,7 @@ function jacket(rec: Review): string {
           ${rec.pages ? `<span class="lbl">Pages</span><span class="val">${rec.pages}</span>` : ''}
           ${rec.series ? `<span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span>` : ''}
           <span class="lbl lbl--fmt">Format</span>${fmtLine(rec)}
+          ${rec.tags?.length ? `<span class="lbl">Tags</span><span class="val">${tagsText(rec)}</span>` : ''}
         </div>
       </div>
     </div>
@@ -328,6 +344,7 @@ function airmail(rec: Review): string {
           <div><span class="lbl">Finished</span><span class="val">${prettyDate(rec.finished)}</span></div>
           ${rec.pages ? `<div><span class="lbl">Pages</span><span class="val">${rec.pages}</span></div>` : ''}
           ${rec.series ? `<div><span class="lbl">Series</span><span class="val">${seriesLine(rec)}</span></div>` : ''}
+          ${rec.tags?.length ? `<div><span class="lbl">Tags</span><span class="val">${tagsText(rec)}</span></div>` : ''}
         </div>
         <div class="s7-fmt">${fmtLine(rec)}</div>
         <div class="s7-rate">${ratingBlock(rec.rating, 22)}</div>
@@ -381,6 +398,7 @@ function herbarium(rec: Review): string {
         ${meta('Finished', prettyDate(rec.finished))}
         ${pagesMeta(rec)}
         ${meta('Rating', `${fmtRating(rec.rating)} / 5`)}
+        ${tagsMeta(rec, 'ct-tags')}
       </div>
       <div class="hb-det-foot">
         <div class="hb-det-fmt">
@@ -416,6 +434,7 @@ function broadside(rec: Review): string {
         ${meta('Finished', prettyDate(rec.finished))}
         ${pagesMeta(rec)}
         ${rec.series ? meta('Series', seriesLine(rec)) : ''}
+        ${tagsMeta(rec, 'ct-tags')}
       </div>
     </div>
     ${fmtRow(rec, 'bs-fmt')}
@@ -433,8 +452,8 @@ function broadside(rec: Review): string {
    spine is the only place in the app where type runs vertically, and the
    tracks are the reading's facts listed the way a tape lists its songs. ── */
 function jcard(rec: Review): string {
-  const track = (label: string, value: string) =>
-    `<div class="jc-track"><span class="lbl">${label}</span><i aria-hidden="true"></i><span class="jc-val">${value}</span></div>`
+  const track = (label: string, value: string, cls = '') =>
+    `<div class="jc-track${cls}"><span class="lbl">${label}</span><i aria-hidden="true"></i><span class="jc-val">${value}</span></div>`
   return `<article class="card card--apricot jc" style="--rot:-.7deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">
     <div class="jc-spine">
       <span>${escapeHtml(rec.title)}</span>
@@ -456,6 +475,7 @@ function jcard(rec: Review): string {
         ${track('01 · Started', prettyDate(rec.started))}
         ${track('02 · Finished', prettyDate(rec.finished))}
         ${rec.pages ? track('03 · Pages', String(rec.pages)) : ''}
+        ${rec.tags?.length ? track('04 · Tags', tagsText(rec), ' jc-track--tags') : ''}
       </div>
       <div class="jc-fmt-row">
         <span class="lbl">Format</span>
@@ -521,6 +541,7 @@ function passport(rec: Review): string {
           ${line('Author', escapeHtml(rec.author))}
           ${rec.series ? line('Series', seriesLine(rec)) : ''}
           ${rec.pages ? line('Pages', String(rec.pages)) : ''}
+          ${rec.tags?.length ? line('Tags', tagsText(rec)) : ''}
           <div class="pp-line pp-line--rate">
             <span class="lbl">Rating</span>
             <span class="pp-val"><span class="r-num">${fmtRating(rec.rating)}</span>${starRow(rec.rating, 17)}</span>
@@ -580,6 +601,7 @@ function specimen(rec: Review): string {
         ${row('Finished', prettyDate(rec.finished))}
         ${rec.pages ? row('Pages', String(rec.pages)) : ''}
         ${rec.series ? row('Series', seriesLine(rec)) : ''}
+        ${rec.tags?.length ? row('Tags', tagsText(rec)) : ''}
       </div>
       <figure class="ts-cut">
         ${cover(rec)}

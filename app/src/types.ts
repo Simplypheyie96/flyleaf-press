@@ -168,6 +168,14 @@ export interface Review {
    * printing a guess.
    */
   pages?: number
+  /**
+   * What the book is about, in the catalogues' own words — filled from Open
+   * Library's subjects, Apple's genres and Google's categories at the moment
+   * the book is added, canonicalised by `src/tags.ts`, and editable like the
+   * page count. Optional, and absent means none: a review written before this
+   * existed simply prints no tag line, and nothing is migrated.
+   */
+  tags?: string[]
   /** the review text — paragraphs separated by blank lines */
   body: string
   plates: Plate[]

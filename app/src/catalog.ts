@@ -4,6 +4,8 @@
    ISBN by shape not check digit, and keep the cover pick as an INDEX into
    the candidate list, never a URL. */
 
+import { canonTags, type TagSource } from './tags'
+
 export interface Candidate {
   title: string
   author: string
@@ -15,7 +17,13 @@ export interface Candidate {
   pages?: number
   /** candidate cover URLs, best first — the user's pick is an index into this */
   covers: string[]
-  source: 'openlibrary' | 'apple' | 'google'
+  source: TagSource
+  /** the raw category words each catalogue gave, kept per source until the
+      merge — agreement between catalogues is what ranks them, and that only
+      exists once the duplicate rows have folded together */
+  subjects?: Partial<Record<TagSource, string[]>>
+  /** those words canonicalised and ranked, filled in by `searchBooks` */
+  tags?: string[]
 }
 
 export interface SearchResult {
@@ -153,7 +161,9 @@ export function amazonCover(isbn10: string): string {
    in the default set — an ISBN lookup without this list came back with every
    candidate's `pages` undefined, which is what made the Pages field stop
    auto-filling for the most precise way to search. Both branches ask for it. */
-const OL_FIELDS = 'title,author_name,first_publish_year,isbn,cover_i,number_of_pages_median'
+/* `subject` is the only addition that costs anything, and it is small:
+   measured on an 8-doc search, 401 → 1215 bytes. */
+const OL_FIELDS = 'title,author_name,first_publish_year,isbn,cover_i,number_of_pages_median,subject'
 
 async function searchOpenLibrary(q: string): Promise<Candidate[]> {
   const url = isIsbn(q)
@@ -176,6 +186,7 @@ async function searchOpenLibrary(q: string): Promise<Candidate[]> {
          to "how long is this book" when we don't know which printing was read */
       pages: d.number_of_pages_median || undefined,
       covers,
+      subjects: d.subject?.length ? { openlibrary: d.subject.slice(0, 40) } : undefined,
       source: 'openlibrary',
     }
   })
@@ -194,6 +205,7 @@ async function searchApple(q: string): Promise<Candidate[]> {
     author: r.artistName || 'Unknown',
     year: r.releaseDate ? r.releaseDate.slice(0, 4) : undefined,
     covers: r.artworkUrl100 ? [r.artworkUrl100.replace('100x100', '600x600')] : [],
+    subjects: r.genres?.length ? { apple: r.genres } : undefined,
     source: 'apple',
   }))
 }
@@ -219,6 +231,7 @@ async function searchGoogle(q: string): Promise<Candidate[]> {
       year: v.publishedDate ? v.publishedDate.slice(0, 4) : undefined,
       pages: v.pageCount || undefined,
       covers,
+      subjects: v.categories?.length ? { google: v.categories } : undefined,
       source: 'google',
     }
   })
@@ -254,6 +267,10 @@ export async function searchBooks(q: string): Promise<SearchResult> {
         if (!existing.series && c.series) existing.series = c.series
         /* a page count from a less-trusted catalogue still beats none */
         if (!existing.pages && c.pages) existing.pages = c.pages
+        /* subjects are kept per source, never folded into one list: two
+           catalogues saying "Historical Fiction" is the strongest signal
+           there is, and a merged list of strings cannot say that */
+        if (c.subjects) existing.subjects = { ...existing.subjects, ...c.subjects }
       } else {
         index.set(key, c)
         merged.push(c)
@@ -265,6 +282,15 @@ export async function searchBooks(q: string): Promise<SearchResult> {
      and Apple does not carry at all) still shows its art at Add time. Last,
      because catalogue art is usually cleaner when it exists. */
   for (const c of merged) {
+    c.tags = c.subjects
+      ? canonTags(
+          (Object.entries(c.subjects) as Array<[TagSource, string[]]>).map(([source, labels]) => ({
+            source,
+            labels,
+          }))
+        )
+      : undefined
+    if (c.tags && !c.tags.length) c.tags = undefined
     const ten = c.isbn ? isbn10Of(c.isbn) : undefined
     if (!ten) continue
     const u = amazonCover(ten)

@@ -641,6 +641,25 @@ body::before{
   background:var(--ink); border-color:var(--ink); color:var(--paper);
 }
 
+/* Tag chips — the format chips' shape and nothing else of their treatment. A
+   tag is a real phrase in its own case ("Epic Fantasy"), so it is not set in
+   the uppercase micro-label a format takes; and it is REMOVED rather than
+   toggled, so the cross is inside the chip's own target instead of being a
+   second control beside it. The row hides itself when there are no tags — an
+   empty flex row would otherwise leave a gap above the input. */
+.tag-pick{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+.tag-pick:empty{ display:none; }
+.tag-chip{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:8px 12px; min-height:38px; cursor:pointer;
+  border:1px solid var(--rule); border-radius:999px; background:var(--card-w);
+  font-family:var(--sans); font-size:12.5px; color:var(--ink); text-align:left;
+  transition:color 160ms var(--ease), border-color 160ms var(--ease);
+}
+.tag-chip i{ font-style:normal; font-size:15px; line-height:1; color:var(--ink-soft); }
+.tag-chip:hover{ border-color:var(--ink); }
+.tag-chip:hover i{ color:var(--ink); }
+
 /* The hand picker. Chips like the format ones, except the label is a SAMPLE —
    each name is drawn in the face it names, at that face's own size, because
    three identical words in one font are three choices nobody can tell apart.

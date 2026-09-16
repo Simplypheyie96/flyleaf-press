@@ -8,6 +8,7 @@ import { StarInput } from '../components/StarInput'
 import { DateField } from '../components/DateField'
 import { StylePicker } from '../components/StylePicker'
 import { coverToDataUrl, lookupPages, searchBooks, type Candidate } from '../catalog'
+import { MAX_TAGS, mergeTags, tagKey } from '../tags'
 import { todayIso } from '../format'
 
 const fileToDataUrl = (f: File): Promise<string> =>
@@ -56,6 +57,12 @@ export function Write() {
   /* held as a string so the field can be emptied — a half-typed "12" must not
      become 12 and then fight the next keystroke */
   const [pages, setPages] = useState(candidate?.pages ? String(candidate.pages) : '')
+  /* what the book is about, in the catalogues' own words. The search already
+     asked all three and canonicalised what came back, so a picked candidate
+     arrives with these filled and no request is spent here. Editable like the
+     page count, and empty is a perfectly good answer. */
+  const [tags, setTags] = useState<string[]>(candidate?.tags ?? [])
+  const [tagDraft, setTagDraft] = useState('')
   const [started, setStarted] = useState('')
   const [finished, setFinished] = useState(todayIso())
   const [formats, setFormats] = useState<FormatName[]>([])
@@ -171,6 +178,7 @@ export function Write() {
       setTitle(r.title); setAuthor(r.author)
       setSeries(r.series ?? ''); setSeriesNo(r.seriesNo ?? '')
       setPages(r.pages ? String(r.pages) : '')
+      setTags(r.tags ?? [])
       setStarted(r.started ?? ''); setFinished(r.finished)
       setFormats(r.formats); setRating(r.rating)
       setBody(r.body); setStyle(r.style); setHand(liveHand(r.hand)); setPlates(r.plates)
@@ -197,6 +205,17 @@ export function Write() {
 
   const toggleFormat = (f: FormatName) =>
     setFormats((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]))
+
+  /* a typed tag joins the list the same way a catalogue's does — trimmed,
+     collapsed, and folded in only if nothing already there means the same
+     word. `mergeTags` is the fold the search runs on, so "epic fantasy"
+     cannot land beside "Epic Fantasy". */
+  const addTag = (raw: string) => {
+    const t = raw.replace(/\s+/g, ' ').trim()
+    setTagDraft('')
+    if (!tagKey(t)) return
+    setTags((cur) => mergeTags(cur, [t]).slice(0, MAX_TAGS))
+  }
 
   const addPlate = async (file: File) => {
     const image = await fileToDataUrl(file)
@@ -225,6 +244,7 @@ export function Write() {
         covers: covers.length ? covers : undefined,
         isbn: existing?.isbn ?? candidate?.isbn,
         pages: Number(pages) > 0 ? Number(pages) : undefined,
+        tags: tags.length ? tags : undefined,
         body: body.trim(),
         plates: plates.map((p) => ({ ...p, caption: p.caption.trim() })),
         style,
@@ -298,6 +318,26 @@ export function Write() {
             <label className="ui-lbl" htmlFor="w-pages">Pages</label>
             <input id="w-pages" className="inp-num" type="number" inputMode="numeric" min={1} max={99999}
               value={pages} placeholder="Auto-filled" onChange={(e) => setPages(e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="ui-lbl" htmlFor="w-tag">Tags</label>
+            <div className="tag-pick">
+              {tags.map((t) => (
+                <button key={t} type="button" className="tag-chip" aria-label={`Remove ${t}`}
+                  onClick={() => setTags((cur) => cur.filter((x) => x !== t))}>
+                  {t}<i aria-hidden="true">×</i>
+                </button>
+              ))}
+            </div>
+            <input id="w-tag" type="text" value={tagDraft} autoComplete="off"
+              disabled={tags.length >= MAX_TAGS}
+              placeholder={tags.length >= MAX_TAGS ? `${MAX_TAGS} tags is all a card prints` : 'e.g. Epic Fantasy'}
+              onChange={(e) => setTagDraft(e.target.value)}
+              onBlur={() => addTag(tagDraft)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagDraft) }
+                else if (e.key === 'Backspace' && !tagDraft) setTags((cur) => cur.slice(0, -1))
+              }} />
           </div>
           <div className="field">
             <span className="ui-lbl">Cover</span>

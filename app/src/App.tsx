@@ -13,6 +13,7 @@ import { Months } from './pages/Months'
 import { MonthDetail } from './pages/MonthDetail'
 import { HopefulsDetail } from './pages/HopefulsDetail'
 import { SettingsPage } from './pages/SettingsPage'
+import { backfillTags } from './import/tags'
 import type { Settings } from './types'
 
 /* Chrome theme only — the cards re-pin the printed palette in CSS. 'system'
@@ -46,12 +47,31 @@ async function seedTheDevServer() {
   await seedIfEmpty()
 }
 
+/* Books written up before tags existed get them without anybody going to look
+   for a button. One quiet sweep per app open, started late enough that it is
+   never competing with the first screen for the network, and only over rows
+   that have no tags — so a fully tagged shelf starts nothing at all and an
+   interrupted one resumes where it stopped. It paces itself, defers a
+   rate-limited book rather than stalling, and the Settings row shows it running
+   with a Stop beside it. */
+function useQuietTagSweep(ready: boolean) {
+  useEffect(() => {
+    if (!ready) return
+    const t = setTimeout(() => {
+      if (navigator.onLine) void backfillTags()
+    }, 6000)
+    return () => clearTimeout(t)
+  }, [ready])
+}
+
 export default function App() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
     Promise.all([getSettings(), seedTheDevServer()]).then(() => setReady(true))
   }, [])
+
+  useQuietTagSweep(ready)
 
   const settings = useLiveQuery(() => db.settings.get(1), [])
   useTheme(settings)

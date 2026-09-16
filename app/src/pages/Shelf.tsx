@@ -79,12 +79,18 @@ export function Shelf({ settings }: { settings: Settings }) {
      and half of what anyone remembers about a book is a phrase they wrote about
      it rather than its title — "the one where I went on about the salt". The
      suggestions above stay title-and-author: a fragment from the middle of a
-     paragraph is a result, not something to autocomplete to. */
+     paragraph is a result, not something to autocomplete to.
+
+     Tags are in the haystack for the same reason the body is: "fantasy" is a
+     real way to ask the shelf a question, and the catalogues' word for a book
+     is often not a word anywhere in the review. They stay out of the
+     suggestions, where a tag would offer a whole shelf under one book's name. */
   const found = needle
     ? reviews.filter(
         (r) =>
           r.title.toLowerCase().includes(needle) ||
           r.author.toLowerCase().includes(needle) ||
+          (r.tags || []).some((t) => t.toLowerCase().includes(needle)) ||
           (r.body || '').toLowerCase().includes(needle)
       )
     : reviews
@@ -224,7 +230,7 @@ export function Shelf({ settings }: { settings: Settings }) {
         {reviews.length > 0 && rows.length === 0 && (
           <div className="empty">
             <div className="ui-h">Nothing matches “{q.trim()}”</div>
-            <p>No title or author matches.</p>
+            <p>Nothing in a title, author, tag or review matches.</p>
           </div>
         )}
 

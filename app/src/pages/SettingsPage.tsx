@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { GoodreadsSheet } from '../components/GoodreadsSheet'
 import { backfillCovers, type Progress } from '../import/covers'
+import { backfillTags, stopTagSweep, tagSweep, watchTagSweep } from '../import/tags'
 import { Tip, TIP_JAR } from '../components/Tip'
 import { FROM_YEAR } from '../import/goodreads'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -44,6 +45,13 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   const [covMsg, setCovMsg] = useState('')
   const covAbort = useRef<AbortController | null>(null)
   const sweeping = cov !== null && cov.done < cov.total
+  /* the tag sweep — the same shape, and deliberately not the same run: both
+     spend the catalogues' allowance, so each refuses while the other is out */
+  const [tgSweep, setTgSweep] = useState(tagSweep)
+  useEffect(() => watchTagSweep(setTgSweep), [])
+  const tg = tgSweep.progress
+  const tgMsg = tgSweep.result
+  const tagging = tg !== null
   /* Live, because the row below is allowed to refuse. A button that offers to
      delete a library which does not exist, warns about consequences that
      cannot happen, and then reports success, is indistinguishable from a
@@ -52,6 +60,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   /* live for the same reason: the row below counts what it is about to look
      up, and refuses when there is nothing */
   const coverless = useLiveQuery(() => db.reviews.filter((r) => !r.cover).count(), [], -1)
+  const untagged = useLiveQuery(() => db.reviews.filter((r) => !r.tags?.length).count(), [], -1)
   /* rows the Goodreads import ADDED — its undo works on exactly these, so the
      row below only exists while there is an import to remove */
   const grCount = useLiveQuery(() => db.reviews.filter((r) => r.source === 'goodreads').count(), [], 0)
@@ -167,6 +176,10 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           (left > 0 ? ` ${left} still without one — run it again later to keep looking.` : ''),
     )
   }
+
+  /* The run itself lives in the module, so this is only a press: start one, or
+     stop the one that is out — including the quiet one the app starts on open. */
+  const runTagSweep = () => (tagging ? stopTagSweep() : void backfillTags())
 
   return (
     <div className="page">
@@ -339,9 +352,34 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               )}
               {covMsg && <p role="status">{covMsg}</p>}
             </div>
-            <button className="btn btn--ghost btn--sm" disabled={coverless < 1 && !sweeping}
+            <button className="btn btn--ghost btn--sm" disabled={(coverless < 1 || tagging) && !sweeping}
               onClick={() => void runCoverSweep()}>
               {sweeping ? 'Stop' : 'Find covers'}
+            </button>
+          </div>
+          <div className="set-row set-row--stack">
+            <div className="set-row-txt">
+              <div className="ui-lbl">Find missing tags</div>
+              <p>
+                {untagged === -1 ? 'Counting the shelf\u2026'
+                  : untagged === 0 ? 'Every book on the shelf is tagged.'
+                  : `${untagged} book${untagged === 1 ? ' has' : 's have'} no tags. Reads the catalogues\u2019 own subject words for each one \u2014 slowly, so they don\u2019t turn us away. Books added from now on are tagged as they are saved.`}
+              </p>
+              {tg && tg.total > 0 && (
+                <>
+                  <div className="gr-bar" role="progressbar" aria-valuenow={tg.done} aria-valuemin={0} aria-valuemax={tg.total}>
+                    <span style={{ width: `${Math.round((tg.done / tg.total) * 100)}%` }} />
+                  </div>
+                  <p className="gr-now">
+                    {tg.waiting ? 'Waiting out a rate limit to retry the skipped books\u2026' : tg.current ?? `${tg.done} of ${tg.total}`}
+                  </p>
+                </>
+              )}
+              {tgMsg && <p role="status">{tgMsg}</p>}
+            </div>
+            <button className="btn btn--ghost btn--sm" disabled={(untagged < 1 || sweeping) && !tagging}
+              onClick={() => void runTagSweep()}>
+              {tagging ? 'Stop' : 'Find tags'}
             </button>
           </div>
           {import.meta.env.DEV && (
