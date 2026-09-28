@@ -13,3 +13,13 @@ dev-dist/
 # stray Playwright captures
 .playwright-mcp/
 d?-*.png
+
+# Reference images stay local; only the transcribed notes are pushed.
+review app inspo/
+refs/**/*.jpg
+refs/**/*.jpeg
+refs/**/*.png
+refs/**/*.JPG
+refs/**/*.PNG
+refs/**/*.mp4
+refs/**/*.MP4
