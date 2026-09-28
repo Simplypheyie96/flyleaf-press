@@ -5,7 +5,7 @@ reformat, or refuse to share a review of real length — this one shares any rev
 printed-looking card, splitting to a second page at a paragraph boundary when it needs to.
 
 The app itself lives in [`app/`](app/). Everything else at this level is design material:
-`DESIGN.md` (the visual system), `refs/` (reference screenshots), and prototype files.
+`refs/` (transcribed reference notes) and prototype files.
 
 ## Features
 

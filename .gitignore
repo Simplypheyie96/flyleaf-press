@@ -23,3 +23,7 @@ refs/**/*.JPG
 refs/**/*.PNG
 refs/**/*.mp4
 refs/**/*.MP4
+
+# Design memory stays on the maker's machine, not on GitHub.
+CLAUDE.md
+DESIGN.md
