@@ -72,13 +72,18 @@ export function lastSync(): number | null {
     shelf of uploaded covers is megabytes, and computing a string must not pull
     them all out of the database. */
 async function signature(): Promise<string> {
-  const [reviews, graves, newest] = await Promise.all([
+  const [reviews, graves, newest, hopefuls, hopefulEdited] = await Promise.all([
     db.reviews.count(),
     db.graves.count(),
     db.reviews.orderBy('editedAt').last(),
+    db.hopefuls.count(),
+    db.hopefuls.orderBy('editedAt').last(),
   ])
-  const created = await db.reviews.orderBy('createdAt').last()
-  return `${reviews}.${graves}.${newest?.editedAt ?? 0}.${created?.createdAt ?? 0}`
+  const [created, hopefulCreated] = await Promise.all([
+    db.reviews.orderBy('createdAt').last(),
+    db.hopefuls.orderBy('createdAt').last(),
+  ])
+  return `${reviews}.${graves}.${newest?.editedAt ?? 0}.${created?.createdAt ?? 0}.${hopefuls}.${hopefulEdited?.editedAt ?? 0}.${hopefulCreated?.createdAt ?? 0}`
 }
 
 /** Did anything get written on this device while it was not connected? */
@@ -92,7 +97,7 @@ export function wroteWhileOffline(): boolean {
     device that predates the flag, and the honest fallback for every library
     already on a phone when this shipped. */
 export async function hasUnsharedWork(): Promise<boolean> {
-  if ((await db.reviews.count()) === 0) return false
+  if ((await db.reviews.count()) + (await db.hopefuls.count()) === 0) return false
   return wroteWhileOffline() || lastSync() === null
 }
 
@@ -312,6 +317,9 @@ export function startAutoSync() {
   db.reviews.hook('creating', touched)
   db.reviews.hook('updating', touched)
   db.reviews.hook('deleting', touched)
+  db.hopefuls.hook('creating', touched)
+  db.hopefuls.hook('updating', touched)
+  db.hopefuls.hook('deleting', touched)
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') attempt()

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
+import { dropHopeful } from '../sync/backup'
 import type { ExportShape, Hopeful, Review, Settings, StyleId } from '../types'
 import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, liveStyle } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
@@ -400,7 +401,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm"
-                          onClick={() => db.hopefuls.delete(h.id!)}
+                          onClick={() => dropHopeful(h)}
                         >
                           Remove
                         </button>
@@ -440,7 +441,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
           covers={editing.covers ?? []}
           current={editing.cover}
           seed={`${editing.title} ${editing.author}`}
-          onCovers={(next) => db.hopefuls.update(editing.id!, { covers: next })}
+          onCovers={(next) => db.hopefuls.update(editing.id!, { covers: next, editedAt: Date.now() })}
           onPick={(cover) => db.hopefuls.update(editing.id!, { cover, editedAt: Date.now() })}
           onClose={() => setCoverFor(null)}
         />
