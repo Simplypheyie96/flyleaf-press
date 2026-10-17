@@ -18,7 +18,7 @@ import { db } from '../db'
 import { exportBlob, mergeLibrary } from './backup'
 import { deviceName } from './device'
 import { dropLibraries, findLibrary, readLibrary, writeLibrary } from './drive'
-import { SYNC_EVENT, optedIn, signIn, silentToken, tokenHeld } from './google'
+import { SYNC_EVENT, dropToken, optedIn, signIn, silentToken, tokenHeld } from './google'
 
 const SYNCED_AT_KEY = 'flyleaf-press-synced-at'
 /** What this device looked like the last time a sync finished, so an unchanged
@@ -137,11 +137,14 @@ async function run(token: string): Promise<SyncResult> {
   }
 
   /* Exported AFTER the merge, so what goes up is the union rather than this
-     device's side of it. This is the line that makes overwriting safe. */
+     device's side of it. This is the line that makes overwriting safe. The
+     signature is taken BEFORE the export: an edit made while a shelf of covers
+     is uploading must leave the mark stale, or the next sync would skip it. */
+  const sent = await signature()
   const saved = await writeLibrary(token, await exportBlob(), deviceName(), remote?.id)
 
   write(SYNCED_AT_KEY, String(Date.now()))
-  write(MARK_KEY, `${saved.modifiedTime} ${await signature()}`)
+  write(MARK_KEY, `${saved.modifiedTime} ${sent}`)
   /* Whatever was written while disconnected has now been up and merged, so it
      is no longer a reason to stop and ask anybody anything. */
   write(OFFLINE_KEY, '')
@@ -163,6 +166,7 @@ export function syncNow(): Promise<SyncResult> {
       /* One retry, and only for the hour being up. Everything else is a real
          failure and says so. */
       if (!(error instanceof Error) || error.message !== 'expired') throw error
+      dropToken()
       return run(await silentToken())
     }
   })().finally(() => {
