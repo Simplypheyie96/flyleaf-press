@@ -32,7 +32,7 @@ db.version(3).stores({
   hopefuls: '++id, month, createdAt, editedAt',
 })
 
-const SETTINGS_DEFAULTS: Settings = {
+export const SETTINGS_DEFAULTS: Settings = {
   id: 1,
   name: '',
   face: '',
