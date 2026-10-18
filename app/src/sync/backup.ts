@@ -15,6 +15,15 @@
 import { db } from '../db'
 import type { Grave, Hopeful, Review } from '../types'
 
+/** Every table that holds somebody's work, and so must travel. sync.ts
+    watches exactly these, and `npm run check:sync` fails the build when a
+    table in db.ts is in neither list — a new kind of row cannot again be
+    added without being synced, the way hopefuls once were. */
+export const SYNCED = ['reviews', 'hopefuls'] as const
+/** Tables that do not travel as rows: settings stays per device (only the name
+    and face ride along, as `profile`), and graves travel inside the merge. */
+export const NOT_ROWS = ['settings', 'graves'] as const
+
 export const FORMAT = 'flyleaf-press'
 export const VERSION = 4
 
