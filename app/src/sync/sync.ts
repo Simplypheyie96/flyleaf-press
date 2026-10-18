@@ -18,7 +18,7 @@ import { db } from '../db'
 import { exportBlob, mergeLibrary } from './backup'
 import { deviceName } from './device'
 import { dropLibraries, findLibrary, readLibrary, writeLibrary } from './drive'
-import { SYNC_EVENT, optedIn, signIn, silentToken, tokenHeld } from './google'
+import { SYNC_EVENT, dropToken, optedIn, signIn, silentToken, tokenHeld } from './google'
 
 const SYNCED_AT_KEY = 'flyleaf-press-synced-at'
 /** What this device looked like the last time a sync finished, so an unchanged
@@ -72,13 +72,18 @@ export function lastSync(): number | null {
     shelf of uploaded covers is megabytes, and computing a string must not pull
     them all out of the database. */
 async function signature(): Promise<string> {
-  const [reviews, graves, newest] = await Promise.all([
+  const [reviews, graves, newest, hopefuls, hopefulEdited] = await Promise.all([
     db.reviews.count(),
     db.graves.count(),
     db.reviews.orderBy('editedAt').last(),
+    db.hopefuls.count(),
+    db.hopefuls.orderBy('editedAt').last(),
   ])
-  const created = await db.reviews.orderBy('createdAt').last()
-  return `${reviews}.${graves}.${newest?.editedAt ?? 0}.${created?.createdAt ?? 0}`
+  const [created, hopefulCreated] = await Promise.all([
+    db.reviews.orderBy('createdAt').last(),
+    db.hopefuls.orderBy('createdAt').last(),
+  ])
+  return `${reviews}.${graves}.${newest?.editedAt ?? 0}.${created?.createdAt ?? 0}.${hopefuls}.${hopefulEdited?.editedAt ?? 0}.${hopefulCreated?.createdAt ?? 0}`
 }
 
 /** Did anything get written on this device while it was not connected? */
@@ -92,7 +97,7 @@ export function wroteWhileOffline(): boolean {
     device that predates the flag, and the honest fallback for every library
     already on a phone when this shipped. */
 export async function hasUnsharedWork(): Promise<boolean> {
-  if ((await db.reviews.count()) === 0) return false
+  if ((await db.reviews.count()) + (await db.hopefuls.count()) === 0) return false
   return wroteWhileOffline() || lastSync() === null
 }
 
@@ -132,11 +137,14 @@ async function run(token: string): Promise<SyncResult> {
   }
 
   /* Exported AFTER the merge, so what goes up is the union rather than this
-     device's side of it. This is the line that makes overwriting safe. */
+     device's side of it. This is the line that makes overwriting safe. The
+     signature is taken BEFORE the export: an edit made while a shelf of covers
+     is uploading must leave the mark stale, or the next sync would skip it. */
+  const sent = await signature()
   const saved = await writeLibrary(token, await exportBlob(), deviceName(), remote?.id)
 
   write(SYNCED_AT_KEY, String(Date.now()))
-  write(MARK_KEY, `${saved.modifiedTime} ${await signature()}`)
+  write(MARK_KEY, `${saved.modifiedTime} ${sent}`)
   /* Whatever was written while disconnected has now been up and merged, so it
      is no longer a reason to stop and ask anybody anything. */
   write(OFFLINE_KEY, '')
@@ -158,6 +166,7 @@ export function syncNow(): Promise<SyncResult> {
       /* One retry, and only for the hour being up. Everything else is a real
          failure and says so. */
       if (!(error instanceof Error) || error.message !== 'expired') throw error
+      dropToken()
       return run(await silentToken())
     }
   })().finally(() => {
@@ -312,6 +321,9 @@ export function startAutoSync() {
   db.reviews.hook('creating', touched)
   db.reviews.hook('updating', touched)
   db.reviews.hook('deleting', touched)
+  db.hopefuls.hook('creating', touched)
+  db.hopefuls.hook('updating', touched)
+  db.hopefuls.hook('deleting', touched)
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') attempt()

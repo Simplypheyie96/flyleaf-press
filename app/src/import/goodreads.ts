@@ -22,7 +22,7 @@
 
 import type { FormatName, Review } from '../types'
 import { db } from '../db'
-import { fingerprint } from '../sync/backup'
+import { bury, fingerprint } from '../sync/backup'
 
 /* Where the import window starts. Not a filter for one calendar year — a
    FLOOR, so the feature keeps working next year without an edit. Today that
@@ -389,6 +389,9 @@ export async function replaceDuplicates(dups: GrBook[]): Promise<number> {
     if (b.isbn && !row.isbn) patch.isbn = b.isbn
     if (!Object.keys(patch).length) continue
     patch.editedAt = Date.now()
+    /* a new finished date is a new fingerprint — bury the old one so the other
+       device does not hand it back as a second copy */
+    if (patch.finished && patch.finished !== row.finished) await bury(row)
     await db.reviews.update(row.id, patch)
     replaced++
   }

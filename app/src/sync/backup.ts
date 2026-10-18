@@ -13,16 +13,19 @@
    makes merging idempotent: syncing twice adds nothing the second time. */
 
 import { db } from '../db'
-import type { Grave, Review } from '../types'
+import type { Grave, Hopeful, Review } from '../types'
 
 export const FORMAT = 'flyleaf-press'
-export const VERSION = 3
+export const VERSION = 4
 
 export interface LibraryFile {
   app: string
   version: number
   reviews: Review[]
   graves?: Grave[]
+  /* The months' picked-but-unread books. Optional, because a version-3 file
+     predates them — and absent is read as "don't know", never as "none". */
+  hopefuls?: Hopeful[]
   /* Who was writing these — the name and the drawn face, nothing else. A
      library restored onto a new phone that came back as an anonymous shelf
      would have restored the books and lost the reader; the name is printed on
@@ -39,20 +42,28 @@ export function fingerprint(r: Pick<Review, 'title' | 'author' | 'finished'>): s
   return `${flat(r.title)}|${flat(r.author)}|${r.finished ?? ''}`
 }
 
+/** A hopeful is the same book picked for the same month. The `h|` prefix keeps
+    its headstones in the one graves table without ever matching a review's. */
+export function hopefulPrint(h: Pick<Hopeful, 'month' | 'title' | 'author'>): string {
+  const flat = (s: string) => (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+  return `h|${h.month}|${flat(h.title)}|${flat(h.author)}`
+}
+
 /** When a row was last written. Rows from before sync existed have no stamp;
     the day they were created is the honest answer for them. */
-export function stampOf(r: Review): number {
+export function stampOf(r: Review | Hopeful): number {
   return r.editedAt ?? r.createdAt ?? 0
 }
 
 export async function exportLibrary(): Promise<LibraryFile> {
-  const [reviews, graves, settings] = await Promise.all([
+  const [reviews, graves, hopefuls, settings] = await Promise.all([
     db.reviews.toArray(),
     db.graves.toArray(),
+    db.hopefuls.toArray(),
     db.settings.get(1),
   ])
   const profile = settings ? { name: settings.name, face: settings.face } : undefined
-  return { app: FORMAT, version: VERSION, reviews, graves, profile }
+  return { app: FORMAT, version: VERSION, reviews, graves, hopefuls, profile }
 }
 
 export async function exportBlob(): Promise<Blob> {
@@ -63,6 +74,12 @@ export async function exportBlob(): Promise<Blob> {
     device instead of being undone by it. Called by every delete path. */
 export async function bury(r: Review): Promise<void> {
   await db.graves.put({ key: fingerprint(r), at: Date.now() })
+}
+
+/** Remove a hopeful and leave a headstone, for the same reason as `bury`. */
+export async function dropHopeful(h: Hopeful): Promise<void> {
+  await db.graves.put({ key: hopefulPrint(h), at: Date.now() })
+  await db.hopefuls.delete(h.id as number)
 }
 
 export interface MergeResult {
@@ -146,6 +163,30 @@ export async function mergeLibrary(text: string): Promise<MergeResult> {
       await db.reviews.delete(row.id as number)
       result.removed++
     }
+  }
+
+  /* Hopefuls, by the same rules: a row is only replaced by a later copy of
+     itself, and only a later headstone removes one. */
+  const myHopefuls = await db.hopefuls.toArray()
+  const hopefulsHere = new Map(myHopefuls.map((h) => [hopefulPrint(h), h]))
+  for (const raw of data.hopefuls ?? []) {
+    if (!raw?.title || !raw.month) continue
+    const key = hopefulPrint(raw)
+    const stamp = stampOf(raw)
+    const buried = graves.get(key)
+    if (buried !== undefined && buried >= stamp) continue
+    const { id: _drop, ...rest } = raw
+    const existing = hopefulsHere.get(key)
+    if (!existing) {
+      await db.hopefuls.add(rest as Hopeful)
+      hopefulsHere.set(key, rest as Hopeful)
+    } else if (stamp > stampOf(existing)) {
+      await db.hopefuls.update(existing.id as number, rest)
+    }
+  }
+  for (const [key, at] of graves) {
+    const row = hopefulsHere.get(key)
+    if (row?.id != null && stampOf(row) <= at) await db.hopefuls.delete(row.id)
   }
 
   /* Headstones travel on, so a third device still holding the review learns

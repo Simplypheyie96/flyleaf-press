@@ -382,6 +382,13 @@ export async function silentToken(): Promise<string> {
   }
 }
 
+/** Forget a token Drive has just refused, so the next request asks Google for
+    a fresh one instead of handing back the same dead one from memory. */
+export function dropToken() {
+  token = null
+  expiresAt = 0
+}
+
 /** Hand the token back to Google and forget the whole arrangement. The copy in
     Drive is deliberately left alone: signing out of a device must not delete
     somebody's library from their own Drive. Removing it is their call, made

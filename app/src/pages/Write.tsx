@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { db, getSettings, nextReviewNo } from '../db'
+import { bury, fingerprint } from '../sync/backup'
 import type { Review, StyleId, HandId, FormatName, Plate } from '../types'
 import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, HAND_IDS, HAND_NAMES, FORMAT_NAMES, liveHand } from '../types'
 import { HANDS, handProps } from '../fonts'
@@ -256,7 +257,14 @@ export function Write() {
            whose copy of a review is the current one */
         editedAt: Date.now(),
       }
-      const savedId = editing ? (await db.reviews.put({ ...rec, id: Number(id) }), Number(id)) : await db.reviews.add(rec as Review)
+      /* An edit that moves the title, author or finished date makes a new
+         fingerprint; the old one is buried, or the other device's copy comes
+         back as a second review. Spread over `existing` so fields the form
+         does not own (the Goodreads `source`) survive the save. */
+      if (editing && existing && fingerprint(existing) !== fingerprint(rec)) await bury(existing)
+      const savedId = editing
+        ? (await db.reviews.put({ ...existing, ...rec, id: Number(id) }), Number(id))
+        : await db.reviews.add(rec as Review)
       nav(`/review/${savedId}`, { replace: true })
     } finally {
       setSaving(false)
