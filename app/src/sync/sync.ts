@@ -15,7 +15,7 @@
    to, and does not change that. */
 
 import { db } from '../db'
-import { exportBlob, mergeLibrary } from './backup'
+import { SYNCED, exportBlob, mergeLibrary } from './backup'
 import { deviceName } from './device'
 import { dropLibraries, findLibrary, readLibrary, writeLibrary } from './drive'
 import { SYNC_EVENT, dropToken, optedIn, signIn, silentToken, tokenHeld } from './google'
@@ -72,18 +72,18 @@ export function lastSync(): number | null {
     shelf of uploaded covers is megabytes, and computing a string must not pull
     them all out of the database. */
 async function signature(): Promise<string> {
-  const [reviews, graves, newest, hopefuls, hopefulEdited] = await Promise.all([
-    db.reviews.count(),
-    db.graves.count(),
-    db.reviews.orderBy('editedAt').last(),
-    db.hopefuls.count(),
-    db.hopefuls.orderBy('editedAt').last(),
-  ])
-  const [created, hopefulCreated] = await Promise.all([
-    db.reviews.orderBy('createdAt').last(),
-    db.hopefuls.orderBy('createdAt').last(),
-  ])
-  return `${reviews}.${graves}.${newest?.editedAt ?? 0}.${created?.createdAt ?? 0}.${hopefuls}.${hopefulEdited?.editedAt ?? 0}.${hopefulCreated?.createdAt ?? 0}`
+  const parts = await Promise.all(
+    SYNCED.map(async (name) => {
+      const table = db.table(name)
+      const [count, edited, created] = await Promise.all([
+        table.count(),
+        table.orderBy('editedAt').last(),
+        table.orderBy('createdAt').last(),
+      ])
+      return `${count}.${edited?.editedAt ?? 0}.${created?.createdAt ?? 0}`
+    }),
+  )
+  return `${await db.graves.count()}.${parts.join('.')}`
 }
 
 /** Did anything get written on this device while it was not connected? */
@@ -97,7 +97,8 @@ export function wroteWhileOffline(): boolean {
     device that predates the flag, and the honest fallback for every library
     already on a phone when this shipped. */
 export async function hasUnsharedWork(): Promise<boolean> {
-  if ((await db.reviews.count()) + (await db.hopefuls.count()) === 0) return false
+  const counts = await Promise.all(SYNCED.map((name) => db.table(name).count()))
+  if (counts.every((n) => n === 0)) return false
   return wroteWhileOffline() || lastSync() === null
 }
 
@@ -318,12 +319,12 @@ export function startAutoSync() {
   /* The listeners go on unconditionally and `attempt` is the thing that
      checks — somebody who connects Drive halfway through a session would
      otherwise get no automatic sync until they next reloaded the app. */
-  db.reviews.hook('creating', touched)
-  db.reviews.hook('updating', touched)
-  db.reviews.hook('deleting', touched)
-  db.hopefuls.hook('creating', touched)
-  db.hopefuls.hook('updating', touched)
-  db.hopefuls.hook('deleting', touched)
+  for (const name of SYNCED) {
+    const table = db.table(name)
+    table.hook('creating', touched)
+    table.hook('updating', touched)
+    table.hook('deleting', touched)
+  }
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') attempt()
