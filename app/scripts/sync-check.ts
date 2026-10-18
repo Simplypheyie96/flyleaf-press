@@ -7,8 +7,8 @@
    in-memory IndexedDB — two devices are played by wiping between them. */
 
 import 'fake-indexeddb/auto'
-import { db } from '../src/db'
-import { NOT_ROWS, SYNCED, dropHopeful, bury, exportLibrary, mergeLibrary } from '../src/sync/backup'
+import { SETTINGS_DEFAULTS, db } from '../src/db'
+import { NOT_ROWS, SYNCED, deleteEverything, exportLibrary, mergeLibrary } from '../src/sync/backup'
 import type { Hopeful, Review } from '../src/types'
 
 type Synced = (typeof SYNCED)[number]
@@ -90,12 +90,12 @@ await mergeLibrary(edited)
 if ((await db.reviews.toArray())[0]?.body !== 'edited') fail('An edited review did not reach the other device.')
 if ((await db.hopefuls.toArray())[0]?.cover !== 'data:edited') fail('An edited hopeful did not reach the other device.')
 
-/* 5. A deletion reaches the other device, and a stale copy cannot undo it. */
+/* 5. A deletion reaches the other device, and a stale copy cannot undo it.
+   Goes through deleteEverything — the path Delete everything takes — so a synced
+   table it forgets fails here, and so does a preference it leaves behind. */
 await wipe()
 await mergeLibrary(phone)
-for (const r of await db.reviews.toArray()) await bury(r)
-await db.reviews.clear()
-for (const h of await db.hopefuls.toArray()) await dropHopeful(h)
+await deleteEverything()
 const deleted = await asText()
 await wipe()
 await mergeLibrary(phone)
@@ -104,6 +104,10 @@ for (const name of SYNCED) {
   const n = await db.table(name).count()
   if (n !== 0) fail(`A "${name}" row deleted on one device survived on the other.`)
 }
+await db.settings.put({ ...SETTINGS_DEFAULTS, name: 'Reader', face: 'f1', onboarded: true, theme: 'dark' })
+await deleteEverything()
+if (JSON.stringify(await db.settings.get(1)) !== JSON.stringify(SETTINGS_DEFAULTS))
+  fail('Delete everything left a setting, the name or the face behind.')
 
 if (failures.length) {
   console.error(`Sync check failed:\n${failures.map((f) => `  • ${f}`).join('\n')}`)

@@ -12,7 +12,7 @@
    book from the same catalogue produce the same fingerprint, which is what
    makes merging idempotent: syncing twice adds nothing the second time. */
 
-import { db } from '../db'
+import { SETTINGS_DEFAULTS, db } from '../db'
 import type { Grave, Hopeful, Review } from '../types'
 
 /** Every table that holds somebody's work, and so must travel. sync.ts
@@ -89,6 +89,28 @@ export async function bury(r: Review): Promise<void> {
 export async function dropHopeful(h: Hopeful): Promise<void> {
   await db.graves.put({ key: hopefulPrint(h), at: Date.now() })
   await db.hopefuls.delete(h.id as number)
+}
+
+/** How each synced table names a row on its headstone. Typed over SYNCED, so
+    a table cannot be added there without saying how its deletions travel. */
+const PRINTS: { [T in (typeof SYNCED)[number]]: (row: never) => string } = {
+  reviews: fingerprint,
+  hopefuls: hopefulPrint,
+}
+
+/** Delete everything a reader has put in the app: every row of every synced
+    table, the name, the face and every preference, back to a first run. Each
+    row leaves a headstone so the wipe reaches the other device instead of being
+    undone by the next sync — the headstones and the Drive link are the only
+    things kept, because they are how the deletion travels. */
+export async function deleteEverything(): Promise<void> {
+  const at = Date.now()
+  for (const name of SYNCED) {
+    const rows = await db.table(name).toArray()
+    await db.graves.bulkPut(rows.map((r) => ({ key: PRINTS[name](r as never), at })))
+    await db.table(name).clear()
+  }
+  await db.settings.put(SETTINGS_DEFAULTS)
 }
 
 export interface MergeResult {
