@@ -632,13 +632,25 @@ function exportScale(page: HTMLElement): number {
 async function leafSvg(
   page: HTMLElement,
   toSvg: (n: HTMLElement, o: Record<string, unknown>) => Promise<string>,
-  fontEmbedCSS: string
+  fontEmbedCSS: string,
+  k: number
 ): Promise<string> {
+  /* The <svg> is sized in DEVICE pixels and the leaf scaled up inside it by a
+     CSS transform, so the engine paints every cover at full resolution. The
+     two ways that don't work: an svg at CSS size stretched by drawImage
+     (WebKit rasterizes at 1× and upscales — the blurry covers), and an outer
+     <svg> whose viewBox does the scaling (WebKit leaves a foreignObject at 1×,
+     so the card landed in the top-left quarter of the file). `style` is
+     applied after html-to-image's own width/height, so the clone keeps its
+     CSS size and layout — only the paint is scaled. */
+  const w = page.offsetWidth
+  const h = page.offsetHeight
   const url = await toSvg(page, {
-    width: page.offsetWidth,
-    height: page.offsetHeight,
+    width: Math.round(w * k),
+    height: Math.round(h * k),
     backgroundColor: PAPER,
     fontEmbedCSS,
+    style: { width: `${w}px`, height: `${h}px`, transform: `scale(${k})`, transformOrigin: '0 0' },
   })
   return decodeURIComponent(url.slice(url.indexOf(',') + 1))
 }
@@ -804,18 +816,7 @@ async function onePng(
      and gives up nothing. */
   const g = c.getContext('2d')!
 
-  /* The outer <svg> is sized in DEVICE pixels and its viewBox in CSS ones, so
-     the engine lays the leaf out at 2× and draws it 1:1. Sized in CSS pixels
-     and stretched by drawImage instead, WebKit rasterizes the leaf at 1× and
-     upscales the bitmap — text survives as glyphs, but every cover comes out
-     at half its resolution. That was the blurry cover on iPhone. */
-  const w = page.offsetWidth
-  const h = page.offsetHeight
-  const inner = await leafSvg(page, toSvg, fontEmbedCSS)
-  const img = await svgImage(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${c.width}" height="${c.height}" ` +
-    `viewBox="0 0 ${w} ${h}">${inner}</svg>`
-  )
+  const img = await svgImage(await leafSvg(page, toSvg, fontEmbedCSS, k))
   g.fillStyle = PAPER
   g.fillRect(0, 0, c.width, c.height)
   g.drawImage(img, 0, 0, c.width, c.height)
@@ -850,7 +851,7 @@ async function tallPng(
   const h = page.offsetHeight
   const k = scaleOf(page)
   const boxes = inkedBoxes(page)
-  const inner = await leafSvg(page, toSvg, fontEmbedCSS)
+  const inner = await leafSvg(page, toSvg, fontEmbedCSS, k)
 
   const dw = Math.round(w * k)
   const dh = Math.round(h * k)
@@ -865,9 +866,9 @@ async function tallPng(
     for (let top = 0; top < dh; top += bandDev) {
       const dhi = Math.min(bandDev, dh - top)
       const svg =
-        /* device-pixel intrinsic size, as in onePng — never stretched */
+        /* the leaf is already device-sized, so this only pans — never scales */
         `<svg xmlns="http://www.w3.org/2000/svg" width="${dw}" height="${dhi}" ` +
-        `viewBox="0 ${top / k} ${w} ${dhi / k}">${inner}</svg>`
+        `viewBox="0 ${top} ${dw} ${dhi}">${inner}</svg>`
       const img = await svgImage(svg)
       canvas.width = dw
       canvas.height = dhi
