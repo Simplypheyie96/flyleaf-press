@@ -86,25 +86,35 @@ export function BookDrawer({ h, sub, acts, onClose }: { h: Hopeful; sub?: string
   )
 }
 
-/* Books in hand: review it, or put it back on its month's list. */
+/* Books in hand are not one more row of covers: the latest sits large on an
+   ink panel with its Review button in front of it; any others wait as pills. */
 export function ReadingList({ books }: { books: Hopeful[] }) {
   const nav = useNavigate()
-  const [open, setOpen] = useState<Hopeful | null>(null)
+  const [id, setId] = useState(books[0].id)
+  const h = books.find((b) => b.id === id) ?? books[0]
   return (
     <>
-      <div className="cover-rail">
-        {books.map((h) => <CoverTile key={h.id} h={h} sub={`Day ${dayOf(h.startedAt!)}`} onClick={() => setOpen(h)} />)}
+      <div className="hero-read">
+        {h.cover ? <img className="lib-cover" src={h.cover} alt="" /> : <span className="lib-cover-miss">No cover</span>}
+        <div className="hero-read-txt">
+          <div className="hero-read-day">Day {dayOf(h.startedAt!)}</div>
+          <div className="hero-read-t">{h.title}</div>
+          <div className="hero-read-a">{h.author}</div>
+          <button type="button" className="hero-read-back" onClick={() => db.hopefuls.update(h.id!, { startedAt: undefined, editedAt: Date.now() })}>
+            Put back on {monthName(h.month)}
+          </button>
+          <button type="button" className="btn btn--ghost btn--sm hero-read-go" onClick={() => nav('/write', { state: writeState(h) })}>Review it</button>
+        </div>
       </div>
-      {open && (
-        <BookDrawer
-          h={open}
-          sub={`Day ${dayOf(open.startedAt!)}`}
-          acts={[
-            { label: 'Review it', onClick: () => nav('/write', { state: writeState(open) }) },
-            { label: `Put back on ${monthName(open.month)}`, onClick: () => db.hopefuls.update(open.id!, { startedAt: undefined, editedAt: Date.now() }) },
-          ]}
-          onClose={() => setOpen(null)}
-        />
+      {books.length > 1 && (
+        <div className="hero-pills" role="radiogroup" aria-label="Books in hand">
+          {books.map((b) => (
+            <button key={b.id} type="button" role="radio" aria-checked={b.id === h.id} onClick={() => setId(b.id)}>
+              {b.cover ? <img src={b.cover} alt="" /> : null}
+              <span>{b.title}</span>
+            </button>
+          ))}
+        </div>
       )}
     </>
   )

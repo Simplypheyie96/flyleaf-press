@@ -1509,3 +1509,30 @@ button.cover-tile{ padding:0; border:0; background:none; font:inherit; text-alig
 /* Cancel is the way out, not one more option: no fill, no ring */
 .drawer-cancel{ width:100%; min-height:48px; margin-top:4px; background:none; box-shadow:none; color:var(--ink-soft); }
 .mo-open-tag--under{ display:table; margin-top:10px; }
+
+/* Reading now: the book in hand on an ink panel, the others as pills */
+.hero-read{ display:grid; grid-template-columns:88px minmax(0,1fr); gap:16px; padding:18px; border-radius:var(--r-lg);
+  background:var(--ink); color:var(--accent-fg); }
+.hero-read .lib-cover, .hero-read .lib-cover-miss{ width:88px; }
+.hero-read .lib-cover{ box-shadow:0 6px 18px rgba(0,0,0,.35); }
+.hero-read-day{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.7; }
+.hero-read-t{ margin-top:6px; font-family:var(--serif); font-weight:600; font-size:19px; line-height:1.2; }
+.hero-read-a{ margin-top:4px; font-size:13px; opacity:.75; }
+.hero-read-back{ margin:10px 0 14px; padding:0; border:0; background:none; font:inherit; font-size:12.5px; color:inherit; opacity:.75;
+  text-decoration:underline; text-underline-offset:2px; cursor:pointer; text-align:left; }
+.hero-read-txt{ min-width:0; display:flex; flex-direction:column; align-items:flex-start; }
+.hero-read .hero-read-go{ margin-top:auto; height:36px; padding:0 18px; }
+.hero-pills{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;
+  margin:0 calc(-1 * var(--gutter)); padding:12px var(--gutter) 4px; }
+.hero-pills::-webkit-scrollbar{ display:none; }
+.hero-pills button{ display:flex; align-items:center; gap:8px; flex:none; max-width:200px; height:40px; padding:0 14px 0 6px;
+  border:1px solid var(--rule); border-radius:999px; background:var(--card-w); color:var(--ink);
+  font:inherit; font-size:13px; cursor:pointer; transition:background 160ms var(--ease), color 160ms var(--ease); }
+.hero-pills button:not(:has(img)){ padding-left:14px; }
+.hero-pills img{ width:20px; height:30px; object-fit:cover; border-radius:3px; flex:none; }
+.hero-pills span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hero-pills button[aria-checked="true"]{ background:var(--ink); color:var(--accent-fg); border-color:var(--ink); }
+
+/* a radio row of plain segments (Settings → Appearance) fills its row evenly */
+.field > .seg{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); }
+.field:has(> .seg) + .field{ margin-top:20px; }
