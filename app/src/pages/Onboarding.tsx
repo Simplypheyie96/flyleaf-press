@@ -60,7 +60,7 @@ export function Onboarding({ settings, onDone }: { settings: Settings; onDone: (
             their library might be recoverable. A restore that finds a library
             closes this screen on the spot, name and face included — they came
             down with it, and asking for them again would be asking somebody to
-            re-invent what the app is holding. An empty Drive leaves the screen
+            re-invent what the app is holding. An empty account leaves the screen
             exactly as it was: there is nothing to take the name from, so the
             fields still have a job. */}
         <RestoreNotice

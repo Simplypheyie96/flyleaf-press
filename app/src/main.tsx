@@ -36,10 +36,10 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 )
 
-/* The Drive triggers go on for everyone; they do nothing at all until somebody
-   has connected an account. The one thing they do while disconnected is note
-   that a write happened with nowhere to send it, which is what lets a later
-   connection know the two libraries have genuinely diverged. */
+/* The sync triggers go on for everyone; they do nothing at all until somebody
+   has signed in. The one thing they do while signed out is note that a write
+   happened with nowhere to send it, which is what lets a later sign-in know
+   the two libraries have genuinely diverged. */
 startAutoSync()
 
 /* Importing ./pwa is itself load-bearing: the beforeinstallprompt listener

@@ -1,6 +1,6 @@
 /* One format, one merge, two doors.
 
-   A library that arrives from Google Drive and a library restored from a file
+   A library that arrives from the Flyleaf account and a library restored from a file
    somebody emailed themselves are the same document read the same way. That is
    deliberate: two readers of the format would drift, and the one that got less
    testing would be the one somebody's whole shelf came back through.
@@ -79,6 +79,61 @@ export async function exportBlob(): Promise<Blob> {
   return new Blob([JSON.stringify(await exportLibrary())], { type: 'application/json' })
 }
 
+/* COVERS TRAVEL BESIDE THE LIBRARY, NOT INSIDE IT. An uploaded cover or plate
+   is a data URL on the row, and a shelf of them would push the account copy
+   past the 8 MB one sync can carry. So the copy sent to the account carries
+   `media:<sha-256>` where each image was, and the images go up once each, by
+   that hash, ahead of it. A file somebody exports still carries every image
+   inline: it has to stand on its own. */
+const REF = 'media:'
+
+function decode(url: string): { type: string; bytes: Uint8Array<ArrayBuffer> } | null {
+  const comma = url.indexOf(',')
+  if (!url.startsWith('data:') || comma < 0) return null
+  const head = url.slice(5, comma).split(';')
+  if (!head.includes('base64')) return null
+  const bin = atob(url.slice(comma + 1))
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return { type: head[0] || 'application/octet-stream', bytes }
+}
+
+async function dataUrl(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer())
+  let bin = ''
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+  return `data:${blob.type || 'application/octet-stream'};base64,${btoa(bin)}`
+}
+
+/** The same row with every image (the cover, and a review's plates) passed
+    through `swap`. */
+async function images<T extends Review | Hopeful>(row: T, swap: (s: string) => Promise<string>): Promise<T> {
+  const out = { ...row }
+  if (out.cover) out.cover = await swap(out.cover)
+  const plates = (out as Review).plates
+  if (Array.isArray(plates)) {
+    ;(out as Review).plates = await Promise.all(plates.map(async (p) => (p.image ? { ...p, image: await swap(p.image) } : p)))
+  }
+  return out
+}
+
+/** The library as the account keeps it: images by reference, and the images. */
+export async function exportForCloud(): Promise<{ blob: Blob; media: Map<string, Blob> }> {
+  const library = await exportLibrary()
+  const media = new Map<string, Blob>()
+  const out = async (s: string) => {
+    const raw = decode(s)
+    if (!raw) return s
+    const digest = await crypto.subtle.digest('SHA-256', raw.bytes)
+    const hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+    media.set(hash, new Blob([raw.bytes], { type: raw.type }))
+    return REF + hash
+  }
+  library.reviews = await Promise.all(library.reviews.map((r) => images(r, out)))
+  library.hopefuls = await Promise.all((library.hopefuls ?? []).map((h) => images(h, out)))
+  return { blob: new Blob([JSON.stringify(library)], { type: 'application/json' }), media }
+}
+
 /** Record that a review was deleted here, so the deletion reaches the other
     device instead of being undone by it. Called by every delete path. */
 export async function bury(r: Review): Promise<void> {
@@ -101,8 +156,10 @@ const PRINTS: { [T in (typeof SYNCED)[number]]: (row: never) => string } = {
 /** Delete everything a reader has put in the app: every row of every synced
     table, the name, the face and every preference, back to a first run. Each
     row leaves a headstone so the wipe reaches the other device instead of being
-    undone by the next sync — the headstones and the Drive link are the only
-    things kept, because they are how the deletion travels. */
+    undone by the next sync — the headstones and the account sign-in are the
+    only things kept, because they are how the deletion travels. Removing the
+    account copy itself is sync.ts's `clearAccount`, which Settings runs after
+    this. */
 export async function deleteEverything(): Promise<void> {
   const at = Date.now()
   for (const name of SYNCED) {
@@ -126,13 +183,16 @@ export interface MergeResult {
  * Fold another library into this one. It cannot lose work: a row is only ever
  * replaced by a copy of ITSELF that was written later, and never by less than
  * itself. That invariant is what makes it safe for sync.ts to overwrite the
- * Drive copy wholesale — what goes up is always the union of both sides.
+ * account copy wholesale — what goes up is always the union of both sides.
  *
  * The one thing that does remove a row is a headstone that postdates it. A
  * deletion is work too, and a merge that silently resurrected a review
  * somebody had thrown away would be the same bug as one that lost it.
  */
-export async function mergeLibrary(text: string): Promise<MergeResult> {
+export async function mergeLibrary(
+  text: string,
+  how: { media?: (hash: string) => Promise<Blob> } = {},
+): Promise<MergeResult> {
   let data: LibraryFile
   try {
     data = JSON.parse(text) as LibraryFile
@@ -156,6 +216,18 @@ export async function mergeLibrary(text: string): Promise<MergeResult> {
 
   const result: MergeResult = { added: 0, updated: 0, removed: 0 }
 
+  /* Images by reference come down only for rows that are actually written
+     here, and each image once. */
+  const fetched = new Map<string, Promise<string>>()
+  const inflate = <T extends Review | Hopeful>(row: T) =>
+    images(row, async (s) => {
+      if (!s.startsWith(REF)) return s
+      if (!how.media) throw new Error('That library refers to covers it does not carry.')
+      const hash = s.slice(REF.length)
+      if (!fetched.has(hash)) fetched.set(hash, how.media(hash).then(dataUrl))
+      return fetched.get(hash)!
+    })
+
   /* Numbering stays local. `no` is the Nº printed on the colophon, and cards
      have already been shared carrying it — renumbering the shelf to agree with
      another device would rewrite a number somebody has handed out. So an
@@ -173,13 +245,13 @@ export async function mergeLibrary(text: string): Promise<MergeResult> {
 
     const existing = here.get(key)
     if (!existing) {
-      const { id: _drop, ...rest } = raw
+      const { id: _drop, ...rest } = await inflate(raw)
       await db.reviews.add({ ...rest, no: ++nextNo } as Review)
       result.added++
       continue
     }
     if (stamp > stampOf(existing)) {
-      const { id: _drop, no: _keepNo, ...rest } = raw
+      const { id: _drop, no: _keepNo, ...rest } = await inflate(raw)
       await db.reviews.update(existing.id as number, rest as Partial<Review>)
       result.updated++
     }
@@ -206,12 +278,13 @@ export async function mergeLibrary(text: string): Promise<MergeResult> {
     const stamp = stampOf(raw)
     const buried = graves.get(key)
     if (buried !== undefined && buried >= stamp) continue
-    const { id: _drop, ...rest } = raw
     const existing = hopefulsHere.get(key)
     if (!existing) {
+      const { id: _drop, ...rest } = await inflate(raw)
       await db.hopefuls.add(rest as Hopeful)
       hopefulsHere.set(key, rest as Hopeful)
     } else if (stamp > stampOf(existing)) {
+      const { id: _drop, ...rest } = await inflate(raw)
       await db.hopefuls.update(existing.id as number, rest)
     }
   }

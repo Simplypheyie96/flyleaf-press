@@ -1,6 +1,6 @@
 /* The guard that keeps sync from quietly leaving a kind of row behind again.
 
-   Hopefuls shipped in their own table and never went to Drive, because nothing
+   Hopefuls shipped in their own table and never synced, because nothing
    forced the question. This runs before every build, so a deploy cannot go out
    with a table, a field, an edit or a deletion that does not survive the trip
    between two devices. It drives the real export and merge against an
@@ -8,7 +8,7 @@
 
 import 'fake-indexeddb/auto'
 import { SETTINGS_DEFAULTS, db } from '../src/db'
-import { NOT_ROWS, SYNCED, deleteEverything, exportLibrary, mergeLibrary } from '../src/sync/backup'
+import { NOT_ROWS, SYNCED, deleteEverything, exportForCloud, exportLibrary, mergeLibrary } from '../src/sync/backup'
 import type { Hopeful, Review } from '../src/types'
 
 type Synced = (typeof SYNCED)[number]
@@ -20,13 +20,13 @@ const FIXTURES: Record<Synced, () => Record<string, unknown>> = {
   reviews: (): Review => ({
     no: 1, title: 'Piranesi', author: 'Susanna Clarke', series: 'S', seriesNo: '1',
     started: '2026-01-01', finished: '2026-01-09', formats: ['Physical'], rating: 4.5,
-    cover: 'data:image/png;base64,AA', covers: ['https://x/c.jpg'], isbn: '9781635575637',
-    pages: 272, tags: ['fantasy'], body: 'A house of tides.', plates: [], style: 'archive',
+    cover: 'data:image/png;base64,AAAA', covers: ['https://x/c.jpg'], isbn: '9781635575637',
+    pages: 272, tags: ['fantasy'], body: 'A house of tides.', plates: [{ image: 'data:image/jpeg;base64,AQID', caption: 'Tide' }], style: 'archive',
     hand: 'shantell' as Review['hand'], source: 'goodreads', createdAt: 1000, editedAt: 2000,
   }),
   hopefuls: (): Hopeful => ({
     month: '2026-10', title: 'Circe', author: 'Madeline Miller', series: 'S', isbn: '9780316556347',
-    cover: 'data:image/png;base64,AA', covers: ['https://x/c.jpg'], pages: 393, createdAt: 1000, editedAt: 2000,
+    cover: 'data:image/png;base64,AAAA', covers: ['https://x/c.jpg'], pages: 393, createdAt: 1000, editedAt: 2000,
   }),
 }
 
@@ -109,8 +109,33 @@ await deleteEverything()
 if (JSON.stringify(await db.settings.get(1)) !== JSON.stringify(SETTINGS_DEFAULTS))
   fail('Delete everything left a setting, the name or the face behind.')
 
+/* 6. The account copy carries covers and plates by reference, never inline,
+   and they come back whole on the other device. Run through exportForCloud
+   and a merge fed from the media it handed over — the same pair sync.ts uses
+   with the Worker in between. */
+await wipe()
+for (const name of SYNCED) await db.table(name).add(FIXTURES[name]())
+const cloud = await exportForCloud()
+const doc = await cloud.blob.text()
+if (doc.includes('data:image')) fail('An image went into the account copy inline instead of by reference — it would push the copy past what one sync carries.')
+if (cloud.media.size !== 2) fail(`The account copy handed over ${cloud.media.size} images; expected 2 (the cover, shared by both rows, and the plate).`)
+await wipe()
+await mergeLibrary(doc, {
+  media: async (hash) => {
+    const blob = cloud.media.get(hash)
+    if (!blob) throw new Error(`missing ${hash}`)
+    return blob
+  },
+})
+for (const name of SYNCED) {
+  const row = (await db.table(name).toArray())[0] as (Review & Hopeful) | undefined
+  const want = FIXTURES[name]() as Review & Hopeful
+  if (row?.cover !== want.cover) fail(`A "${name}" cover did not come back whole through the account.`)
+  if (name === 'reviews' && row?.plates?.[0]?.image !== want.plates[0].image) fail('A plate image did not come back whole through the account.')
+}
+
 if (failures.length) {
   console.error(`Sync check failed:\n${failures.map((f) => `  • ${f}`).join('\n')}`)
   process.exit(1)
 }
-console.log(`Sync check passed: ${SYNCED.join(', ')} travel whole, edits and deletions included.`)
+console.log(`Sync check passed: ${SYNCED.join(', ')} travel whole, edits, deletions and covers included.`)
