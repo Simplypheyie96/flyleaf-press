@@ -804,7 +804,18 @@ async function onePng(
      and gives up nothing. */
   const g = c.getContext('2d')!
 
-  const img = await svgImage(await leafSvg(page, toSvg, fontEmbedCSS))
+  /* The outer <svg> is sized in DEVICE pixels and its viewBox in CSS ones, so
+     the engine lays the leaf out at 2× and draws it 1:1. Sized in CSS pixels
+     and stretched by drawImage instead, WebKit rasterizes the leaf at 1× and
+     upscales the bitmap — text survives as glyphs, but every cover comes out
+     at half its resolution. That was the blurry cover on iPhone. */
+  const w = page.offsetWidth
+  const h = page.offsetHeight
+  const inner = await leafSvg(page, toSvg, fontEmbedCSS)
+  const img = await svgImage(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${c.width}" height="${c.height}" ` +
+    `viewBox="0 0 ${w} ${h}">${inner}</svg>`
+  )
   g.fillStyle = PAPER
   g.fillRect(0, 0, c.width, c.height)
   g.drawImage(img, 0, 0, c.width, c.height)
@@ -854,7 +865,8 @@ async function tallPng(
     for (let top = 0; top < dh; top += bandDev) {
       const dhi = Math.min(bandDev, dh - top)
       const svg =
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${dhi / k}" ` +
+        /* device-pixel intrinsic size, as in onePng — never stretched */
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${dw}" height="${dhi}" ` +
         `viewBox="0 ${top / k} ${w} ${dhi / k}">${inner}</svg>`
       const img = await svgImage(svg)
       canvas.width = dw
