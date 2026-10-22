@@ -1570,6 +1570,8 @@
 .rc-cut{ display:block; height:0; border:0; border-top:1.5px dashed rgba(27,25,23,.45); margin:18px 0; }
 .rc-title{ margin:0; text-align:center; }
 .rc-by{ margin-top:6px; text-align:center; }
+.rc-cov{ display:flex; justify-content:center; margin-top:18px; }
+.rc-cov .cover, .rc-cov .cover-missing{ width:140px; border-radius:0; box-shadow:none; }
 .rc-items{ margin-top:18px; }
 .rc-line{ display:flex; align-items:baseline; gap:10px; padding:5px 0; }
 .rc-line .lbl{ flex:1 0 96px; display:flex; align-items:baseline; gap:8px; }
@@ -1644,7 +1646,7 @@
 
 /* ── S16 · Photo Booth (curtain) ── */
 .pb-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.pb-top{ display:grid; grid-template-columns:150px 1fr; gap:0 28px; align-items:start; margin-top:20px; }
+.pb-top{ display:grid; grid-template-columns:124px 1fr; gap:0 28px; align-items:start; margin-top:20px; }
 .pb-strip{ display:grid; gap:8px; padding:8px 8px 24px; background:var(--cream); transform:rotate(-1.5deg); }
 .pb-pose .cover, .pb-pose .cover-missing{ border-radius:0; box-shadow:none; }
 .pb-shot{
@@ -1658,8 +1660,10 @@
 .pb-by{ margin-top:6px; }
 .pb-data .stars{ margin-top:10px; }
 .pb-facts{ margin-top:12px; }
-.pb-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:8px 0; border-bottom:1px solid var(--hair); }
-.pb-line .lbl{ flex:none; width:64px; }
+/* .pb-fact, not .pb-line: the collage's Photo Booth row owns that name and
+   its later rule was overriding these */
+.pb-fact{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:8px 0; border-bottom:1px solid var(--hair); }
+.pb-fact .lbl{ flex:none; width:64px; }
 .pb-fmt-row{ display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-top:16px; }
 /* format mark: a cream ring round the chosen ones */
 .pb-fmt{ column-gap:4px; }
@@ -1674,11 +1678,11 @@
 /* the rules are each square's own border, so a short row could never leave
    bare backdrop showing (the Postmark lesson); the grid draws the outer two */
 .bg-grid{
-  display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); margin-top:20px;
+  display:grid; grid-template-columns:150px repeat(2, minmax(0, 1fr)); margin-top:20px;
   border-top:2px solid var(--tx); border-left:2px solid var(--tx);
 }
 .bg-sq{
-  position:relative; display:flex; flex-direction:column; gap:6px; min-height:96px; padding:10px; min-width:0;
+  position:relative; display:flex; flex-direction:column; gap:6px; min-height:76px; padding:10px; min-width:0;
   border-right:2px solid var(--tx); border-bottom:2px solid var(--tx);
 }
 .bg-sq > *{ position:relative; }
@@ -1689,33 +1693,35 @@
 }
 .bg-v{ font-family:var(--serif); font-weight:600; font-size:16px; line-height:1.25; overflow-wrap:break-word; }
 .bg-v .r-num{ color:var(--num); }
-.bg-free{ align-items:center; justify-content:center; }
-.bg-free .cover, .bg-free .cover-missing{ width:84px; border-radius:0; }
+.bg-free{ grid-column:1; align-items:center; justify-content:center; gap:10px; }
+.bg-free .cover, .bg-free .cover-missing{ width:110px; border-radius:0; box-shadow:none; }
 .bg-sq--wide{ grid-column:span 2; }
 .bg-fmt{ column-gap:6px; }
 /* format mark: each chosen format is daubed */
 .bg-fmt .fmt-t{ padding:3px 9px; border-radius:999px; }
 .bg-fmt .fmt-t[data-on="true"]{ background:rgba(194,65,12,.22); }
-.bg > .stars{ margin-top:16px; }
+.bg .sheet > .stars{ margin-top:16px; }
 
 /* ── S18 · Seed Packet (pistachio) ── */
 .sp-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 .sp-win{
-  position:relative; max-width:300px; margin:20px auto 0; padding:34px 30px 26px;
-  border:2px solid rgba(27,25,23,.7); border-radius:150px 150px 4px 4px;
+  position:relative; padding:28px 18px 18px;
+  border:2px solid rgba(27,25,23,.7); border-radius:90px 90px 4px 4px;
   background:rgba(255,255,255,.32);
 }
-.sp-win .cover, .sp-win .cover-missing{ width:180px; margin:0 auto; border-radius:0; }
+.sp-top{ display:grid; grid-template-columns:180px 1fr; gap:0 28px; align-items:center; margin-top:20px; }
+.sp-data{ min-width:0; }
+.sp-win .cover, .sp-win .cover-missing{ width:100%; border-radius:0; box-shadow:none; }
 .sp-price{
-  position:absolute; top:22px; right:-14px; width:78px; height:78px;
+  position:absolute; top:14px; right:-18px; width:62px; height:62px;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
   border-radius:50%; border:2px solid var(--tx); background:var(--cream);
   transform:rotate(10deg);
 }
-.sp-price .r-num{ font-size:24px; line-height:1; color:var(--num); }
-.sp-title{ margin:22px 0 0; text-align:center; }
-.sp-by{ margin-top:6px; text-align:center; }
-.sp > .stars{ justify-content:center; margin-top:10px; }
+.sp-price .r-num{ font-size:20px; line-height:1; color:var(--num); }
+.sp-title{ margin:0; }
+.sp-by{ margin-top:6px; }
+.sp-data .stars{ margin-top:12px; }
 .sp-table{ margin-top:20px; border-top:1.5px solid rgba(27,25,23,.6); }
 .sp-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:9px 0; border-bottom:1px solid var(--hair); }
 .sp-line .lbl{ flex:none; width:70px; }
@@ -1729,8 +1735,8 @@
 /* ── S19 · Embroidery Hoop (periwinkle) ── */
 .eh-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 .eh-hoop{
-  position:relative; width:250px; aspect-ratio:1; margin:34px auto 0;
-  border:12px solid #C79A5E; border-radius:50%;
+  position:relative; aspect-ratio:1;
+  border:10px solid #C79A5E; border-radius:50%;
 }
 .eh-screw{
   position:absolute; top:-26px; left:50%; width:26px; height:16px; margin-left:-13px;
@@ -1741,9 +1747,11 @@
   border:2px solid #9C7140; background:rgba(255,255,255,.4);
 }
 .eh-cloth .cover, .eh-cloth .cover-missing{ width:100%; height:100%; aspect-ratio:auto; border:0; border-radius:0; box-shadow:none; }
-.eh-title{ margin:22px 0 0; text-align:center; }
-.eh-by{ margin-top:6px; text-align:center; }
-.eh-rate{ display:flex; justify-content:center; align-items:center; gap:12px; margin-top:10px; }
+.eh-top{ display:grid; grid-template-columns:170px 1fr; gap:0 28px; align-items:center; margin-top:34px; }
+.eh-data{ min-width:0; }
+.eh-title{ margin:0; }
+.eh-by{ margin-top:6px; }
+.eh-rate{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:10px; }
 .eh-rate .r-num{ font-size:26px; color:var(--num); }
 .eh-facts{ margin-top:20px; }
 /* the rules between facts are running stitches */
@@ -1794,10 +1802,70 @@
 .cz-fmt .fmt-t{ padding:3px 10px; border-radius:999px; }
 .cz-fmt .fmt-t[data-on="true"]{ background:var(--rose); }
 
+/* ── The patterned cloths of S13–S19, after Chintz: each card lies on a
+   printed ground of its own metaphor, and everything written sits on a plain
+   .sheet of the card's colour, so no word is ever set on the pattern.
+   Gradients only, whole-pixel stops, fades to an rgba zero. ── */
+.card.rc, .card.lb, .card.pb, .card.bg, .card.sp, .card.eh{ padding:22px; }
+.card > .sheet{ position:relative; padding:26px; background:var(--g); border:1px solid rgba(27,25,23,.2); border-radius:2px; }
+.card.pb > .sheet{ border-color:rgba(244,242,237,.3); }
+/* Receipt: rung up on a diner's gingham */
+.card.rc{ background:
+  repeating-linear-gradient(0deg, rgba(196,58,48,.42) 0 10px, rgba(196,58,48,0) 10px 20px),
+  repeating-linear-gradient(90deg, rgba(196,58,48,.42) 0 10px, rgba(196,58,48,0) 10px 20px),
+  #F7F1E3; }
+/* Library Card: tucked in a cloth-bound endpaper of quatrefoils */
+.card.lb{ background:
+  radial-gradient(circle at 16px 16px, #2F4A7E 0 2px, rgba(47,74,126,0) 2.5px),
+  radial-gradient(circle at 16px 10px, #F1E7CF 0 4px, rgba(241,231,207,0) 4.5px),
+  radial-gradient(circle at 22px 16px, #F1E7CF 0 4px, rgba(241,231,207,0) 4.5px),
+  radial-gradient(circle at 16px 22px, #F1E7CF 0 4px, rgba(241,231,207,0) 4.5px),
+  radial-gradient(circle at 10px 16px, #F1E7CF 0 4px, rgba(241,231,207,0) 4.5px),
+  radial-gradient(circle at 0 0, #C9A85A 0 2px, rgba(201,168,90,0) 2.5px),
+  #2F4A7E;
+  background-size:32px 32px; }
+/* Trading Card: a foil border of gold stars over a holo sheen */
+.card.tc{ padding:18px; background:
+  radial-gradient(circle at 12px 12px, #E4C56A 0 2px, rgba(228,197,106,0) 2.5px) 0 0 / 24px 24px,
+  radial-gradient(circle at 0 0, rgba(244,242,237,.5) 0 1px, rgba(244,242,237,0) 1.5px) 0 0 / 24px 24px,
+  repeating-linear-gradient(135deg, rgba(255,255,255,.14) 0 6px, rgba(255,255,255,0) 6px 12px),
+  var(--cobalt); }
+.tc-frame{ background:var(--cobalt); }
+/* Photo Booth: the booth's pleated curtain */
+.card.pb{ background:
+  repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 2px, rgba(0,0,0,0) 2px 8px, rgba(255,255,255,.12) 8px 11px, rgba(0,0,0,0) 11px 18px),
+  var(--curtain); }
+/* Bingo: confetti from the hall */
+.card.bg{ background:
+  radial-gradient(circle at 12px 14px, #FCE6EC 0 5px, rgba(252,230,236,0) 5.5px),
+  radial-gradient(circle at 42px 10px, #2E6F6C 0 3px, rgba(46,111,108,0) 3.5px),
+  radial-gradient(circle at 50px 40px, #F7F1E3 0 6px, rgba(247,241,227,0) 6.5px),
+  radial-gradient(circle at 22px 46px, #C2410C 0 4px, rgba(194,65,12,0) 4.5px),
+  radial-gradient(circle at 34px 28px, #E8B84A 0 3px, rgba(232,184,74,0) 3.5px),
+  var(--tangerine);
+  background-size:60px 60px; }
+/* Seed Packet: rows of seedlings, two leaves and a seed */
+.card.sp{ background:
+  radial-gradient(ellipse 6px 3px at 9px 12px, #4E7A44 0 99%, rgba(78,122,68,0) 100%),
+  radial-gradient(ellipse 6px 3px at 21px 12px, #6E9A5C 0 99%, rgba(110,154,92,0) 100%),
+  linear-gradient(#4E7A44, #4E7A44) 14px 13px / 2px 7px no-repeat,
+  radial-gradient(circle at 15px 22px, #8A5A2B 0 2px, rgba(138,90,43,0) 2.5px),
+  radial-gradient(circle at 35px 38px, #F3F0DC 0 2px, rgba(243,240,220,0) 2.5px),
+  var(--pistachio);
+  background-size:40px 40px, 40px 40px, auto, 40px 40px, 40px 40px; }
+/* Embroidery Hoop: aida cloth with cross-stitched rosebuds */
+.card.eh{ background:
+  radial-gradient(circle at 16px 16px, #F7F1E3 0 1px, rgba(247,241,227,0) 1.5px),
+  radial-gradient(circle at 16px 16px, #D9738C 0 4px, rgba(217,115,140,0) 4.5px),
+  repeating-linear-gradient(45deg, rgba(27,25,23,.14) 0 1px, rgba(27,25,23,0) 1px 8px),
+  repeating-linear-gradient(-45deg, rgba(27,25,23,.14) 0 1px, rgba(27,25,23,0) 1px 8px),
+  var(--periwinkle);
+  background-size:32px 32px, 32px 32px, auto, auto; }
+
 /* ── compact (narrow host) for S13–S20 ── */
 .card-compact .lb-top,
 .card-compact .cz-top{ grid-template-columns:96px 1fr; gap:0 18px; }
-.card-compact .pb-top{ grid-template-columns:112px 1fr; gap:0 18px; }
+.card-compact .pb-top{ grid-template-columns:96px 1fr; gap:0 18px; }
 .card-compact .pb-big{ font-size:13px; }
 .card-compact .lb-cell{ padding:10px 10px 14px; }
 .card-compact .lb-stamp{ font-size:12.5px; padding:3px 6px; }
@@ -1807,13 +1875,22 @@
 .card-compact .tc-art .cover, .card-compact .tc-art .cover-missing{ width:150px; }
 .card-compact .tc-hp .r-num{ font-size:28px; }
 .card-compact .bg-word{ font-size:34px; }
-.card-compact .bg-sq{ min-height:84px; padding:8px; }
+.card-compact .bg-sq{ min-height:66px; padding:8px; }
+.card-compact .bg-grid{ grid-template-columns:88px repeat(2, minmax(0, 1fr)); }
 .card-compact .bg-v{ font-size:14px; }
-.card-compact .bg-free .cover, .card-compact .bg-free .cover-missing{ width:62px; }
-.card-compact .sp-win{ padding:28px 22px 22px; }
-.card-compact .sp-win .cover, .card-compact .sp-win .cover-missing{ width:140px; }
-.card-compact .eh-hoop{ width:210px; border-width:10px; }
-.card-compact .card.cz{ padding:16px; }
+.card-compact .bg-free .cover, .card-compact .bg-free .cover-missing{ width:66px; }
+.card-compact .rc-cov .cover, .card-compact .rc-cov .cover-missing{ width:112px; }
+.card-compact .sp-top{ grid-template-columns:118px 1fr; gap:0 18px; }
+.card-compact .sp-win{ padding:20px 12px 12px; border-radius:60px 60px 4px 4px; }
+.card-compact .sp-price{ width:48px; height:48px; right:-14px; top:8px; }
+.card-compact .sp-price .r-num{ font-size:16px; }
+.card-compact .eh-top{ grid-template-columns:116px 1fr; gap:0 18px; }
+.card-compact .eh-hoop{ border-width:7px; }
+.card-compact .eh-screw{ top:-20px; width:20px; height:12px; margin-left:-10px; }
+.card-compact .card.cz,
+.card-compact .card.rc, .card-compact .card.lb, .card-compact .card.pb,
+.card-compact .card.bg, .card-compact .card.sp, .card-compact .card.eh{ padding:14px; }
+.card-compact .card > .sheet{ padding:20px; }
 .card-compact .cz-label{ padding:20px; }
 
 /* ── compact (narrow host) for the five review cards ── */
