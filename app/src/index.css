@@ -943,7 +943,7 @@ body::before{
    to hardcode the tight height/padding here, which was harmless while tight was
    the only capture and then silently outranked `--screen` (0,2,0 beats 0,1,0),
    so switching shape changed the class and nothing else. */
-.share-preview-scale .share-page{ border:1px solid var(--rule); margin-bottom:20px; }
+.share-preview-scale .share-page{ outline:1px solid var(--rule); margin-bottom:20px; }
 .share-note{ font-size:12px; line-height:1.5; color:var(--ink-soft); margin-top:10px; }
 /* Share and Download stand side by side — two different destinations, never
    one folding into the other, and never stacked either: a wrapping flex row put
@@ -1521,7 +1521,8 @@ button.cover-tile{ padding:0; border:0; background:none; font:inherit; text-alig
 .hero-read-back{ margin:10px 0 14px; padding:0; border:0; background:none; font:inherit; font-size:12.5px; color:inherit; opacity:.75;
   text-decoration:underline; text-underline-offset:2px; cursor:pointer; text-align:left; }
 .hero-read-txt{ min-width:0; display:flex; flex-direction:column; align-items:flex-start; }
-.hero-read .hero-read-go{ margin-top:auto; height:36px; padding:0 18px; }
+.hero-read-go{ margin-top:auto; display:flex; flex-wrap:wrap; gap:8px; }
+.hero-read-go .btn{ height:36px; padding:0 18px; }
 .hero-pills{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;
   margin:0 calc(-1 * var(--gutter)); padding:12px var(--gutter) 4px; }
 .hero-pills::-webkit-scrollbar{ display:none; }

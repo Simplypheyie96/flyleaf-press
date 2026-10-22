@@ -88,7 +88,7 @@ export function BookDrawer({ h, sub, acts, onClose }: { h: Hopeful; sub?: string
 
 /* Books in hand are not one more row of covers: the latest sits large on an
    ink panel with its Review button in front of it; any others wait as pills. */
-export function ReadingList({ books }: { books: Hopeful[] }) {
+export function ReadingList({ books, onShare }: { books: Hopeful[]; onShare: (h: Hopeful) => void }) {
   const nav = useNavigate()
   const [id, setId] = useState(books[0].id)
   const h = books.find((b) => b.id === id) ?? books[0]
@@ -103,7 +103,10 @@ export function ReadingList({ books }: { books: Hopeful[] }) {
           <button type="button" className="hero-read-back" onClick={() => db.hopefuls.update(h.id!, { startedAt: undefined, editedAt: Date.now() })}>
             Put back on {monthName(h.month)}
           </button>
-          <button type="button" className="btn btn--ghost btn--sm hero-read-go" onClick={() => nav('/write', { state: writeState(h) })}>Review it</button>
+          <div className="hero-read-go">
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => nav('/write', { state: writeState(h) })}>Review it</button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => onShare(h)}>Share</button>
+          </div>
         </div>
       </div>
       {books.length > 1 && (

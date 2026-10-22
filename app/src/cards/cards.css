@@ -1746,10 +1746,11 @@
    A hopefuls card is a list that grows; this one is a frame that does not.
    With a single book there is nothing to pack, so the card takes a FIXED
    height and lets the cover have the slack — which is also what makes it a
-   9:16 object rather than a short collage. The arithmetic is the phone
-   shape's, unchanged: card 688 + 16 mat a side = a 720 leaf, and 1248 + 16
-   top and bottom = 1280, so the file is 1440 × 2560 and scales clean to
-   1080 × 1920. Nothing here invents a width; the only novelty is a height
+   4:5 object rather than a short collage. The arithmetic is the phone
+   shape's, unchanged: card 688 + 16 mat a side = a 720 leaf, and 868 + 16
+   top and bottom = 900, so the file is 1440 × 1800 and scales clean to
+   1080 × 1350. It was 9:16 at 2560 tall and read as too big and too long.
+   Nothing here invents a width; the only novelty is a height
    that is set rather than measured.
 
    Every style keeps its own clothes. The hero is not the hopefuls grid at
@@ -1758,7 +1759,7 @@
    own that mirrors, at hero scale, the chrome its cells already wear.
    ═════════════════════════════════════════════════════════════ */
 .card--story{
-  height:1248px;
+  height:868px;
   display:flex; flex-direction:column;
   overflow:hidden;
   --st-cov:640px; /* nominal; fitStoryCover states the real one */

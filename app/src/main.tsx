@@ -7,6 +7,7 @@ import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { startAutoSync } from './sync/sync'
 import { initServiceWorker } from './pwa'
+import { sharpenCovers } from './import/covers'
 import { Analytics } from '@vercel/analytics/react'
 
 /* Before the first paint: the @font-face rules live in a module now, not
@@ -46,6 +47,10 @@ startAutoSync()
    goes on at module scope, and that event fires once, early. Register the
    worker from here too, so Settings has a registration to check. */
 initServiceWorker()
+
+/* Covers saved before art was fetched large are re-fetched once, quietly,
+   after the app is up — see sharpenCovers. */
+setTimeout(() => void sharpenCovers().catch(() => {}), 4000)
 
 /* Drop the launch screen once there is something behind it. It waits on the
    web fonts so the first thing seen isn't the page in a fallback face, but

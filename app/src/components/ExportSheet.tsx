@@ -36,7 +36,7 @@ export function ExportSheet({
   onShape: (s: ExportShape) => void
   /* The shapes this card is actually offered in. A review and a collage
      compose on either column; the story card has ONE, because its whole
-     definition is a 9:16 frame and the broad column is a different aspect.
+     definition is a 4:5 frame and the broad column is a different aspect.
      Where there is one, the picker is replaced by the plain figure — a
      control with a single option is a control that decides nothing, and a
      pressed button nobody can unpress reads as broken. */

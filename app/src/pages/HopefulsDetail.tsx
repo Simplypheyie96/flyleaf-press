@@ -24,7 +24,7 @@ const DEBOUNCE = 350
 const MIN_CHARS = 3
 
 /* The story card composes on ONE column and only one: 688px of card on a
-   720px leaf is 1440 x 2560, which is 9:16 to the pixel, and the broad column
+   720px leaf is 1440 x 1800, which is 4:5 to the pixel, and the broad column
    would be a different aspect and therefore not a story. Module-level because
    `ExportSheet` measures on a dependency of this array — an inline literal is
    a new array every render, so the whole card would be rebuilt and remeasured
@@ -59,6 +59,53 @@ function asReview(h: Hopeful): Review {
     style: 'archive',
     createdAt: h.createdAt,
   }
+}
+
+/* One book in a portrait frame, shared from its month's list and from Reading
+   now on Home. It is the only card in the app that carries the reader's name —
+   so the face is resolved to a data URI HERE, in React, where the cache lives.
+   The renderer is a template literal and cannot call a hook or hold a cache of
+   its own. */
+export function StoryShare({ h, settings, style, onStyle, onClose }: {
+  h: Hopeful
+  settings: Settings
+  style: StyleId
+  onStyle: (s: StyleId) => void
+  onClose: () => void
+}) {
+  const story: MonthData = {
+    name: monthName(h.month),
+    books: [asReview(h)],
+    span: 'reading',
+    reader: { name: settings.name, face: settings.face ? faceUri(settings.face) : undefined },
+  }
+  const build = useCallback(
+    (host: HTMLDivElement) => buildStoryPage(story, style, host),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [h, style, settings.name, settings.face]
+  )
+  return (
+    <ExportSheet
+      heading={h.title}
+      baseName={storyBaseName(story)}
+      picker={
+        <StylePicker
+          ids={STYLE_IDS}
+          names={STYLE_NAMES}
+          grounds={STYLE_GROUNDS}
+          value={style}
+          onChange={onStyle}
+          label="Card style"
+        />
+      }
+      build={build}
+      shape="phone"
+      shapes={STORY_SHAPES}
+      onShape={() => {}}
+      exportImages={(mode: ExportMode) => shareStoryImage(story, style, mode)}
+      onClose={onClose}
+    />
+  )
 }
 
 /**
@@ -230,22 +277,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
     [key, style, rows, doneKey]
   )
 
-  /* The story is one book, and it is the only card in the app that carries the
-     reader's name — so the face is resolved to a data URI HERE, in React,
-     where the cache lives. The renderer is a template literal and cannot call
-     a hook or hold a cache of its own. */
   const told = (rows ?? []).find((r) => r.id === storyFor)
-  const story: MonthData = {
-    name: monthName(key),
-    books: told ? [asReview(told)] : [],
-    span: 'reading',
-    reader: { name: settings.name, face: settings.face ? faceUri(settings.face) : undefined },
-  }
-  const storyBuild = useCallback(
-    (host: HTMLDivElement) => buildStoryPage(story, storyStyle, host),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [storyFor, storyStyle, rows, settings.name, settings.face]
-  )
 
   if (!rows) return null
 
@@ -435,26 +467,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
       )}
 
       {told && (
-        <ExportSheet
-          heading={told.title}
-          baseName={storyBaseName(story)}
-          picker={
-            <StylePicker
-              ids={STYLE_IDS}
-              names={STYLE_NAMES}
-              grounds={STYLE_GROUNDS}
-              value={storyStyle}
-              onChange={setStoryStyle}
-              label="Card style"
-            />
-          }
-          build={storyBuild}
-          shape="phone"
-          shapes={STORY_SHAPES}
-          onShape={() => {}}
-          exportImages={(mode: ExportMode) => shareStoryImage(story, storyStyle, mode)}
-          onClose={() => setStoryFor(null)}
-        />
+        <StoryShare h={told} settings={settings} style={storyStyle} onStyle={setStoryStyle} onClose={() => setStoryFor(null)} />
       )}
 
       {sharing && (

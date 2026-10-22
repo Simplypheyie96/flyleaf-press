@@ -189,7 +189,7 @@ export function buildCollagePage(
 
 /* Story: one book, on a leaf of a FIXED height. Every other page here grows
    to whatever it is holding; this one cannot, because the shape is the point —
-   a 688px card 1248px tall on the 720px leaf is 1440 × 2560, which is 9:16 to
+   a 688px card 868px tall on the 720px leaf is 1440 × 1800, which is 4:5 to
    the pixel. So it is always the phone column — the broad one would be a
    different aspect and no longer a story — and the card's own fixed height is
    what the tight leaf then measures. */
@@ -207,7 +207,7 @@ export function buildStoryPage(
 
 /* Give the picture every pixel the type does not want.
 
-   The card is 1248px tall and the head, the book block and the foot are all
+   The card is 868px tall and the head, the book block and the foot are all
    `flex:none`, so the hero is the remainder — and that remainder does NOT
    depend on how tall the cover is (measured: identical at a 640px cover and at
    a 2000px one). That is the whole reason this can be one pass rather than a

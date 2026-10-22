@@ -226,3 +226,85 @@ export async function backfillCovers(
     return undefined
   }
 }
+
+/* ─── Sharpen covers saved small ───────────────────────────────────────────
+
+   Asking the catalogues for big art (21 Oct) only helps a cover fetched after
+   it: every cover already on a shelf is the 300–600px picture it was saved
+   as, and a story card prints its cover ~1000 device px tall. So once per
+   cover, quietly, a small one is fetched again at the large size from the
+   row's own candidates — and swapped in ONLY if it is the same picture. The
+   row does not record which candidate was picked, and replacing a deliberate
+   jacket with the catalogue's first one would be worse than a soft cover. */
+
+const SHARP_H = 1000
+const TRIED_KEY = 'press.sharpened'
+
+async function pic(src: string): Promise<HTMLImageElement | undefined> {
+  const img = new Image()
+  img.src = src
+  try { await img.decode(); return img } catch { return undefined }
+}
+
+/* 12 × 18 greys, brightness-normalised. Measured on The Stone Sky: the same
+   jacket at 300 vs 1400px scores 0.08, another scan of it 0.10, a different
+   jacket 0.32 — so 0.15 sits in the gap. */
+function print(img: HTMLImageElement): number[] {
+  const c = document.createElement('canvas')
+  c.width = 12
+  c.height = 18
+  const g = c.getContext('2d')!
+  g.imageSmoothingQuality = 'high'
+  g.drawImage(img, 0, 0, 12, 18)
+  const d = g.getImageData(0, 0, 12, 18).data
+  const v: number[] = []
+  for (let i = 0; i < d.length; i += 4) v.push((d[i] + d[i + 1] + d[i + 2]) / 765)
+  const mean = v.reduce((a, b) => a + b, 0) / v.length
+  return v.map((x) => x - mean)
+}
+
+const same = (a: HTMLImageElement, b: HTMLImageElement): boolean => {
+  const ra = a.naturalWidth / a.naturalHeight, rb = b.naturalWidth / b.naturalHeight
+  if (Math.abs(ra - rb) / ra > 0.06) return false
+  const pa = print(a), pb = print(b)
+  return pa.reduce((s, x, i) => s + Math.abs(x - pb[i]), 0) / pa.length < 0.15
+}
+
+export async function sharpenCovers(): Promise<void> {
+  let tried: string[] = []
+  try { tried = JSON.parse(localStorage.getItem(TRIED_KEY) || '[]') } catch { /* fresh */ }
+  const mark = (k: string) => {
+    tried.push(k)
+    try { localStorage.setItem(TRIED_KEY, JSON.stringify(tried.slice(-2000))) } catch { /* no storage */ }
+  }
+  const rows = [
+    ...(await db.reviews.toArray()).map((r) => ({ t: db.reviews, r })),
+    ...(await db.hopefuls.toArray()).map((r) => ({ t: db.hopefuls, r })),
+  ]
+  for (const { t, r } of rows) {
+    if (!r.cover?.startsWith('data:') || r.id == null) continue
+    const key = `${t.name}:${r.id}:${r.cover.length}`
+    if (tried.includes(key)) continue
+    const old = await pic(r.cover)
+    if (!old || old.naturalHeight >= SHARP_H) { mark(key); continue }
+    const ten = r.isbn ? isbn10Of(r.isbn) : undefined
+    const urls = [...new Set([
+      ...(r.covers ?? []),
+      ...(ten ? [amazonCover(ten)] : []),
+    ])].filter((u) => !u.includes('books.google.')).slice(0, 6)
+    /* the LARGEST match, not the first: an Open Library scan of the same
+       jacket matches too, at a third of Apple's size */
+    let best: { data: string; h: number } | undefined
+    for (const u of urls) {
+      const data = await coverToDataUrl(u)
+      const big = data && (await pic(data))
+      if (data && big && big.naturalHeight > (best?.h ?? old.naturalHeight * 1.2) && same(old, big)) {
+        best = { data, h: big.naturalHeight }
+        if (best.h >= SHARP_H) break
+      }
+      await sleep(CDN_GAP_MS)
+    }
+    if (best) await t.update(r.id, { cover: best.data, editedAt: Date.now() })
+    mark(key)
+  }
+}

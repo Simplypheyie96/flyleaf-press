@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import type { Settings } from '../types'
-import { STYLE_GROUNDS } from '../types'
+import type { Hopeful, Settings, StyleId } from '../types'
+import { STYLE_GROUNDS, liveStyle } from '../types'
 import { Face } from '../components/Face'
 import { InstallNotice } from '../components/InstallNotice'
+import { StoryShare } from './HopefulsDetail'
 import { CarryOver, HopeRail, HopeRow, ReadingList, shiftMonth, useHopes } from '../components/Hopes'
 import { fmtRating, monthKey, monthName, currentMonthKey } from '../format'
 import calendar from '../assets/emoji/tear-off-calendar.svg'
@@ -29,6 +31,8 @@ function partOfDay(): string {
 export function Home({ settings }: { settings: Settings }) {
   const reviews = useLiveQuery(() => db.reviews.orderBy('finished').reverse().toArray(), [])
   const hopes = useHopes()
+  const [sharing, setSharing] = useState<Hopeful | null>(null)
+  const [storyStyle, setStoryStyle] = useState<StyleId>(liveStyle(settings.defaultCollage))
   if (!reviews || !hopes) return null
 
   const nowKey = currentMonthKey()
@@ -80,7 +84,7 @@ export function Home({ settings }: { settings: Settings }) {
           <span className="ui-lbl">Reading now</span>
         </div>
         {hopes.reading.length ? (
-          <ReadingList books={hopes.reading} />
+          <ReadingList books={hopes.reading} onShare={setSharing} />
         ) : (
           <div className="notice">
             <div className="notice-txt"><p>Nothing in your hands. Start a book and it waits here until you review it.</p></div>
@@ -151,6 +155,10 @@ export function Home({ settings }: { settings: Settings }) {
           </>
         )}
       </div>
+
+      {sharing && (
+        <StoryShare h={sharing} settings={settings} style={storyStyle} onStyle={setStoryStyle} onClose={() => setSharing(null)} />
+      )}
     </div>
   )
 }

@@ -1216,8 +1216,8 @@ function specimen(m: MonthData): string {
    is how much paper is left around the cover rather than how long the card is.
 
    It falls out of constants that already exist. The standard card is 688px and
-   the mat is 16 a side, so the leaf is 720; at a card height of 1248 the leaf
-   is 1280, and 720 × 1280 doubled is 1440 × 2560 — exactly 9:16, and exactly
+   the mat is 16 a side, so the leaf is 720; at a card height of 868 the leaf
+   is 900, and 720 × 900 doubled is 1440 × 1800 — exactly 4:5, at exactly
    what the Small card option already exports at. So no new column width, no
    new type scale, and every size on it is a size these twelve styles are
    already tuned for. The one genuinely new thing is that the height is FIXED.
