@@ -14,7 +14,7 @@
 
    ONE FORMAT, ONE MERGE, THREE DOORS. This file does not write to the
    database. It converts a CSV into the same `LibraryFile` that a hand-carried
-   backup and a Drive sync both arrive as, and hands it to `mergeLibrary`.
+   backup and a sync both arrive as, and hands it to `mergeLibrary`.
    Dedupe, idempotency, and the rule that a review you deliberately deleted
    does not come back are all properties of that fold; reimplementing them here
    would mean two readers of the same intent, and the one with less testing
@@ -22,7 +22,7 @@
 
 import type { FormatName, Review } from '../types'
 import { db } from '../db'
-import { fingerprint } from '../sync/backup'
+import { bury, fingerprint } from '../sync/backup'
 
 /* Where the import window starts. Not a filter for one calendar year — a
    FLOOR, so the feature keeps working next year without an edit. Today that
@@ -389,6 +389,9 @@ export async function replaceDuplicates(dups: GrBook[]): Promise<number> {
     if (b.isbn && !row.isbn) patch.isbn = b.isbn
     if (!Object.keys(patch).length) continue
     patch.editedAt = Date.now()
+    /* a new finished date is a new fingerprint — bury the old one so the other
+       device does not hand it back as a second copy */
+    if (patch.finished && patch.finished !== row.finished) await bury(row)
     await db.reviews.update(row.id, patch)
     replaced++
   }

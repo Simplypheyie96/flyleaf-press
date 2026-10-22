@@ -1,28 +1,22 @@
-/* Signing in to Google, and nothing more than that.
+/* Google Drive, for the one job it still has: reading and removing the copy
+   an older Flyleaf Press kept there.
 
-   WHY THIS IS THE SHAPE IT IS. Flyleaf Press has no server and does not want
-   one — the library is local, and that is the promise. So backup does not mean
-   "our database holds your reviews": it means the shelf is written into the
-   user's OWN Google Drive, into a hidden folder only this app can see
-   (`appDataFolder`). We never hold a copy, we never see it, and the storage it
-   uses is theirs. That is the only version of sync this app could honestly
-   offer, and it is also the only one that stays free.
+   Sync used to run through here, on hour-long access tokens that only a popup
+   could renew, so every phone fell out of sync an hour after it was last used.
+   Syncing is now the Flyleaf account (cloud.ts): Google only proves who the
+   reader is, once. What is left in this file opens Google's Drive window when
+   somebody presses "Bring in my Google Drive copy" or "Remove the Google Drive
+   copy" in Settings, and at no other time. The flag it remembers is what tells
+   Settings this device used Drive, so those two rows appear only where there
+   is a Drive copy to speak of.
 
-   NO CLIENT SECRET, ANYWHERE. This is Google Identity Services' token flow,
-   designed for exactly this: a browser app with no backend. The client ID is
-   public by design — it is compiled into the JavaScript every visitor
-   downloads, and that is fine, because a client ID is not a credential. The
-   client SECRET is never used, never stored, and must never appear in this
-   repo.
+   NO CLIENT SECRET, ANYWHERE. Google Identity Services' token flow, built for
+   a browser app; the client ID is public by design and is not a credential.
 
-   THE SCOPE IS ONE LINE, AND IT MATTERS. `drive.appdata` grants access to a
-   folder this app creates and nothing else: not their documents, not their
-   photos, not one other file in their Drive.
+   THE SCOPE IS ONE LINE, AND IT MATTERS. `drive.appdata` reaches the hidden
+   folder this app created and nothing else in anybody's Drive.
 
-   TOKENS LIVE IN MEMORY ONLY. An access token is good for about an hour and is
-   never written to disk. What IS remembered is a flag saying "this device
-   opted in", which lets us ask Google for a fresh token silently rather than
-   putting a popup in front of somebody who already said yes. */
+   TOKENS LIVE IN MEMORY ONLY, and are never written to disk. */
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
 /* `drive.appdata` is the only scope that touches a file. `userinfo.email`
@@ -40,8 +34,8 @@ const OPTED_IN_KEY = 'flyleaf-press-sync-on'
 /** The address on the line in Settings. A label, not a credential. */
 const ACCOUNT_KEY = 'flyleaf-press-google-account'
 
-/** Fired whenever anything a Settings row displays has moved. */
-export const SYNC_EVENT = 'flyleaf-press-sync'
+/** Same event as cloud.ts fires: Settings redraws on either. */
+const SYNC_EVENT = 'flyleaf-press-sync'
 
 interface TokenResponse {
   access_token?: string
@@ -68,6 +62,18 @@ declare global {
             error_callback?: (error: { type?: string }) => void
           }): TokenClient
           revoke(token: string, done?: () => void): void
+        }
+        /* The ID-token sign-in the Flyleaf account uses (cloud.ts). */
+        id?: {
+          initialize(config: {
+            client_id: string
+            ux_mode?: 'popup' | 'redirect'
+            auto_select?: boolean
+            itp_support?: boolean
+            callback: (response: { credential?: string }) => void
+          }): void
+          renderButton(el: HTMLElement, options: Record<string, string | number>): void
+          disableAutoSelect(): void
         }
       }
     }
@@ -218,7 +224,7 @@ function remember(on: boolean) {
    waiting for. */
 const SCRIPT_PATIENCE = 20_000
 
-function loadScript(): Promise<void> {
+export function loadScript(): Promise<void> {
   if (window.google?.accounts?.oauth2) return Promise.resolve()
   if (loading) return loading
 
@@ -380,6 +386,13 @@ export async function silentToken(): Promise<string> {
       ? error
       : new Error('Sign in to Google again to keep backing up.')
   }
+}
+
+/** Forget a token Drive has just refused, so the next request asks Google for
+    a fresh one instead of handing back the same dead one from memory. */
+export function dropToken() {
+  token = null
+  expiresAt = 0
 }
 
 /** Hand the token back to Google and forget the whole arrangement. The copy in

@@ -89,38 +89,43 @@ export function GoodreadsSheet({ file, onClose }: { file: File; onClose: () => v
   async function run() {
     if (!scan || (!picked.length && !willReplace)) return
     setStage('importing')
+    try {
+      if (picked.length) {
+        const reviews = toReviews(picked, fmts)
+        /* THE THIRD DOOR. This does not touch the database itself — it hands the
+           rows to the same fold a hand-carried backup and a sync arrive
+           through, so the exact-fingerprint dedupe, the tombstone check that keeps
+           a deliberately deleted book from coming back, and the local Nº numbering
+           are all the behaviour that is already tested rather than a second
+           implementation of it. */
+        const lib: LibraryFile = { app: FORMAT, version: VERSION, reviews }
+        const res = await mergeLibrary(JSON.stringify(lib))
+        setAdded(res.added)
+      }
 
-    if (picked.length) {
-      const reviews = toReviews(picked, fmts)
-      /* THE THIRD DOOR. This does not touch the database itself — it hands the
-         rows to the same fold a hand-carried backup and a Drive sync arrive
-         through, so the exact-fingerprint dedupe, the tombstone check that keeps
-         a deliberately deleted book from coming back, and the local Nº numbering
-         are all the behaviour that is already tested rather than a second
-         implementation of it. */
-      const lib: LibraryFile = { app: FORMAT, version: VERSION, reviews }
-      const res = await mergeLibrary(JSON.stringify(lib))
-      setAdded(res.added)
-    }
+      /* The one write the fold cannot do: overwriting shelf copies with the
+         file's, because their fingerprints differ by date on purpose. Only when
+         the reader chose it. */
+      let redone = 0
+      if (willReplace) {
+        redone = await replaceDuplicates(scan.duplicates)
+        setReplaced(redone)
+      }
 
-    /* The one write the fold cannot do: overwriting shelf copies with the
-       file's, because their fingerprints differ by date on purpose. Only when
-       the reader chose it. */
-    let redone = 0
-    if (willReplace) {
-      redone = await replaceDuplicates(scan.duplicates)
-      setReplaced(redone)
+      /* Then go and find the artwork. A Goodreads export carries none at all, so
+         without this every imported book is a blank card. It runs here rather
+         than on a later visit because this is the moment somebody is watching
+         and can see it happen. */
+      if (picked.length > 0 || redone > 0) {
+        abort.current = new AbortController()
+        await backfillCovers(setCov, abort.current.signal)
+      }
+      setStage('done')
+    } catch (e) {
+      /* back to the report, which prints the error, rather than a spinner forever */
+      setError(e instanceof Error ? e.message : String(e))
+      setStage('report')
     }
-
-    /* Then go and find the artwork. A Goodreads export carries none at all, so
-       without this every imported book is a blank card. It runs here rather
-       than on a later visit because this is the moment somebody is watching
-       and can see it happen. */
-    if (picked.length > 0 || redone > 0) {
-      abort.current = new AbortController()
-      await backfillCovers(setCov, abort.current.signal)
-    }
-    setStage('done')
   }
 
   return (

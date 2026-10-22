@@ -12,8 +12,9 @@ import { Mark } from '../components/Mark'
 import { Confirm } from '../components/Confirm'
 import { ChoiceSheet } from '../components/ChoiceSheet'
 import { printLibraryPdf } from '../share/export'
-import { bury, exportLibrary, mergeLibrary } from '../sync/backup'
+import { bury, deleteEverything, exportLibrary, mergeLibrary } from '../sync/backup'
 import { SyncPanel } from '../components/SyncPanel'
+import { clearAccount } from '../sync/sync'
 import { useInstall, promptInstall, checkForUpdate } from '../pwa'
 
 const THEMES: { id: ThemeChoice; label: string }[] = [
@@ -66,6 +67,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
      cannot happen, and then reports success, is indistinguishable from a
      broken button — which is precisely how it was read. */
   const count = useLiveQuery(() => db.reviews.count(), [], -1)
+  const hopes = useLiveQuery(() => db.hopefuls.count(), [], -1)
   /* live for the same reason: the row below counts what it is about to look
      up, and refuses when there is nothing */
   const coverless = useLiveQuery(() => db.reviews.filter((r) => !r.cover).count(), [], -1)
@@ -73,17 +75,22 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   /* rows the Goodreads import ADDED — its undo works on exactly these, so the
      row below only exists while there is an import to remove */
   const grCount = useLiveQuery(() => db.reviews.filter((r) => r.source === 'goodreads').count(), [], 0)
-  const some = count > 0
+  const some = count > 0 || hopes > 0
   /* two forms, because "all 1 review" is not English: the plain count for the
      result line, and a phrase that reads on a button and in a question */
   const nReviews = `${count} review${count === 1 ? '' : 's'}`
   const allOfThem = count === 1 ? 'the one review' : `all ${count} reviews`
+  /* Delete everything means everything: hopefuls go with the reviews, and
+     the name, face and preferences after them */
+  const nHopes = `${hopes} hopeful${hopes === 1 ? '' : 's'}`
+  const both = (a: string, b: string) => [count > 0 && a, hopes > 0 && b].filter(Boolean).join(' and ')
+  const everything = both(allOfThem, hopes === 1 ? 'the one hopeful' : `all ${hopes} hopefuls`)
 
   const put = (patch: Partial<Settings>) => db.settings.put({ ...settings, ...patch })
 
-  /* Export and import go through the same document the Drive backup writes —
-     one format and one merge, so a library restored from a downloaded file and
-     one that arrives from Drive cannot drift apart. */
+  /* Export and import go through the same document sync writes — one format
+     and one merge, so a library restored from a downloaded file and one that
+     arrives from another device cannot drift apart. */
   const exportJson = async () => {
     const data = await exportLibrary()
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -123,6 +130,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   const resetDemo = async () => {
     setConfirming(null)
     await db.reviews.clear()
+    await db.hopefuls.clear()
     const { seedIfEmpty } = await import('../seed')
     await seedIfEmpty()
     setMsg('Demo library loaded.')
@@ -147,19 +155,25 @@ export function SettingsPage({ settings }: { settings: Settings }) {
 
   const clearAll = async () => {
     setConfirming(null)
-    const gone = nReviews
-    /* headstones for all of them, so clearing here does not simply invite the
-       Drive copy to put the whole shelf back on the next sync */
-    for (const r of await db.reviews.toArray()) await bury(r)
-    await db.reviews.clear()
+    const gone = both(nReviews, nHopes)
+    /* headstones for all of them, so clearing here does not simply invite
+       another device to put the whole shelf back on the next sync */
+    await deleteEverything()
     /* say what was destroyed. "Library cleared." is true of clearing fourteen
        and of clearing nothing, so it could not tell those two apart either. */
-    setMsg(`${gone} deleted. The shelf is empty.`)
+    setMsg(gone ? `${gone} deleted. The shelf is empty.` : 'Reset. The app starts over.')
+    /* Then the account copy and its covers. Signed out, there is none to
+       clear; offline, the device is already empty and says so honestly. */
+    try {
+      await clearAccount()
+    } catch {
+      setMsg(`${gone ? `${gone} deleted here` : 'Reset here'}, but the copy in your Flyleaf account could not be removed. Try again when you’re online.`)
+    }
   }
 
   /* Undo for the Goodreads import: removes the rows the import ADDED — marked
      `source: 'goodreads'` when they were built — and nothing else. Buried like
-     any other delete, or the next Drive sync would put them straight back. */
+     any other delete, or the next sync would put them straight back. */
   const removeGoodreads = async () => {
     setConfirming(null)
     const rows = (await db.reviews.toArray()).filter((r) => r.source === 'goodreads')
@@ -416,15 +430,14 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             <div className="set-row-txt">
               <div className="ui-lbl">Delete everything</div>
               <p>
-                {count === -1 ? 'Counting the shelf\u2026'
-                  : some ? `Deletes ${allOfThem} on the shelf, ${count === 1 ? 'and its cover' : 'covers and all'}. There is no cloud copy to recover from.`
-                  : 'Nothing to delete \u2014 the shelf is already empty.'}
+                {count === -1 || hopes === -1 ? 'Counting the shelf\u2026'
+                  : some ? `Deletes ${everything}, covers and all, then your name, face and preferences. There is no cloud copy to recover from.`
+                  : 'The shelf is already empty \u2014 this resets your name, face and preferences.'}
               </p>
             </div>
-            {/* disabled rather than hidden: the row is where somebody comes
-                looking for it, and a row that vanishes on an empty shelf reads
-                as the feature having gone missing. */}
-            <button className="btn btn--danger btn--sm" disabled={!some}
+            {/* never hidden, and on an empty shelf it still resets the name,
+                face and preferences: everything means everything */}
+            <button className="btn btn--danger btn--sm" disabled={count === -1 || hopes === -1}
               onClick={() => setConfirming('clear')}>Delete</button>
           </div>
         </div>
@@ -480,10 +493,10 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             to. Every month becomes a collage of what you finished.
           </p>
           <p>
-            Your library lives on this device, in this browser. No account and no server of ours —
-            the host counts page views and nothing else. Nothing else leaves unless you send it:
-            Export library writes the whole shelf to one file, and Google Drive backup, if you turn
-            it on, keeps a copy in a hidden folder of your own Drive.
+            Your library lives on this device, in this browser, and the host counts page views and
+            nothing else. Nothing leaves unless you send it: Export library writes the whole shelf
+            to one file, and if you sign in to sync across devices, a copy is kept on Flyleaf’s
+            servers at Cloudflare, private to your account, until you remove it.
           </p>
           {/* the check sits beside the number it checks, at the very bottom
               of the page. "Local-first PWA" gave up the slot: the header and
@@ -555,7 +568,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
       {confirming === 'goodreads' && (
         <Confirm
           title={grCount === 1 ? 'Remove the imported book?' : `Remove all ${grCount} imported books?`}
-          body="Ratings, covers and anything you've edited on them since go too, here and in any Drive backup. There is no undo."
+          body="Ratings, covers and anything you've edited on them since go too, here and on every device that syncs. There is no undo."
           action={grCount === 1 ? 'Remove it' : `Remove ${grCount} books`}
           onConfirm={removeGoodreads}
           onCancel={() => setConfirming(null)}
@@ -563,9 +576,9 @@ export function SettingsPage({ settings }: { settings: Settings }) {
       )}
       {confirming === 'clear' && (
         <Confirm
-          title={`Delete ${allOfThem}?`}
-          body="Any Drive backup is cleared along with this device. There is no undo — export a backup first if in doubt."
-          action={count === 1 ? 'Delete it' : `Delete ${count} reviews`}
+          title={some ? `Delete ${everything}?` : 'Start over?'}
+          body="Your name, face and preferences go too, and the copy in your Flyleaf account is cleared along with this device. The app starts over as new. There is no undo — export a backup first if in doubt."
+          action={some ? 'Delete everything' : 'Start over'}
           onConfirm={clearAll}
           onCancel={() => setConfirming(null)}
         />

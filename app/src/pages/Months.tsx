@@ -61,7 +61,7 @@ function SpanRow({ s, open }: { s: Span; open: boolean }) {
    beside the book in hand, because they are what you read next, not a span. */
 export function Months() {
   const reviews = useLiveQuery(() => db.reviews.orderBy('finished').reverse().toArray(), [])
-  const [tab, setTab] = useState<'months' | 'years'>('months')
+  const [chosen, setTab] = useState<'months' | 'years'>('months')
   /* Which year sections have been opened or shut BY HAND. Only the exceptions
      are held, never the whole state — the default is a rule (the newest year
      is open, every earlier one is a single line), and a Set seeded once from
@@ -79,6 +79,8 @@ export function Months() {
   const years = group(reviews, yearKey, (k) => k)
     .filter((y) => months.filter((m) => m.key.startsWith(y.key)).length > 1)
   const tabbed = years.length > 0
+  /* The Years button leaves when the last qualifying year does; the tab must too. */
+  const tab = chosen === 'years' && !tabbed ? 'months' : chosen
 
   /* Year headings inside the Months tab, newest first — and under a heading
      that already says the year, the row says only the month. */

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
+import { dropHopeful, hopefulPrint } from '../sync/backup'
 import type { ExportShape, Hopeful, Review, Settings, StyleId } from '../types'
 import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, liveStyle } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
@@ -70,7 +71,7 @@ function asReview(h: Hopeful): Review {
 export function HopefulsDetail({ settings }: { settings: Settings }) {
   const nav = useNavigate()
   const { month } = useParams()
-  const key = month ?? currentMonthKey()
+  const key = month && /^\d{4}-(0[1-9]|1[0-2])$/.test(month) ? month : currentMonthKey()
 
   const [q, setQ] = useState('')
   const [busy, setBusy] = useState(false)
@@ -178,6 +179,15 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
       /* The candidate's art is a URL on somebody else's host. It is converted
          here, at add time, for the same reason a review's is: the card is
          rasterized into a file, and a file cannot hold a link. */
+      /* Already on this month's list: a twin would share its headstone, so
+         removing one would take the other with it on the next sync. */
+      const print = hopefulPrint({ month: key, title: c.title, author: c.author })
+      const twin = (await db.hopefuls.where('month').equals(key).toArray()).some((h) => hopefulPrint(h) === print)
+      if (twin) {
+        setQ('')
+        setResult(null)
+        return
+      }
       const cover = c.covers[0] ? await coverToDataUrl(c.covers[0]) : undefined
       await db.hopefuls.add({
         month: key,
@@ -376,7 +386,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm"
-                          onClick={() => db.hopefuls.delete(h.id!)}
+                          onClick={() => dropHopeful(h)}
                         >
                           Remove
                         </button>
@@ -416,7 +426,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
           covers={editing.covers ?? []}
           current={editing.cover}
           seed={`${editing.title} ${editing.author}`}
-          onCovers={(next) => db.hopefuls.update(editing.id!, { covers: next })}
+          onCovers={(next) => db.hopefuls.update(editing.id!, { covers: next, editedAt: Date.now() })}
           onPick={(cover) => db.hopefuls.update(editing.id!, { cover, editedAt: Date.now() })}
           onClose={() => setCoverFor(null)}
         />

@@ -2,41 +2,55 @@
 
    MERGE, NEVER PICK-ONE. The rule this file exists to hold: a sync must not be
    able to lose somebody a review. So it never asks "which side wins" — it
-   pulls what is in Drive, merges it into this device, and writes the merged
-   whole back up. Both sides end up holding the union. A review written on a
-   phone with no signal and one written on a laptop the same afternoon both
-   survive, in either order, however long the gap. `backup.ts` supplies the
-   identity and the fold; this file is only the transport.
+   pulls what is in the account, merges it into this device, and writes the
+   merged whole back up. Both sides end up holding the union. A review written
+   on a phone with no signal and one written on a laptop the same afternoon
+   both survive, in either order, however long the gap. `backup.ts` supplies
+   the identity and the fold; this file is only the transport.
 
-   LOCAL STAYS LOCAL. Nothing here runs for somebody who has not asked for it.
-   There is no sign-in wall, no nag, and a user who never connects Drive is not
+   LOCAL STAYS LOCAL. Nothing here runs for somebody who has not signed in.
+   There is no sign-in wall, no nag, and a reader who never signs in is not
    merely unsynced — they are unknown to us, with nothing of theirs anywhere
-   but their own device. Connecting later changes where the library is COPIED
-   to, and does not change that. */
+   but their own device. Signing in later changes where the library is COPIED
+   to, and does not change that.
+
+   The account is the Flyleaf one Journal uses (cloud.ts). Google Drive, which
+   this file used to run on, is now only a place to bring an old copy in from,
+   or remove it from: fromDrive and forgetDrive. */
 
 import { db } from '../db'
-import { exportBlob, mergeLibrary } from './backup'
+import { SYNCED, exportForCloud, mergeLibrary } from './backup'
+import { drop, fetchMedia, optedIn, peek, pull, push, sendMedia, SYNC_EVENT } from './cloud'
 import { deviceName } from './device'
-import { dropLibraries, findLibrary, readLibrary, writeLibrary } from './drive'
-import { SYNC_EVENT, optedIn, signIn, silentToken, tokenHeld } from './google'
+import { dropLibraries, findLibrary, readLibrary } from './drive'
+import { optedIn as usedDriveFlag, signIn as driveSignIn, signOut as driveSignOut, silentToken } from './google'
 
-const SYNCED_AT_KEY = 'flyleaf-press-synced-at'
-/** What this device looked like the last time a sync finished, so an unchanged
-    device on an unchanged Drive can skip the whole round trip. */
-const MARK_KEY = 'flyleaf-press-sync-mark'
-/** Set the moment anything is written while this device is NOT connected, and
+/** New keys rather than Drive's old ones, so every device's first sync to the
+    account counts as a first meeting and sends its whole library up. */
+const SYNCED_AT_KEY = 'flyleaf-press-cloud-synced-at'
+/** `<rev>:<at> <signature>`: the account revision this device last finished on,
+    and what the device looked like then, so an unchanged device on an
+    unchanged account skips the whole round trip. The `at` is there because a
+    revision number alone repeats: remove the account copy and the next one
+    starts again at 1, which a device that last saw an older 1 would otherwise
+    take for the copy it already holds. */
+const MARK_KEY = 'flyleaf-press-cloud-mark'
+/** Set the moment anything is written while this device is NOT signed in, and
     cleared by the first sync that succeeds after it. It is the single input to
-    the one question this file ever asks: connecting a device that is carrying
-    work Drive has never seen is the one case where two libraries genuinely
+    the one question this file ever asks: signing in on a device carrying work
+    the account has never seen is the one case where two libraries genuinely
     diverged without anybody being able to watch it happen. */
 const OFFLINE_KEY = 'flyleaf-press-wrote-offline'
+/** Set once the old Google Drive copy has been brought in, so the offer to
+    bring it in does not stay on screen after it has done its job. */
+const DRIVE_IN_KEY = 'flyleaf-press-drive-in'
 
 export interface SyncResult {
-  /** Reviews that came down from another device. */
+  /** Reviews and hopefuls that came down from another device. */
   gained: number
-  /** Reviews replaced here by a newer copy from the other device. */
+  /** Rows replaced here by a newer copy from the other device. */
   updated: number
-  /** Reviews removed here because the other device had deleted them. */
+  /** Rows removed here because the other device had deleted them. */
   removed: number
   /** True when nothing had changed on either side and no bytes moved. */
   unchanged: boolean
@@ -72,76 +86,112 @@ export function lastSync(): number | null {
     shelf of uploaded covers is megabytes, and computing a string must not pull
     them all out of the database. */
 async function signature(): Promise<string> {
-  const [reviews, graves, newest] = await Promise.all([
-    db.reviews.count(),
-    db.graves.count(),
-    db.reviews.orderBy('editedAt').last(),
-  ])
-  const created = await db.reviews.orderBy('createdAt').last()
-  return `${reviews}.${graves}.${newest?.editedAt ?? 0}.${created?.createdAt ?? 0}`
+  const parts = await Promise.all(
+    SYNCED.map(async (name) => {
+      const table = db.table(name)
+      const [count, edited, created] = await Promise.all([
+        table.count(),
+        table.orderBy('editedAt').last(),
+        table.orderBy('createdAt').last(),
+      ])
+      return `${count}.${edited?.editedAt ?? 0}.${created?.createdAt ?? 0}`
+    }),
+  )
+  return `${await db.graves.count()}.${parts.join('.')}`
 }
 
-/** Did anything get written on this device while it was not connected? */
+async function rows(): Promise<number> {
+  const counts = await Promise.all(SYNCED.map((name) => db.table(name).count()))
+  return counts.reduce((a, b) => a + b, 0)
+}
+
+/** Is there anything here the account should hold? Headstones count: after
+    "Delete everything" the library is empty and the headstones are the whole
+    message, the only way the other devices hear that it went. */
+async function hasAnythingToSend(): Promise<boolean> {
+  return (await rows()) + (await db.graves.count()) > 0
+}
+
+/** Did anything get written on this device while it was not signed in? */
 export function wroteWhileOffline(): boolean {
   return read(OFFLINE_KEY) !== ''
 }
 
-/** Is this device carrying work Drive has never been shown? Two ways that
-    happens: something was written while disconnected, or this device has
-    simply never completed a sync — which is the same situation seen from a
-    device that predates the flag, and the honest fallback for every library
-    already on a phone when this shipped. */
+/** Is this device carrying work the account has never been shown? Two ways
+    that happens: something was written while signed out, or this device has
+    simply never completed a sync to the account — which covers every library
+    that was already on a phone, or in Drive, before the account existed. */
 export async function hasUnsharedWork(): Promise<boolean> {
-  if ((await db.reviews.count()) === 0) return false
+  if ((await rows()) === 0) return false
   return wroteWhileOffline() || lastSync() === null
 }
 
-/** What is already in this account's Drive, and where it was last written.
-    A question about "your Drive" is a question about a place nobody has ever
-    been; "your iPhone, three hours ago" is one they can actually answer. */
+/** What is already in the account, and where it was last written. A question
+    about "your account" is a question about a place nobody has ever been;
+    "your iPhone, three hours ago" is one they can actually answer. */
 export async function otherLibrary(): Promise<{ device: string; at: number } | null> {
-  const file = await findLibrary(await silentToken())
-  if (!file) return null
-  return { device: file.device ?? '', at: Date.parse(file.modifiedTime) || 0 }
+  const doc = await peek()
+  return doc && { device: doc.device, at: doc.at }
 }
 
-/** One full sync: pull, merge, push. Throws with a sentence fit to show. The
-    caller supplies the token so an expired one can be renewed and the whole
-    thing retried without this function knowing anything about auth. */
-async function run(token: string): Promise<SyncResult> {
-  const remote = await findLibrary(token)
+/** One full sync: pull, merge, push. Throws with a sentence fit to show, or
+    with SIGNED_OUT when the account itself has gone. */
+async function run(): Promise<SyncResult> {
+  const [seen = '', seenSig = ''] = read(MARK_KEY).split(' ')
+  const [seenRev, seenAt] = seen.split(':').map(Number)
+  /* Has this device written anything since it last finished a sync? Measured
+     BEFORE the pull, because what the pull brings in changes the signature
+     too, and that is the other device's news, not this one's. */
+  const mine = (await signature()) !== seenSig
+  let remote = await pull(seenRev || 0)
+  /* Same number, different moment: the copy was removed and started over, so
+     the revision this device remembers is not the one the account holds. */
+  if (remote && remote.text === undefined && seenAt && remote.at !== seenAt) remote = await pull(0)
+  const result: SyncResult = { gained: 0, updated: 0, removed: 0, unchanged: false }
 
-  const here = await signature()
-  const mark = `${remote?.modifiedTime ?? ''} ${here}`
-  if (remote && read(MARK_KEY) === mark) {
-    write(SYNCED_AT_KEY, String(Date.now()))
-    return { gained: 0, updated: 0, removed: 0, unchanged: true }
+  for (let tries = 0; tries < 3; tries++) {
+    if (remote?.text !== undefined) {
+      /* Through the same door a hand-carried file uses, so a library that
+         restores from a downloaded backup and one that arrives from another
+         device cannot drift apart. Covers come by reference, and only for rows
+         this device is about to write. */
+      const folded = await mergeLibrary(remote.text, { media: fetchMedia })
+      result.gained += folded.added
+      result.updated += folded.updated
+      result.removed += folded.removed
+    }
+
+    /* Nothing new here, so the account already holds everything this device
+       has: every newer revision was written on top of the one it last saw, and
+       a merge only adds. Writing back would only bounce the other device's
+       work to it again, and the two would trade the same file forever. */
+    if (remote && !mine) return settle(remote, { ...result, unchanged: remote.text === undefined })
+    if (!remote && !(await hasAnythingToSend())) return settle(null, { ...result, unchanged: true })
+
+    /* Exported AFTER the merge, so what goes up is the union rather than this
+       device's side of it. This is the line that makes overwriting safe.
+       Covers travel once each, by their hash, ahead of the library that
+       points at them. */
+    const { blob, media } = await exportForCloud()
+    await sendMedia(media)
+    const written = await push(blob, remote?.rev ?? 0, deviceName())
+    if (written) return settle(written, result)
+
+    /* Another device wrote in between. Take its whole revision, merge it, and
+       try again on top of it: nothing is overwritten, ever. */
+    remote = await pull(0)
   }
+  throw new Error('Another device kept writing at the same moment. Flyleaf will try again by itself.')
+}
 
-  let gained = 0
-  let updated = 0
-  let removed = 0
-  if (remote) {
-    /* Through the same door a hand-carried file uses, so a library that
-       restores from a downloaded backup and one that arrives from Drive
-       cannot drift apart. */
-    const folded = await mergeLibrary(await readLibrary(token, remote.id))
-    gained = folded.added
-    updated = folded.updated
-    removed = folded.removed
-  }
-
-  /* Exported AFTER the merge, so what goes up is the union rather than this
-     device's side of it. This is the line that makes overwriting safe. */
-  const saved = await writeLibrary(token, await exportBlob(), deviceName(), remote?.id)
-
+async function settle(remote: { rev: number; at: number } | null, result: SyncResult): Promise<SyncResult> {
+  write(MARK_KEY, `${remote?.rev ?? 0}:${remote?.at ?? 0} ${await signature()}`)
   write(SYNCED_AT_KEY, String(Date.now()))
-  write(MARK_KEY, `${saved.modifiedTime} ${await signature()}`)
-  /* Whatever was written while disconnected has now been up and merged, so it
+  /* Whatever was written while signed out has now been up and merged, so it
      is no longer a reason to stop and ask anybody anything. */
   write(OFFLINE_KEY, '')
   window.dispatchEvent(new Event(SYNC_EVENT))
-  return { gained, updated, removed, unchanged: false }
+  return result
 }
 
 let running: Promise<SyncResult> | null = null
@@ -150,20 +200,9 @@ let running: Promise<SyncResult> | null = null
     because two syncs at once would each merge the other's half-written state. */
 export function syncNow(): Promise<SyncResult> {
   if (running) return running
-
-  running = (async () => {
-    try {
-      return await run(await silentToken())
-    } catch (error) {
-      /* One retry, and only for the hour being up. Everything else is a real
-         failure and says so. */
-      if (!(error instanceof Error) || error.message !== 'expired') throw error
-      return run(await silentToken())
-    }
-  })().finally(() => {
+  running = run().finally(() => {
     running = null
   })
-
   return running
 }
 
@@ -175,41 +214,94 @@ export async function bringTogether(): Promise<SyncResult> {
   return syncNow()
 }
 
-/** Take the library out of Drive, and stop this device putting it back.
-
-    Both halves, or it is theatre: deleting the file while this device is still
-    connected means the next write recreates it within seconds, and somebody
-    would have pressed a button that did nothing they could see. So syncing
-    pauses first, the copy goes, and the caller signs out.
+/** Take the library and its covers out of the account, and stop this device
+    putting them back. Syncing pauses first and the caller signs out, or the
+    next write would recreate it within seconds.
 
     Nothing on the device is touched. Every review stays where it is — this
     removes the copy, not the writing. */
-export async function forgetDrive(interactive = false): Promise<number> {
+export async function forgetCopy(): Promise<void> {
   pauseAutoSync()
   try {
-    if (!tokenHeld() && interactive) await signIn()
-    const count = await dropLibraries(await silentToken())
-    /* The mark described a file that no longer exists. Left behind, a later
-       reconnection could match it and skip the round trip that would have put
-       the library back up. */
+    await running?.catch(() => {})
+    await drop()
     write(MARK_KEY, '')
     write(SYNCED_AT_KEY, '')
-    /* Everything here is now unshared by definition, so connecting again is a
+    /* Everything here is now unshared by definition, so signing in again is a
        first meeting and should ask like one. */
     write(OFFLINE_KEY, '1')
-    return count
   } finally {
     resumeAutoSync()
   }
 }
 
+/** The account half of "Delete everything", run after the device has been
+    emptied. The account copy and its covers go, and then the headstones go up
+    on their own, so every other signed-in device deletes too instead of
+    sending the library straight back. This device stays signed in. */
+export async function clearAccount(): Promise<void> {
+  if (!optedIn()) return
+  pauseAutoSync()
+  try {
+    await running?.catch(() => {})
+    await drop()
+    write(MARK_KEY, '')
+  } finally {
+    resumeAutoSync()
+  }
+  await syncNow()
+}
+
+/* ── The copy an older Flyleaf Press kept in Google Drive ───────────────── */
+
+/** Did this device ever sync through Google Drive, with the copy not yet
+    removed? */
+export function usedDrive(): boolean {
+  return usedDriveFlag()
+}
+
+/** Has that copy already been brought in here? */
+export function broughtInDrive(): boolean {
+  return read(DRIVE_IN_KEY) !== ''
+}
+
+/** Bring in the library an older Flyleaf Press kept in Google Drive.
+
+    Once, by hand, and read-only: Google's window asks for Drive, the file is
+    merged in, and the merged whole goes up to the account on the sync that
+    follows. The Drive copy itself is left alone; removing it is forgetDrive.
+    Null when that Drive held no library. */
+export async function fromDrive(): Promise<{ added: number; updated: number } | null> {
+  await driveSignIn()
+  const file = await findLibrary(await silentToken())
+  if (!file) return null
+  const folded = await mergeLibrary(await readLibrary(await silentToken(), file.id))
+  write(DRIVE_IN_KEY, '1')
+  window.dispatchEvent(new Event(SYNC_EVENT))
+  if (optedIn()) void syncNow().catch(() => {})
+  return folded
+}
+
+/** Delete the copy an older Flyleaf Press kept in Google Drive. Its hidden
+    folder has no row in Drive's own list, so this is the only way to remove
+    it. Returns how many files went. */
+export async function forgetDrive(): Promise<number> {
+  await driveSignIn()
+  try {
+    return await dropLibraries(await silentToken())
+  } finally {
+    await driveSignOut()
+    window.dispatchEvent(new Event(SYNC_EVENT))
+  }
+}
+
 /* ── Keeping up, without being asked ────────────────────────────────────────
 
-   NOBODY SHOULD EVER HAVE TO PRESS "SYNC NOW". Connecting once is the only
+   NOBODY SHOULD EVER HAVE TO PRESS "SYNC NOW". Signing in once is the only
    thing anybody should have to do. Three triggers, because two devices staying
    level needs both halves:
 
-   PUSH, after a write — a Dexie hook on the reviews table schedules a sync,
+   PUSH, after a write — a Dexie hook on each synced table schedules a sync,
    debounced by SETTLE so writing a long review uploads once when the hand
    stops rather than once per keystroke.
 
@@ -217,17 +309,18 @@ export async function forgetDrive(interactive = false): Promise<number> {
    something is not an event this device can hear, so it has to go and look.
    Only while visible: a backgrounded tab costs battery and finds nothing.
 
-   AND ON ARRIVAL — at launch and whenever the app comes back to the front,
-   which is the moment the other device is most likely to have moved.
+   AND ON ARRIVAL — at launch, on focus, on coming back online, and whenever
+   the app comes back to the front, which is the moment the other device is
+   most likely to have moved.
 
-   Each is cheap when nothing has changed: `run` compares the Drive copy's
-   modifiedTime against a stored mark and returns without moving bytes, so a
-   poll on an idle pair is one metadata call. */
+   Each is cheap when nothing has changed: `run` sends the revision it last
+   finished on, the server answers 204 with no body when that is still the
+   newest, and a poll on an idle pair moves a few hundred bytes. */
 
 /** How long a writing hand must be still before its work is sent up. */
 const SETTLE = 4_000
 /** How often an app in the foreground goes to look for the other device. */
-const BEAT = 90_000
+const BEAT = 30_000
 /** A floor under everything, so no combination of triggers can loop. */
 const QUIET = 10_000
 
@@ -253,10 +346,10 @@ export function autoSyncPaused(): boolean {
 
 /* THE FLOOR DELAYS A SYNC; IT MUST NEVER CANCEL ONE. A blocked attempt books
    itself for the moment the floor lifts, rather than being dropped — otherwise
-   a review added just after a sync waits for the ninety-second beat, if the
-   app is even still in front when it comes round. One timer, not one per
-   caller: three triggers inside the same window still produce one sync, which
-   is what the floor was for. */
+   a review added just after a sync waits for the beat, if the app is even
+   still in front when it comes round. One timer, not one per caller: three
+   triggers inside the same window still produce one sync, which is what the
+   floor was for. */
 function attempt() {
   if (!optedIn() || paused) return
 
@@ -278,20 +371,18 @@ function attempt() {
   lastRun = Date.now()
   void syncNow().catch(() => {
     /* Silence is right here. This one was not asked for: somebody on a train
-       with no signal must not be handed an error about it. The Settings row
-       still shows how old the last real sync is, which is the honest version
-       of the same fact. */
+       with no signal must not be handed an error about it. */
   })
 }
 
 /* A write happened. Wait for the hand to stop, then send. `running` is checked
    at the far end rather than here because the writes a sync makes are
-   themselves merges arriving from Drive — they would otherwise schedule a sync
-   of the thing just synced, forever. */
+   themselves merges arriving from the account — they would otherwise schedule
+   a sync of the thing just synced, forever. */
 function touched() {
   if (!optedIn()) {
     /* Nowhere to send this — but it is exactly the work that will need
-       reconciling if Drive is connected later, and remembering it now is the
+       reconciling if this device signs in later, and remembering it now is the
        only way to know it happened. */
     write(OFFLINE_KEY, '1')
     return
@@ -303,19 +394,35 @@ function touched() {
   }, SETTLE)
 }
 
+/* A phone puts the app away without warning. Work still settling goes up now,
+   while the page is alive to send it, not four seconds after it isn't. */
+function flush() {
+  if (!settling) return
+  clearTimeout(settling)
+  settling = null
+  if (optedIn() && !paused) void syncNow().catch(() => {})
+}
+
 export function startAutoSync() {
   if (started) return
   started = true
   /* The listeners go on unconditionally and `attempt` is the thing that
-     checks — somebody who connects Drive halfway through a session would
-     otherwise get no automatic sync until they next reloaded the app. */
-  db.reviews.hook('creating', touched)
-  db.reviews.hook('updating', touched)
-  db.reviews.hook('deleting', touched)
+     checks — somebody who signs in halfway through a session would otherwise
+     get no automatic sync until they next reloaded the app. */
+  for (const name of SYNCED) {
+    const table = db.table(name)
+    table.hook('creating', touched)
+    table.hook('updating', touched)
+    table.hook('deleting', touched)
+  }
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') attempt()
+    else flush()
   })
+  window.addEventListener('pagehide', flush)
+  window.addEventListener('focus', attempt)
+  window.addEventListener('online', attempt)
   setInterval(() => {
     if (document.visibilityState === 'visible') attempt()
   }, BEAT)
