@@ -498,6 +498,11 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             to one file, and if you sign in to sync across devices, a copy is kept on Flyleaf’s
             servers at Cloudflare, private to your account, until you remove it.
           </p>
+          <p>
+            <a href="https://feyidesigns.com/apps/flyleaf-bookprint/privacy/" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+            {' · '}
+            <a href="https://feyidesigns.com/apps/flyleaf-bookprint/" target="_blank" rel="noopener noreferrer">Support</a>
+          </p>
           {/* the check sits beside the number it checks, at the very bottom
               of the page. "Local-first PWA" gave up the slot: the header and
               the paragraph above both already say it, and a control earns the
