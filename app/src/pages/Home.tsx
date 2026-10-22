@@ -5,7 +5,7 @@ import type { Settings } from '../types'
 import { STYLE_GROUNDS } from '../types'
 import { Face } from '../components/Face'
 import { InstallNotice } from '../components/InstallNotice'
-import { HopeRow, ReadingList, nextMonthKey, useHopes } from '../components/Hopes'
+import { HopeRow, ReadingList, useHopes } from '../components/Hopes'
 import { fmtRating, monthKey, monthName, currentMonthKey } from '../format'
 import calendar from '../assets/emoji/tear-off-calendar.svg'
 import books from '../assets/emoji/books.svg'
@@ -39,6 +39,7 @@ export function Home({ settings }: { settings: Settings }) {
     ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 4) / 4
     : 0
   const latest = reviews.slice(0, 3)
+  const toRead = hopes.ofMonth(nowKey).filter((h) => !hopes.isRead(h))
 
   return (
     <div className="page">
@@ -87,12 +88,31 @@ export function Home({ settings }: { settings: Settings }) {
         )}
 
         <div className="sec-h">
-          <span className="ui-lbl">Hopefuls</span>
-          <Link className="ui-lbl" to="/shelf?tab=hopefuls">All months →</Link>
+          <span className="ui-lbl">Hopefuls · {monthName(nowKey)}</span>
+          <Link className="ui-lbl" to={`/hopefuls/${nowKey}`}>Open list →</Link>
         </div>
+        {/* this month's books still to read, rows as on the month's own page */}
         <div className="field">
           <div className="mo-list">
-            {[nextMonthKey(), nowKey].map((k) => <HopeRow key={k} k={k} hopes={hopes} />)}
+            {toRead.length ? toRead.map((h) => (
+              <div className="hope-row" key={h.id}>
+                {h.cover ? <img src={h.cover} alt="" /> : <span className="hope-miss">No cover</span>}
+                <span className="hope-txt">
+                  <span className="res-t">{h.title}</span>
+                  <span className="res-a" style={{ display: 'block' }}>{h.author}</span>
+                </span>
+                <span className="hope-acts">
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    aria-pressed={!!h.startedAt}
+                    onClick={() => db.hopefuls.update(h.id!, { startedAt: h.startedAt ? undefined : Date.now(), editedAt: Date.now() })}
+                  >
+                    {h.startedAt ? 'Reading' : 'Start'}
+                  </button>
+                </span>
+              </div>
+            )) : <HopeRow k={nowKey} hopes={hopes} />}
           </div>
         </div>
 
