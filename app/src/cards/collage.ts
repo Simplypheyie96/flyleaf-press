@@ -103,6 +103,7 @@ function cov(b: Review, cls?: string): string {
 type HeadId =
   | 'c1' | 'c2' | 'c3' | 'c4' | 'c5' | 'c6' | 'c7'
   | 'c8' | 'c9' | 'c10' | 'c11' | 'c12'
+  | 'c13' | 'c14' | 'c15' | 'c16' | 'c17' | 'c18' | 'c19' | 'c20'
 
 function moHead(m: MonthData, id: HeadId): string {
   const n = m.books.length
@@ -258,6 +259,82 @@ function moHead(m: MonthData, id: HeadId): string {
         ${cnt(`<span class="lbl">${num(`${n} sort${n === 1 ? '' : 's'}`)}</span>`)}
       </div>
       <hr class="mo-set-rule">
+    </div>`
+
+  /* C13 · a till roll: the shop centred over the month, the item count under
+     it, and the tear-off rule a receipt is cut along */
+  if (id === 'c13')
+    return `<div class="mo-head mo-head--c13">
+      <div class="mo-kick">Flyleaf Press · Reading receipt</div>
+      <div class="mo-title">${t}</div>
+      ${cnt(`<span class="lbl">${num(`${n} item${n === 1 ? '' : 's'}`)}</span>`)}
+      <hr class="mo-cut">
+    </div>`
+
+  /* C14 · the top of a borrower's card: the card's own name, the month as the
+     borrower line, and the loan count right, over a doubled rule */
+  if (id === 'c14')
+    return `<div class="mo-head mo-head--c14">
+      <div class="mo-kick">Library card · Flyleaf Press</div>
+      <div class="mo-set">
+        <div class="mo-title">${t}</div>
+        ${cnt(`<span class="lbl">${num(`${n} loan${n === 1 ? '' : 's'}`)}</span>`)}
+      </div>
+    </div>`
+
+  /* C15 · a binder page's index tab: the set named left, the count in a
+     printed foil chip right */
+  if (id === 'c15')
+    return `<div class="mo-head mo-head--c15">
+      <div>
+        <div class="mo-kick">Collector's binder</div>
+        <div class="mo-title">${t}</div>
+      </div>
+      ${cnt(`<span class="lbl mo-chip">${num(`${n} card${n === 1 ? '' : 's'}`)}</span>`)}
+    </div>`
+
+  /* C16 · the booth's lit sign: centred, the shot count beneath on a plain
+     line, no rule — the strips below are the rule */
+  if (id === 'c16')
+    return `<div class="mo-head mo-head--c16">
+      <div class="mo-kick">Photo booth · Four for one</div>
+      <div class="mo-title">${t}</div>
+      ${cnt(`<span class="lbl">${num(`${n} shot${n === 1 ? '' : 's'}`)}</span>`)}
+    </div>`
+
+  /* C17 · the five letters across the top of every bingo card */
+  if (id === 'c17')
+    return `<div class="mo-head mo-head--c17">
+      <div class="mo-bingo" aria-hidden="true">${['B', 'I', 'N', 'G', 'O'].map((x) => `<span>${x}</span>`).join('')}</div>
+      <div class="mo-set">
+        <div class="mo-title">${t}</div>
+        ${cnt(`<span class="lbl">${num(`${n} square${n === 1 ? '' : 's'}`)}</span>`)}
+      </div>
+    </div>`
+
+  /* C18 · the rack's header board: centred, with a dashed fold under it */
+  if (id === 'c18')
+    return `<div class="mo-head mo-head--c18">
+      <div class="mo-kick">Seed rack · Flyleaf Press</div>
+      <div class="mo-title">${t}</div>
+      ${cnt(`<span class="lbl">${num(`${n} packet${n === 1 ? '' : 's'}`)}</span>`)}
+    </div>`
+
+  /* C19 · a sampler's lettering, centred between two running stitches */
+  if (id === 'c19')
+    return `<div class="mo-head mo-head--c19">
+      <div class="mo-kick">Stitched by hand</div>
+      <div class="mo-title">${t}</div>
+      ${cnt(`<span class="lbl">${num(`${n} hoop${n === 1 ? '' : 's'}`)}</span>`)}
+    </div>`
+
+  /* C20 · the place card on the cloth: the head sits on a cream card of its
+     own, because type cannot be read off the sprigs */
+  if (id === 'c20')
+    return `<div class="mo-head mo-head--c20">
+      <div class="mo-kick">Laid for tea · Flyleaf Press</div>
+      <div class="mo-title">${t}</div>
+      ${cnt(`<span class="lbl">${num(`${n} book${n === 1 ? '' : 's'}`)}</span>`)}
     </div>`
 
   /* C5 · a register head: month left, the range of entries right, one heavy
@@ -485,6 +562,54 @@ function moStats(m: MonthData, id: HeadId): string {
   if (id === 'c12')
     return `<div class="mo-stats mo-stats--sorts">
       ${st.map((x) => `<div class="mo-sort"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
+    </div>`
+
+  /* C13 · totted up the way a till prints them: label, dotted leader, figure */
+  if (id === 'c13')
+    return `<div class="mo-stats mo-stats--till">
+      ${st.map((x) => `<div class="mo-till"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
+    </div>`
+
+  /* C14 · the card's ruled columns, each figure in its own box */
+  if (id === 'c14')
+    return `<div class="mo-stats mo-stats--cols">
+      ${st.map((x) => `<div class="mo-col"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
+    </div>`
+
+  /* C15 · the stats box printed on the back of a card: cream, rounded, ruled */
+  if (id === 'c15')
+    return `<div class="mo-stats mo-stats--back">
+      ${st.map((x) => `<div class="mo-bk"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
+    </div>`
+
+  /* C16 · four figures, one to a frame, the way the booth gives four shots */
+  if (id === 'c16')
+    return `<div class="mo-stats mo-stats--frames">
+      ${st.map((x) => `<div class="mo-fr"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
+    </div>`
+
+  /* C17 · the figures in a row of called balls */
+  if (id === 'c17')
+    return `<div class="mo-stats mo-stats--balls">
+      ${st.map((x) => `<div class="mo-ball"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
+    </div>`
+
+  /* C18 · the back of a packet: the growing facts in a plain two-column table */
+  if (id === 'c18')
+    return `<div class="mo-stats mo-stats--grow">
+      ${st.map((x) => `<div class="mo-gr"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
+    </div>`
+
+  /* C19 · centred, each figure ringed in a running stitch */
+  if (id === 'c19')
+    return `<div class="mo-stats mo-stats--stitch">
+      ${st.map((x) => `<div class="mo-sti"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
+    </div>`
+
+  /* C20 · on the place card with the head, under a hairline */
+  if (id === 'c20')
+    return `<div class="mo-stats mo-stats--place">
+      ${st.map((x) => `<div class="mo-pl"><b>${x.value}</b><span class="lbl">${x.label}</span></div>`).join('')}
     </div>`
 
   /* C5 · a register head: column names ruled across the top, figures aligned
@@ -744,6 +869,14 @@ const HOPE_WORDS: Partial<Record<HeadId, string>> = {
   c10: 'Queued',
   c11: 'No entry yet',
   c12: 'To read',
+  c13: 'On order',
+  c14: 'On hold',
+  c15: 'Unopened',
+  c16: 'Still developing',
+  c17: 'Not called yet',
+  c18: 'Not sown yet',
+  c19: 'Not stitched yet',
+  c20: 'Saved for later',
 }
 
 /* What a hopefuls cell says under the book it is carrying. */
@@ -1206,6 +1339,211 @@ function specimen(m: MonthData): string {
   </article>`
 }
 
+/* The verdict as every new style prints it on a cell: numeral, then stars in
+   the ground's own pair. On a hopefuls card the style's own word stands in. */
+function verdict(m: MonthData, b: Review, id: HeadId): string {
+  return tbr(m)
+    ? hopeSay(id)
+    : `<span class="r-num">${fmtRating(b.rating)}</span>${starsS(b.rating, 10, 'var(--star)', 'var(--star-line)')}`
+}
+
+/* The month's bottom line, the figure both list styles total under their
+   rows: pages when any were recorded, else the count of books, else the
+   average a month of verdicts comes to. */
+function bottomLine(m: MonthData): { label: string; value: string } {
+  const n = m.books.length
+  const pages = m.books.reduce((s, b) => s + (b.pages || 0), 0)
+  const avg = m.books.reduce((s, b) => s + b.rating, 0) / (n || 1)
+  if (pages) return { label: tbr(m) ? 'Pages to read' : 'Pages read', value: pages.toLocaleString() }
+  if (tbr(m)) return { label: 'Books to read', value: String(n) }
+  return { label: 'Average', value: fmtRating(Math.round(avg / 0.25) * 0.25) }
+}
+
+/* C13 · Receipt (canary) — the month rung up: one line per book, numbered as
+   items, with the bottom line totalled under a tear-off rule. */
+function receipt(m: MonthData): string {
+  const cols = listCols(m.books.length, m.wide)
+  const tot = bottomLine(m)
+  return `<article class="card card--canary c13" style="--rot:.4deg">
+    ${patchC(150)}
+    ${moHead(m, 'c13')}
+    ${moStats(m, 'c13')}
+    ${tbr(m)
+      ? hopeGrid(m, 'hg--c13', (b) => `
+        <div class="hg-c">${cov(b)}<div class="hg-cap">${hopeCap(b)}</div><div class="hg-end">${hopeSay('c13')}</div></div>`)
+      : `<div class="c13-items ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
+      ${m.books.map((b, i) => `
+        <div class="c13-r">
+          <span class="lbl c13-q">${String(i + 1).padStart(2, '0')}</span>
+          ${cov(b)}
+          <div style="min-width:0">
+            <div class="c13-name">${escapeHtml(b.title)}</div>
+            <div class="c13-by">${meta(escapeHtml(b.author), fmts(b))}</div>
+          </div>
+          <div class="c13-rate">${verdict(m, b, 'c13')}</div>
+        </div>`).join('')}
+    </div>`}
+    <div class="c13-total">
+      <span class="lbl">${tot.label}</span>
+      <span class="r-num">${tot.value}</span>
+    </div>
+    <div class="c13-thanks lbl">Thank you for reading</div>
+  </article>`
+}
+
+/* the date-due stamp: day, month, year, the way a library dater sets it */
+function dueStamp(iso: string): string {
+  if (!iso) return '—'
+  const [y, mo, d] = iso.split('-')
+  const mon = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][Number(mo) - 1] || ''
+  return `${d} ${mon} ${y.slice(2)}`
+}
+
+/* C14 · Library card (manila) — one stamped line per book: the date it came
+   back in the stamp column, the book beside it, the verdict right. */
+function library(m: MonthData): string {
+  const cols = listCols(m.books.length, m.wide)
+  return `<article class="card card--manila c14" style="--rot:-.5deg">
+    ${patchC(140)}
+    ${moHead(m, 'c14')}
+    ${moStats(m, 'c14')}
+    ${tbr(m)
+      ? hopeGrid(m, 'hg--c14', (b) => `
+        <div class="hg-c">${cov(b)}<div class="hg-cap">${hopeCap(b)}</div><div class="hg-end">${hopeSay('c14')}</div></div>`)
+      : `<div class="c14-loans ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
+      ${m.books.map((b) => `
+        <div class="c14-r">
+          <span class="c14-stamp">${dueStamp(b.finished)}</span>
+          ${cov(b)}
+          <div style="min-width:0">
+            <div class="c14-name">${escapeHtml(b.title)}</div>
+            <div class="c14-by">${meta(escapeHtml(b.author), fmts(b))}</div>
+          </div>
+          <div class="c14-rate">${verdict(m, b, 'c14')}</div>
+        </div>`).join('')}
+    </div>`}
+  </article>`
+}
+
+/* C15 · Trading card (cobalt) — a binder page: every book a card in its own
+   sleeve, the sleeves in counted rows. */
+function trading(m: MonthData): string {
+  return `<article class="card card--cobalt c15" style="--rot:.5deg">
+    ${patchC(150)}
+    ${moHead(m, 'c15')}
+    ${moStats(m, 'c15')}
+    <div class="c15-binder" style="--cols:${gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+      ${m.books.map((b, i) => `
+        <div class="c15-sleeve"><div class="c15-card">
+          <div class="c15-top"><span class="lbl">Nº ${String(i + 1).padStart(3, '0')}</span></div>
+          ${cov(b)}
+          <div class="c15-t">${escapeHtml(b.title)}</div>
+          <div class="c15-a">${escapeHtml(b.author)}</div>
+          <div class="c15-r">${verdict(m, b, 'c15')}</div>
+        </div></div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C16 · Photo booth (curtain) — strips of frames, joined top to bottom down
+   each column, the caption printed in the white under each shot. */
+function booth(m: MonthData): string {
+  return `<article class="card card--curtain c16" style="--rot:-.4deg">
+    ${patchC(150)}
+    ${moHead(m, 'c16')}
+    ${moStats(m, 'c16')}
+    <div class="c16-strips" style="--cols:${gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+      ${m.books.map((b) => `
+        <div class="c16-fr">
+          ${cov(b)}
+          <div class="c16-t">${escapeHtml(b.title)}</div>
+          <div class="c16-a">${escapeHtml(b.author)}</div>
+          <div class="c16-r">${verdict(m, b, 'c16')}</div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C17 · Bingo card (tangerine) — every book a square, ruled cell by cell. A
+   read book is a square with its cover daubed; a hopeful is a square still
+   open, its cover there but no daub on it yet. */
+function bingo(m: MonthData): string {
+  return `<article class="card card--tangerine c17" style="--rot:.6deg">
+    ${patchC(150)}
+    ${moHead(m, 'c17')}
+    ${moStats(m, 'c17')}
+    <div class="c17-board" style="--cols:${gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+      ${m.books.map((b, i) => `
+        <div class="c17-sq">
+          <span class="lbl c17-no">${String(i + 1).padStart(2, '0')}</span>
+          <div class="c17-mount">${cov(b)}${tbr(m) ? '' : '<i class="c17-daub" aria-hidden="true"></i>'}</div>
+          <div class="c17-t">${escapeHtml(b.title)}</div>
+          <div class="c17-r">${verdict(m, b, 'c17')}</div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C18 · Seed packet (pistachio) — a rack of packets: each book a cream packet
+   with its fold, its window, and its name printed under it. */
+function seedpacket(m: MonthData): string {
+  return `<article class="card card--pistachio c18" style="--rot:-.6deg">
+    ${patchC(150)}
+    ${moHead(m, 'c18')}
+    ${moStats(m, 'c18')}
+    <div class="c18-rack" style="--cols:${gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+      ${m.books.map((b, i) => `
+        <div class="c18-pk">
+          <div class="c18-fold"><span class="lbl">Nº ${String(i + 1).padStart(2, '0')}</span></div>
+          ${cov(b)}
+          <div class="c18-t">${escapeHtml(b.title)}</div>
+          <div class="c18-a">${escapeHtml(b.author)}</div>
+          <div class="c18-r">${verdict(m, b, 'c18')}</div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C19 · Embroidery hoop (periwinkle) — every cover worked inside its own
+   wooden hoop, the name stitched under it. */
+function hoop(m: MonthData): string {
+  return `<article class="card card--periwinkle c19" style="--rot:.4deg">
+    ${patchC(150)}
+    ${moHead(m, 'c19')}
+    ${moStats(m, 'c19')}
+    <div class="c19-hoops" style="--cols:${gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+      ${m.books.map((b) => `
+        <div class="c19-c">
+          <div class="c19-ring">${cov(b)}</div>
+          <div class="c19-t">${escapeHtml(b.title)}</div>
+          <div class="c19-a">${escapeHtml(b.author)}</div>
+          <div class="c19-r">${verdict(m, b, 'c19')}</div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
+/* C20 · Chintz (rose) — the month laid out on a sprigged cloth: a cream place
+   card heads it, and every book sits on a cream card of its own, because
+   type cannot be read off the pattern. */
+function chintz(m: MonthData): string {
+  return `<article class="card card--rose cz c20" style="--rot:-.3deg">
+    <div class="c20-label">
+      ${moHead(m, 'c20')}
+      ${moStats(m, 'c20')}
+    </div>
+    <div class="c20-table" style="--cols:${gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED)}">
+      ${m.books.map((b) => `
+        <div class="c20-c">
+          ${cov(b)}
+          <div class="c20-t">${escapeHtml(b.title)}</div>
+          <div class="c20-a">${escapeHtml(b.author)}</div>
+          <div class="c20-r">${verdict(m, b, 'c20')}</div>
+        </div>`).join('')}
+    </div>
+  </article>`
+}
+
 /* ─────────────────────────────────────────────────────────────
    THE STORY CARD — one book, currently in hand, on a portrait sheet.
 
@@ -1233,6 +1571,8 @@ const HEAD_OF: Record<StyleId, HeadId> = {
   catalogue: 'c1', airmail: 'c2', scrapbook: 'c3', fieldnotes: 'c4',
   archive: 'c5', jacket: 'c6', masthead: 'c7', herbarium: 'c8',
   broadside: 'c9', jcard: 'c10', passport: 'c11', specimen: 'c12',
+  receipt: 'c13', library: 'c14', trading: 'c15', booth: 'c16',
+  bingo: 'c17', seedpacket: 'c18', hoop: 'c19', chintz: 'c20',
 }
 
 /* The shell each style wears, lifted from its own renderer so the story card
@@ -1252,6 +1592,14 @@ const STORY_SHELL: Record<StyleId, { cls: string; rot: string; patch: number }> 
   jcard: { cls: 'card--apricot c10', rot: '-.6', patch: 140 },
   passport: { cls: 'card--quartz c11', rot: '.4', patch: 150 },
   specimen: { cls: 'card--teal c12', rot: '-.3', patch: 150 },
+  receipt: { cls: 'card--canary c13', rot: '.4', patch: 150 },
+  library: { cls: 'card--manila c14', rot: '-.5', patch: 140 },
+  trading: { cls: 'card--cobalt c15', rot: '.5', patch: 150 },
+  booth: { cls: 'card--curtain c16', rot: '-.4', patch: 150 },
+  bingo: { cls: 'card--tangerine c17', rot: '.6', patch: 150 },
+  seedpacket: { cls: 'card--pistachio c18', rot: '-.6', patch: 150 },
+  hoop: { cls: 'card--periwinkle c19', rot: '.4', patch: 150 },
+  chintz: { cls: 'card--rose cz c20', rot: '-.3', patch: 140 },
 }
 
 /* The cover at hero scale, in each style's own chrome. Every class here is one
@@ -1295,6 +1643,21 @@ function storyHero(b: Review, id: HeadId): string {
   if (id === 'c9') return `<figure class="st-frame st-frame--c9">${art}</figure>`
   if (id === 'c10') return `<figure class="st-frame st-frame--c10">${art}</figure>`
   if (id === 'c11') return `<figure class="st-frame st-frame--c11">${art}</figure>`
+  if (id === 'c13') return `<figure class="st-frame st-frame--c13">${art}</figure>`
+  if (id === 'c14')
+    return `<figure class="st-frame st-frame--c14">
+      <figcaption class="lbl st-no">Date due</figcaption>
+      ${art}
+    </figure>`
+  if (id === 'c15')
+    return `<figure class="st-frame st-frame--c15"><span class="c15-top"><span class="lbl">Nº 001</span></span>${art}</figure>`
+  if (id === 'c16') return `<figure class="st-frame st-frame--c16">${art}</figure>`
+  if (id === 'c17')
+    return `<figure class="st-frame st-frame--c17"><span class="lbl c17-no">01</span>${art}</figure>`
+  if (id === 'c18')
+    return `<figure class="st-frame st-frame--c18"><span class="c18-fold"><span class="lbl">Nº 01</span></span>${art}</figure>`
+  if (id === 'c19') return `<figure class="st-frame st-frame--c19">${art}</figure>`
+  if (id === 'c20') return `<figure class="st-frame st-frame--c20">${art}</figure>`
   return `<figure class="st-frame st-frame--c12">
     <span class="cs-back st-back" aria-hidden="true">${escapeHtml(initial(b.title))}</span>
     ${art}
@@ -1335,6 +1698,13 @@ export function renderStory(m: MonthData, style: StyleId): string {
       <div class="colo st-colo">${mark(13)}<span>Flyleaf Press</span></div>
     </div>`
 
+  /* Chintz sets its type on a cream place card, because nothing can be read
+     off the sprigs — the cloth shows round it as a margin. */
+  if (id === 'c20')
+    return `<article class="card ${sh.cls} card--story" style="--rot:${sh.rot}deg">
+      <div class="cz-label st-in">${inner}</div>
+    </article>`
+
   /* The passport lays everything inside its own security page, so the story
      card has to go in there too or the guilloche would sit over the cover. */
   if (id === 'c11')
@@ -1359,6 +1729,14 @@ export const COLLAGE_RENDERERS: Record<StyleId, (m: MonthData) => string> = {
   jcard,
   passport,
   specimen,
+  receipt,
+  library,
+  trading,
+  booth,
+  bingo,
+  seedpacket,
+  hoop,
+  chintz,
 }
 
 export function renderCollage(m: MonthData, style: StyleId): string {

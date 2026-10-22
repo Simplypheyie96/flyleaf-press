@@ -1,4 +1,4 @@
-/* ONE set of twelve styles, and every card in the app answers to it — the
+/* ONE set of twenty styles, and every card in the app answers to it — the
    review, the monthly collage, and the currently-reading card alike.
 
    It used to be two sets of twelve with two vocabularies, so the same idea
@@ -18,19 +18,24 @@
 export type StyleId =
   | 'archive' | 'masthead' | 'catalogue' | 'scrapbook' | 'fieldnotes' | 'jacket' | 'airmail'
   | 'herbarium' | 'broadside' | 'jcard' | 'passport' | 'specimen'
+  | 'receipt' | 'library' | 'trading' | 'booth' | 'bingo'
+  | 'seedpacket' | 'hoop' | 'chintz'
 
 export const STYLE_IDS: StyleId[] = [
   'archive', 'masthead', 'catalogue', 'scrapbook', 'fieldnotes', 'jacket', 'airmail',
   'herbarium', 'broadside', 'jcard', 'passport', 'specimen',
+  'receipt', 'library', 'trading', 'booth', 'bingo',
+  'seedpacket', 'hoop', 'chintz',
 ]
 
 /* The styles a YEAR offers. Scrapbook, Archive and Broadside draw one row per
    book as a collage, which holds a month and runs to a strip nobody can read
    as an object at two hundred rows — a year gets only the styles that PACK:
-   the grids and the spine rail. All twelve still ship and still serve every
+   the grids and the spine rail. All twenty still ship and still serve every
    month, and every one of them is still a review style. */
 export const YEAR_COLLAGE_IDS: StyleId[] = [
   'catalogue', 'airmail', 'fieldnotes', 'jacket', 'herbarium', 'passport', 'specimen',
+  'receipt', 'library', 'bingo', 'trading', 'seedpacket', 'hoop', 'chintz',
 ]
 
 /* The twelve ids a collage or a story card used to be saved under, mapped onto
@@ -63,6 +68,14 @@ export const STYLE_NAMES: Record<StyleId, string> = {
   jcard: 'J-Card',
   passport: 'Passport',
   specimen: 'Specimen',
+  receipt: 'Receipt',
+  library: 'Library Card',
+  trading: 'Trading Card',
+  booth: 'Photo Booth',
+  bingo: 'Bingo Card',
+  seedpacket: 'Seed Packet',
+  hoop: 'Embroidery Hoop',
+  chintz: 'Chintz',
 }
 
 /* THE HAND A REVIEW IS WRITTEN IN.
@@ -119,6 +132,14 @@ export const STYLE_GROUNDS: Record<StyleId, string> = {
   jcard: '#F2BC97',
   passport: '#E5BDD0',
   specimen: '#1E4645',
+  receipt: '#F7EE8E',
+  library: '#E8D5A6',
+  trading: '#284A9A',
+  booth: '#A32A2E',
+  bingo: '#F6A55E',
+  seedpacket: '#C8E39A',
+  hoop: '#B9C6F0',
+  chintz: '#F49FB4',
 }
 
 export const FORMAT_NAMES = ['Ebook', 'Audiobook', 'Physical'] as const

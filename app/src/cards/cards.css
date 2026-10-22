@@ -178,6 +178,18 @@
   --star:#E4C56A; --star-line:rgba(244,242,237,.58);
 }
 
+/* ── The eight grounds of S13–S20. Pale ones take the quartz tokens (ink at
+   72% for metadata, terracotta numeral: 2.58–4.33:1, all above mustard's
+   2.42); cobalt and curtain take teal's cream set. ── */
+.card--canary{ --g:var(--canary); background:var(--canary); --meta:rgba(27,25,23,.72); --hair:rgba(27,25,23,.2); --star:var(--ink); --star-line:rgba(27,25,23,.55); }
+.card--manila{ --g:var(--manila); background:var(--manila); --meta:rgba(27,25,23,.72); --hair:rgba(27,25,23,.2); --star:var(--ink); --star-line:rgba(27,25,23,.55); }
+.card--cobalt{ --g:var(--cobalt); background:var(--cobalt); --tx:var(--cream); --meta:rgba(244,242,237,.68); --num:var(--cream); --hair:rgba(244,242,237,.24); --star:#E4C56A; --star-line:rgba(244,242,237,.58); }
+.card--curtain{ --g:var(--curtain); background:var(--curtain); --tx:var(--cream); --meta:rgba(244,242,237,.68); --num:var(--cream); --hair:rgba(244,242,237,.24); --star:#E4C56A; --star-line:rgba(244,242,237,.58); }
+.card--tangerine{ --g:var(--tangerine); background:var(--tangerine); --meta:rgba(27,25,23,.72); --hair:rgba(27,25,23,.2); --star:var(--ink); --star-line:rgba(27,25,23,.55); }
+.card--pistachio{ --g:var(--pistachio); background:var(--pistachio); --meta:rgba(27,25,23,.72); --hair:rgba(27,25,23,.2); --star:var(--ink); --star-line:rgba(27,25,23,.55); }
+.card--periwinkle{ --g:var(--periwinkle); background:var(--periwinkle); --meta:rgba(27,25,23,.72); --hair:rgba(27,25,23,.2); --star:var(--ink); --star-line:rgba(27,25,23,.55); }
+.card--rose{ --g:var(--rose); background:var(--rose); --meta:rgba(27,25,23,.72); --hair:rgba(27,25,23,.2); --star:var(--ink); --star-line:rgba(27,25,23,.55); }
+
 .card .lbl{
   font-family:var(--mono); font-size:10.5px; font-weight:500; line-height:1.2;
   letter-spacing:.14em; text-transform:uppercase; color:var(--meta);
@@ -1059,14 +1071,17 @@
    --gx is each grid's own column gap, written beside it so the arithmetic
    cannot drift from the gap it is describing. */
 .c1-grid, .c2-rail, .c4-board, .c6-sheet, .hg,
-.cb-grid, .vp-sheet, .cs-grid{
+.cb-grid, .vp-sheet, .cs-grid, .c15-binder, .c16-strips,
+.c17-board, .c18-rack, .c19-hoops, .c20-table{
   --cap:220px;
   max-width:calc(var(--cols,3) * var(--cap) + (var(--cols,3) - 1) * var(--gx,16px));
   margin-inline:auto;
 }
 .card-compact .c1-grid, .card-compact .c2-rail,
 .card-compact .c4-board, .card-compact .c6-sheet, .card-compact .hg,
-.card-compact .cb-grid, .card-compact .vp-sheet, .card-compact .cs-grid{ --cap:130px; }
+.card-compact .cb-grid, .card-compact .vp-sheet, .card-compact .cs-grid,
+.card-compact .c15-binder, .card-compact .c16-strips, .card-compact .c17-board,
+.card-compact .c18-rack, .card-compact .c19-hoops, .card-compact .c20-table{ --cap:130px; }
 
 /* C1 · Catalogue (coal) */
 .c1{
@@ -1539,6 +1554,268 @@
 .ts-sample{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-top:20px; padding-bottom:2px; }
 .ts-sample .stars{ padding:0; }
 
+/* ── S13–S20 share one fact row: a fixed label lane and a value that wraps
+   onto its own line under ~108px rather than being crushed. ── */
+.fx-val{
+  flex:1 1 108px; min-width:0;
+  font-family:var(--sans); font-size:13.5px; line-height:1.45; color:var(--tx);
+  overflow-wrap:break-word;
+}
+.rc .patch, .lb .patch, .pb .patch, .bg .patch{ right:-54px; bottom:-60px; opacity:.07; }
+.tc .patch, .sp .patch, .eh .patch, .cz .patch{ left:-50px; bottom:-60px; opacity:.07; }
+
+/* ── S13 · Receipt (canary) ── */
+.rc-head{ display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
+.rc-shop{ font-family:var(--mono); font-size:15px; font-weight:600; letter-spacing:.22em; text-transform:uppercase; }
+.rc-cut{ display:block; height:0; border:0; border-top:1.5px dashed rgba(27,25,23,.45); margin:18px 0; }
+.rc-title{ margin:0; text-align:center; }
+.rc-by{ margin-top:6px; text-align:center; }
+.rc-items{ margin-top:18px; }
+.rc-line{ display:flex; align-items:baseline; gap:10px; padding:5px 0; }
+.rc-line .lbl{ flex:1 0 96px; display:flex; align-items:baseline; gap:8px; }
+/* the dotted leader runs from the label to the value */
+.rc-line .lbl::after{ content:''; flex:1; min-width:12px; border-bottom:1.5px dotted rgba(27,25,23,.4); }
+.rc-line .fx-val{ flex:0 1 auto; text-align:right; font-family:var(--mono); font-size:12.5px; }
+.rc-fmt-row{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:14px; }
+/* format mark: a dashed coupon box round the items on the bill */
+.rc-fmt{ column-gap:8px; }
+.rc-fmt .fmt-t{ padding:3px 8px; border:1.5px dashed rgba(27,25,23,0); }
+.rc-fmt .fmt-t[data-on="true"]{ border-color:currentColor; }
+.rc-total{ display:flex; justify-content:space-between; align-items:baseline; gap:16px; }
+.rc-sum{ display:flex; align-items:baseline; gap:8px; }
+.rc-sum .r-num{ font-size:40px; line-height:1; color:var(--num); }
+.rc .stars{ justify-content:flex-end; }
+.rc-bar{ display:flex; justify-content:center; height:46px; margin-top:30px; }
+.rc-bar i{ display:block; height:100%; background:var(--tx); }
+
+/* ── S14 · Library Card (manila) ── */
+.lb-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.lb-top{ display:grid; grid-template-columns:120px 1fr; gap:0 26px; align-items:start; margin-top:20px; }
+.lb-cov .cover{ border:1px solid var(--hair); border-radius:0; box-shadow:none; }
+.lb-data{ min-width:0; }
+.lb-title{ margin:0 0 8px; }
+/* a library card is ruled in blue */
+.lb-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:8px 0; border-bottom:1px solid rgba(62,96,160,.45); }
+.lb-line .lbl{ flex:none; width:70px; }
+.lb-reg{ display:grid; grid-template-columns:1fr 1fr; margin-top:24px; border:1.5px solid rgba(27,25,23,.55); }
+.lb-cell{ padding:12px 14px 16px; min-width:0; }
+.lb-cell + .lb-cell{ border-left:1.5px solid rgba(27,25,23,.55); }
+.lb-stamp{
+  display:inline-block; margin-top:10px; padding:3px 8px;
+  font-family:var(--mono); font-size:15px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--num); border:1.5px solid currentColor; border-radius:2px;
+  transform:rotate(var(--srot,0deg)); white-space:nowrap;
+}
+.lb-row{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:16px; }
+.lb-row > .lbl{ flex:none; width:70px; }
+.lb-rate{ display:flex; align-items:center; gap:12px; }
+.lb-rate .r-num{ font-size:24px; }
+/* format mark: a punched hole — filled through when chosen */
+.lb-fmt{ column-gap:18px; }
+.lb-fmt .fmt-t{ display:inline-flex; align-items:center; gap:7px; }
+.lb-fmt .fmt-t::before{ content:''; flex:none; width:10px; height:10px; border-radius:50%; border:1.5px solid currentColor; }
+.lb-fmt .fmt-t[data-on="true"]::before{ background:currentColor; }
+
+/* ── S15 · Trading Card (cobalt) ── */
+.card.tc{ padding:14px; border-radius:14px; }
+.tc-frame{ position:relative; border:2px solid rgba(244,242,237,.7); border-radius:10px; padding:20px; }
+.tc-top{ display:flex; justify-content:space-between; align-items:baseline; gap:16px; }
+.tc-title{ margin:0; min-width:0; }
+.tc-hp{ flex:none; display:flex; align-items:baseline; gap:6px; }
+.tc-hp .r-num{ font-size:34px; line-height:1; color:var(--num); }
+.tc-art{
+  display:flex; justify-content:center; margin-top:16px; padding:22px;
+  border:2px solid rgba(244,242,237,.7); border-radius:4px;
+  background:radial-gradient(circle, rgba(244,242,237,.16) 0 1px, rgba(244,242,237,0) 1.5px) 0 0 / 8px 8px;
+}
+.tc-art .cover, .tc-art .cover-missing{ width:200px; border-radius:0; box-shadow:none; }
+.tc-type{ margin-top:12px; font-family:var(--serif); font-style:italic; font-size:17px; line-height:1.35; color:var(--meta); }
+.tc-tiles{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:16px; }
+.tc-tile{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 8px; border:1.5px solid var(--hair); border-radius:8px; text-align:center; }
+.tc-big{ font-family:var(--serif); font-weight:600; font-size:20px; line-height:1.15; }
+.tc-row{ display:flex; align-items:center; gap:6px 16px; flex-wrap:wrap; margin-top:14px; }
+.tc-row > .lbl{ flex:none; width:70px; }
+/* format mark: an energy pip — a filled cream pill when chosen */
+.tc-fmt{ column-gap:6px; }
+.tc-fmt .fmt-t{ padding:3px 10px; border:1.5px solid rgba(244,242,237,.35); border-radius:999px; }
+.tc-fmt .fmt-t[data-on="true"]{ background:var(--cream); border-color:var(--cream); color:var(--cobalt); }
+.tc-set{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:24px; padding-top:14px; border-top:1px solid var(--hair); }
+.tc-set svg{ display:block; opacity:.75; }
+
+/* ── S16 · Photo Booth (curtain) ── */
+.pb-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.pb-top{ display:grid; grid-template-columns:150px 1fr; gap:0 28px; align-items:start; margin-top:20px; }
+.pb-strip{ display:grid; gap:8px; padding:8px 8px 24px; background:var(--cream); transform:rotate(-1.5deg); }
+.pb-pose .cover, .pb-pose .cover-missing{ border-radius:0; box-shadow:none; }
+.pb-shot{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  aspect-ratio:4/3; padding:8px; background:var(--ink); text-align:center;
+}
+.pb-shot .lbl{ color:rgba(244,242,237,.68); }
+.pb-big{ font-family:var(--serif); font-weight:600; font-size:16px; line-height:1.15; color:var(--cream); }
+.pb-data{ min-width:0; }
+.pb-title{ margin:0; }
+.pb-by{ margin-top:6px; }
+.pb-data .stars{ margin-top:10px; }
+.pb-facts{ margin-top:12px; }
+.pb-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:8px 0; border-bottom:1px solid var(--hair); }
+.pb-line .lbl{ flex:none; width:64px; }
+.pb-fmt-row{ display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-top:16px; }
+/* format mark: a cream ring round the chosen ones */
+.pb-fmt{ column-gap:4px; }
+.pb-fmt .fmt-t{ padding:3px 10px; border:1.5px solid rgba(244,242,237,0); border-radius:999px; }
+.pb-fmt .fmt-t[data-on="true"]{ border-color:var(--cream); }
+
+/* ── S17 · Bingo Card (tangerine) ── */
+.bg-head{ display:flex; justify-content:space-between; align-items:baseline; gap:8px 16px; flex-wrap:wrap; }
+.bg-word{ font-family:var(--serif); font-weight:600; font-size:44px; line-height:1; letter-spacing:.16em; }
+.bg-title{ margin:16px 0 0; }
+.bg-by{ margin-top:6px; }
+/* the rules are each square's own border, so a short row could never leave
+   bare backdrop showing (the Postmark lesson); the grid draws the outer two */
+.bg-grid{
+  display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); margin-top:20px;
+  border-top:2px solid var(--tx); border-left:2px solid var(--tx);
+}
+.bg-sq{
+  position:relative; display:flex; flex-direction:column; gap:6px; min-height:96px; padding:10px; min-width:0;
+  border-right:2px solid var(--tx); border-bottom:2px solid var(--tx);
+}
+.bg-sq > *{ position:relative; }
+/* the dauber: a translucent blot, painted first so the square's words sit on it */
+.bg-sq[data-hit="true"]::before{
+  content:''; position:absolute; left:50%; top:50%; width:62px; height:62px; margin:-31px 0 0 -31px;
+  border-radius:50%; background:rgba(194,65,12,.22);
+}
+.bg-v{ font-family:var(--serif); font-weight:600; font-size:16px; line-height:1.25; overflow-wrap:break-word; }
+.bg-v .r-num{ color:var(--num); }
+.bg-free{ align-items:center; justify-content:center; }
+.bg-free .cover, .bg-free .cover-missing{ width:84px; border-radius:0; }
+.bg-sq--wide{ grid-column:span 2; }
+.bg-fmt{ column-gap:6px; }
+/* format mark: each chosen format is daubed */
+.bg-fmt .fmt-t{ padding:3px 9px; border-radius:999px; }
+.bg-fmt .fmt-t[data-on="true"]{ background:rgba(194,65,12,.22); }
+.bg > .stars{ margin-top:16px; }
+
+/* ── S18 · Seed Packet (pistachio) ── */
+.sp-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.sp-win{
+  position:relative; max-width:300px; margin:20px auto 0; padding:34px 30px 26px;
+  border:2px solid rgba(27,25,23,.7); border-radius:150px 150px 4px 4px;
+  background:rgba(255,255,255,.32);
+}
+.sp-win .cover, .sp-win .cover-missing{ width:180px; margin:0 auto; border-radius:0; }
+.sp-price{
+  position:absolute; top:22px; right:-14px; width:78px; height:78px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  border-radius:50%; border:2px solid var(--tx); background:var(--cream);
+  transform:rotate(10deg);
+}
+.sp-price .r-num{ font-size:24px; line-height:1; color:var(--num); }
+.sp-title{ margin:22px 0 0; text-align:center; }
+.sp-by{ margin-top:6px; text-align:center; }
+.sp > .stars{ justify-content:center; margin-top:10px; }
+.sp-table{ margin-top:20px; border-top:1.5px solid rgba(27,25,23,.6); }
+.sp-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:9px 0; border-bottom:1px solid var(--hair); }
+.sp-line .lbl{ flex:none; width:70px; }
+.sp-fmt-row{ display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-top:16px; }
+/* format mark: a seed — filled when chosen */
+.sp-fmt{ column-gap:18px; }
+.sp-fmt .fmt-t{ display:inline-flex; align-items:center; gap:7px; }
+.sp-fmt .fmt-t::before{ content:''; flex:none; width:8px; height:12px; border-radius:50% 50% 50% 50% / 62% 62% 38% 38%; border:1.5px solid currentColor; }
+.sp-fmt .fmt-t[data-on="true"]::before{ background:currentColor; }
+
+/* ── S19 · Embroidery Hoop (periwinkle) ── */
+.eh-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.eh-hoop{
+  position:relative; width:250px; aspect-ratio:1; margin:34px auto 0;
+  border:12px solid #C79A5E; border-radius:50%;
+}
+.eh-screw{
+  position:absolute; top:-26px; left:50%; width:26px; height:16px; margin-left:-13px;
+  background:#9AA0A6; border:1.5px solid #6E747A; border-radius:3px;
+}
+.eh-cloth{
+  position:absolute; inset:0; overflow:hidden; border-radius:50%;
+  border:2px solid #9C7140; background:rgba(255,255,255,.4);
+}
+.eh-cloth .cover, .eh-cloth .cover-missing{ width:100%; height:100%; aspect-ratio:auto; border:0; border-radius:0; box-shadow:none; }
+.eh-title{ margin:22px 0 0; text-align:center; }
+.eh-by{ margin-top:6px; text-align:center; }
+.eh-rate{ display:flex; justify-content:center; align-items:center; gap:12px; margin-top:10px; }
+.eh-rate .r-num{ font-size:26px; color:var(--num); }
+.eh-facts{ margin-top:20px; }
+/* the rules between facts are running stitches */
+.eh-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:9px 0; border-bottom:1.5px dashed rgba(27,25,23,.45); }
+.eh-line .lbl{ flex:none; width:70px; }
+.eh-fmt-row{ display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-top:16px; }
+/* format mark: cross-stitched when chosen, a stitched outline when not */
+.eh-fmt{ column-gap:18px; }
+.eh-fmt .fmt-t{ display:inline-flex; align-items:center; gap:7px; }
+.eh-fmt .fmt-t::before{
+  content:''; flex:none; width:10px; height:10px; box-sizing:border-box;
+  border:1.5px dashed currentColor;
+  font-family:var(--mono); font-weight:700; font-size:15px; line-height:7px; text-align:center;
+}
+.eh-fmt .fmt-t[data-on="true"]::before{ content:'×'; border-color:rgba(27,25,23,0); }
+
+/* ── S20 · Chintz (rose) — the cloth is five-petal sprigs on a 56px repeat,
+   radial gradients only, every stop on a whole pixel and every fade to an
+   rgba zero rather than `transparent`, so nothing greys at the edge. ── */
+.card.cz{
+  padding:22px;
+  background:
+    radial-gradient(circle at 28px 28px, #E8B84A 0 3px, rgba(232,184,74,0) 3.5px),
+    radial-gradient(circle at 28px 20px, #FCE6EC 0 6px, rgba(252,230,236,0) 6.5px),
+    radial-gradient(circle at 36px 28px, #FCE6EC 0 6px, rgba(252,230,236,0) 6.5px),
+    radial-gradient(circle at 28px 36px, #FCE6EC 0 6px, rgba(252,230,236,0) 6.5px),
+    radial-gradient(circle at 20px 28px, #FCE6EC 0 6px, rgba(252,230,236,0) 6.5px),
+    radial-gradient(circle at 44px 46px, #7FA77B 0 4px, rgba(127,167,123,0) 4.5px),
+    radial-gradient(circle at 10px 8px, #D9738C 0 3px, rgba(217,115,140,0) 3.5px),
+    var(--rose);
+  background-size:56px 56px;
+}
+.cz-label{ position:relative; padding:26px; background:var(--cream); border:1px solid rgba(27,25,23,.2); border-radius:2px; }
+.cz-head{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.cz-top{ display:grid; grid-template-columns:116px 1fr; gap:0 24px; align-items:start; margin-top:18px; }
+.cz-cov .cover{ border-radius:0; }
+.cz-data{ min-width:0; }
+.cz-title{ margin:0; }
+.cz-by{ margin-top:6px; }
+.cz-rate{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+.cz-rate .r-num{ font-size:24px; color:var(--num); }
+.cz-facts{ margin-top:18px; }
+.cz-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:9px 0; border-bottom:1px solid var(--hair); }
+.cz-line .lbl{ flex:none; width:70px; }
+.cz-fmt-row{ display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-top:16px; }
+/* format mark: a rose-pink pill, the cloth's own colour */
+.cz-fmt{ column-gap:4px; }
+.cz-fmt .fmt-t{ padding:3px 10px; border-radius:999px; }
+.cz-fmt .fmt-t[data-on="true"]{ background:var(--rose); }
+
+/* ── compact (narrow host) for S13–S20 ── */
+.card-compact .lb-top,
+.card-compact .cz-top{ grid-template-columns:96px 1fr; gap:0 18px; }
+.card-compact .pb-top{ grid-template-columns:112px 1fr; gap:0 18px; }
+.card-compact .pb-big{ font-size:13px; }
+.card-compact .lb-cell{ padding:10px 10px 14px; }
+.card-compact .lb-stamp{ font-size:12.5px; padding:3px 6px; }
+.card-compact .card.tc{ padding:10px; }
+.card-compact .tc-frame{ padding:16px; }
+.card-compact .tc-art{ padding:16px; }
+.card-compact .tc-art .cover, .card-compact .tc-art .cover-missing{ width:150px; }
+.card-compact .tc-hp .r-num{ font-size:28px; }
+.card-compact .bg-word{ font-size:34px; }
+.card-compact .bg-sq{ min-height:84px; padding:8px; }
+.card-compact .bg-v{ font-size:14px; }
+.card-compact .bg-free .cover, .card-compact .bg-free .cover-missing{ width:62px; }
+.card-compact .sp-win{ padding:28px 22px 22px; }
+.card-compact .sp-win .cover, .card-compact .sp-win .cover-missing{ width:140px; }
+.card-compact .eh-hoop{ width:210px; border-width:10px; }
+.card-compact .card.cz{ padding:16px; }
+.card-compact .cz-label{ padding:20px; }
+
 /* ── compact (narrow host) for the five review cards ── */
 .card-compact .hb{ padding:calc(var(--pad) + 10px); }
 .card-compact .hb-top,
@@ -1942,6 +2219,216 @@
   font-family:var(--mono); font-size:9.5px; letter-spacing:.16em;
   text-transform:uppercase; color:var(--ink-soft);
 }
+
+/* ═════════════════════════════════════════════════════════════
+   C13–C20 · the second eight. Same two faces, same rosette; each one
+   dresses its rows or cells in the object it is named for.
+   ═════════════════════════════════════════════════════════════ */
+
+/* shared cell type for the six grids */
+:is(.c15-t,.c16-t,.c17-t,.c18-t,.c19-t,.c20-t){
+  margin-top:8px; font-family:var(--serif); font-weight:600; font-size:13px;
+  line-height:1.25; letter-spacing:-.008em; color:var(--tx); overflow-wrap:break-word;
+}
+:is(.c15-a,.c16-a,.c18-a,.c19-a,.c20-a){
+  margin-top:3px; font-family:var(--mono); font-size:8.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--meta); overflow-wrap:break-word;
+}
+:is(.c15-r,.c16-r,.c17-r,.c18-r,.c19-r,.c20-r){ display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; margin-top:6px; }
+:is(.c15-r,.c16-r,.c17-r,.c18-r,.c19-r,.c20-r) .r-num{ font-size:13px; color:var(--num); }
+.card-compact :is(.c15-t,.c16-t,.c17-t,.c18-t,.c19-t,.c20-t){ font-size:12px; }
+
+/* C13 · Receipt (canary) — a till roll: dotted leaders, a tear rule, a total */
+.c13 .patch{ right:-40px; bottom:-50px; opacity:.07; }
+.mo-head--c13{ display:block; text-align:center; }
+.mo-head--c13 .mo-title{ display:block; margin:6px 0 4px; }
+.mo-cut{ display:block; height:0; border:0; border-top:1.5px dashed rgba(27,25,23,.45); margin:14px 0 0; }
+.mo-stats--till{ display:grid; gap:4px; padding:0 0 12px; border-bottom:1.5px dashed rgba(27,25,23,.45); }
+.mo-till{ display:flex; align-items:baseline; gap:10px; }
+.mo-till::after{ content:none; }
+.mo-till .lbl{ flex:none; }
+.mo-till b{ margin-left:auto; text-align:right; }
+.c13-items.is-split{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:30px; }
+.card-compact .c13-items.is-split{ grid-template-columns:1fr; }
+.c13-r{ display:grid; grid-template-columns:22px 30px 1fr auto; gap:0 12px; align-items:center;
+  padding:9px 0; border-bottom:1px dotted rgba(27,25,23,.4); }
+.c13-r .cov{ width:30px; }
+.c13-q{ font-variant-numeric:tabular-nums; }
+.c13-name{ font-family:var(--serif); font-weight:600; font-size:14.5px; line-height:1.25; min-width:0; overflow-wrap:break-word; }
+.c13-by{ font-family:var(--mono); font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--meta); margin-top:3px; }
+.c13-rate{ text-align:right; }
+.c13-rate .r-num{ font-size:15px; }
+.c13-rate .stars-s{ margin-top:2px; }
+.c13-total{ display:flex; justify-content:space-between; align-items:baseline; padding:14px 0 0;
+  margin-top:10px; border-top:3px double rgba(27,25,23,.55); }
+.c13-total .r-num{ font-size:22px; }
+.c13-thanks{ display:block; text-align:center; margin-top:18px; }
+.card-compact .c13-r{ grid-template-columns:18px 26px 1fr auto; gap:0 9px; }
+.card-compact .c13-r .cov{ width:26px; }
+.card-compact .c13-name{ font-size:13px; }
+
+/* C14 · Library card (manila) — ruled loan lines, a date-due stamp in each */
+.c14 .patch{ left:-48px; bottom:-56px; opacity:.07; }
+.mo-head--c14{ display:block; padding-bottom:12px; border-bottom:1.5px solid rgba(27,25,23,.5); }
+.mo-head--c14 .mo-set{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:8px; }
+.mo-stats--cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr));
+  border-top:1px solid var(--hair); border-left:1px solid var(--hair); }
+.mo-col{ min-width:0; padding:8px 12px; border-right:1px solid var(--hair); border-bottom:1px solid var(--hair); }
+.mo-col b{ display:block; margin-top:4px; }
+.c14-loans{ border-top:1px solid rgba(27,25,23,.3); }
+.c14-loans.is-split{ display:grid; grid-template-columns:repeat(var(--cols,1),1fr); column-gap:30px; }
+.card-compact .c14-loans.is-split{ grid-template-columns:1fr; }
+.c14-r{ display:grid; grid-template-columns:auto 30px 1fr auto; gap:0 12px; align-items:center;
+  padding:9px 0; border-bottom:1px solid rgba(27,25,23,.22); }
+.c14-r .cov{ width:30px; }
+.c14-stamp{ font-family:var(--mono); font-size:9px; font-weight:500; letter-spacing:.1em; color:#8E2A1E;
+  padding:3px 5px; border:1.5px solid rgba(142,42,30,.7); border-radius:2px; transform:rotate(-3deg); white-space:nowrap; }
+.c14-name{ font-family:var(--serif); font-weight:600; font-size:14.5px; line-height:1.25; min-width:0; overflow-wrap:break-word; }
+.c14-by{ font-family:var(--mono); font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--meta); margin-top:3px; }
+.c14-rate{ text-align:right; }
+.c14-rate .r-num{ font-size:15px; }
+.card-compact .c14-r{ grid-template-columns:auto 1fr auto; }
+.card-compact .c14-r .cov{ display:none; }
+.card-compact .c14-name{ font-size:13px; }
+
+/* C15 · Trading card (cobalt) — a binder page of sleeved cards */
+.c15 .patch{ right:-44px; top:-40px; opacity:.08; }
+.mo-head--c15{ align-items:flex-end; }
+.mo-head--c15 .mo-title{ display:block; margin-top:6px; }
+.mo-chip{ padding:4px 9px; border:1px solid var(--hair); border-radius:20px; }
+.mo-stats--back{ display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:8px; }
+.mo-bk{ min-width:0; padding:9px 10px; text-align:center; border:1px solid var(--hair); border-radius:6px; }
+.mo-bk b{ display:block; }
+.mo-bk .lbl{ display:block; margin-top:3px; }
+.c15-binder{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:16px; --gx:16px; }
+.c15-sleeve{ min-width:0; padding:5px; border:1px solid rgba(244,242,237,.3); border-radius:8px; }
+.c15-card{ padding:8px 8px 10px; background:var(--cream); color:var(--ink); border-radius:5px; --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); --star:var(--ink); --star-line:rgba(27,25,23,.5); }
+.c15-top{ display:flex; justify-content:space-between; margin-bottom:6px; color:var(--meta); }
+.c15-card .cov{ border-radius:3px; }
+.card-compact .c15-binder{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:12px; --gx:12px; }
+.card-compact .c15-sleeve{ padding:4px; }
+.card-compact .c15-card{ padding:6px 6px 8px; }
+
+/* C16 · Photo booth (curtain) — strips of frames on white paper */
+.c16 .patch{ left:-40px; top:-44px; opacity:.08; }
+.mo-head--c16{ display:block; text-align:center; }
+.mo-head--c16 .mo-title{ display:block; margin-top:6px; }
+.mo-stats--frames{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+.mo-fr{ min-width:84px; padding:8px 12px; text-align:center; background:var(--cream); color:var(--ink); --tx:var(--ink); --num:var(--ink); --meta:rgba(27,25,23,.66); }
+.mo-fr b{ display:block; }
+.mo-fr .lbl{ display:block; margin-top:3px; color:rgba(27,25,23,.66); }
+.c16-strips{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:0 18px; --gx:18px;
+  background:none; }
+.c16-fr{ min-width:0; padding:9px 9px 12px; background:var(--cream);
+  --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); --star:var(--ink); --star-line:rgba(27,25,23,.5);
+  border-bottom:1px solid rgba(27,25,23,.12); }
+.c16-fr .cov{ border-radius:0; box-shadow:none; filter:none; }
+.card-compact .c16-strips{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:0 12px; --gx:12px; }
+.card-compact .c16-fr{ padding:7px 7px 9px; }
+
+/* C17 · Bingo card (tangerine) — the letters across the top, a ruled board,
+   a daub on every book that was called */
+.c17 .patch{ right:-46px; bottom:-52px; opacity:.07; }
+.mo-head--c17{ display:block; }
+.mo-bingo{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+.mo-bingo span{ display:flex; align-items:center; justify-content:center; height:40px;
+  font-family:var(--serif); font-weight:600; font-size:24px; color:var(--cream); background:var(--ink); border-radius:50%; aspect-ratio:1; margin:0 auto; }
+.mo-head--c17 .mo-set{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:12px; }
+.mo-stats--balls{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px 16px; }
+.mo-ball{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:88px; height:88px;
+  border:1.5px solid rgba(27,25,23,.55); border-radius:50%; text-align:center; }
+.mo-ball .lbl{ margin-top:2px; max-width:70px; }
+.c17-board{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); --gx:0px;
+  border-top:1.5px solid rgba(27,25,23,.55); border-left:1.5px solid rgba(27,25,23,.55); }
+.c17-sq{ min-width:0; padding:10px 10px 12px; border-right:1.5px solid rgba(27,25,23,.55); border-bottom:1.5px solid rgba(27,25,23,.55); }
+.c17-no{ display:block; margin-bottom:6px; }
+.c17-mount{ position:relative; }
+.c17-daub{ position:absolute; right:5px; top:5px; width:30px; height:30px; border-radius:50%;
+  background:rgba(194,65,12,.55); border:2px solid rgba(140,40,8,.6); }
+.card-compact .c17-board{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); }
+.card-compact .c17-sq{ padding:8px 7px 9px; }
+.card-compact .mo-ball{ width:76px; height:76px; }
+
+/* C18 · Seed packet (pistachio) — a rack of paper packets, folded at the top */
+.c18 .patch{ left:-46px; top:-46px; opacity:.08; }
+.mo-head--c18{ display:block; text-align:center; }
+.mo-head--c18 .mo-title{ display:block; margin-top:6px; font-style:italic; }
+.mo-stats--grow{ display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:0 18px;
+  padding:10px 0; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); }
+.mo-gr{ min-width:0; text-align:center; }
+.mo-gr b{ display:block; margin-top:3px; }
+.c18-rack{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
+.c18-pk{ min-width:0; padding:0 9px 11px; background:var(--cream); border-radius:2px 2px 6px 6px;
+  --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); }
+.c18-fold{ display:block; margin:0 -9px 9px; padding:6px 9px; text-align:center; border-bottom:1.5px dashed rgba(27,25,23,.35); }
+.card-compact .c18-rack{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:14px 12px; --gx:12px; }
+.card-compact .c18-pk{ padding:0 7px 9px; }
+.card-compact .c18-fold{ margin:0 -7px 7px; }
+
+/* C19 · Embroidery hoop (periwinkle) — every cover framed in a wooden ring */
+.c19 .patch{ right:-42px; top:-40px; opacity:.08; }
+.mo-head--c19{ display:block; text-align:center; padding-bottom:12px; border-bottom:2px dashed rgba(27,25,23,.4); }
+.mo-head--c19 .mo-title{ display:block; margin-top:6px; }
+.mo-stats--stitch{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px 28px; }
+.mo-sti{ min-width:0; text-align:center; }
+.mo-sti b{ display:block; }
+.mo-sti .lbl{ display:block; margin-top:3px; }
+.c19-hoops{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:22px 16px; --gx:16px; }
+.c19-c{ min-width:0; text-align:center; }
+.c19-ring{ padding:6px; border-radius:50%; background:#C99A62; border:2px solid #9C6E3C; }
+.c19-ring .cov{ aspect-ratio:1; object-fit:cover; border-radius:50%; box-shadow:none; }
+.c19-ring .cov-miss{ aspect-ratio:1; border-radius:50%; }
+.c19-r{ justify-content:center; }
+.card-compact .c19-hoops{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:18px 12px; --gx:12px; }
+.card-compact .c19-ring{ padding:4px; }
+
+/* C20 · Chintz (rose) — the sprig ground with a cream label laid over it */
+.c20-label{ position:relative; padding:22px 24px 20px; margin-bottom:22px; background:var(--cream); border:1px solid rgba(27,25,23,.2); border-radius:2px; }
+.c20-label .mo-stats{ margin-bottom:0; }
+.mo-head--c20{ display:block; text-align:center; }
+.mo-head--c20 .mo-title{ display:block; margin-top:6px; font-style:italic; }
+.mo-stats--place{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px 28px; padding-top:12px; border-top:1px solid var(--hair); }
+.mo-pl{ min-width:0; text-align:center; }
+.mo-pl b{ display:block; }
+.mo-pl .lbl{ display:block; margin-top:3px; }
+.c20-table{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:16px; --gx:16px; }
+.c20-c{ min-width:0; padding:9px 9px 11px; background:var(--cream); border:1px solid rgba(27,25,23,.2); border-radius:2px;
+  --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); }
+.card-compact .c20-label{ padding:16px 16px 14px; }
+.card-compact .c20-table{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:12px; --gx:12px; }
+.card-compact .c20-c{ padding:7px 7px 9px; }
+
+/* hopefuls cells, in each style's clothing */
+.hg--c13 .hg-c, .hg--c14 .hg-c{ padding-bottom:10px; border-bottom:1px dotted rgba(27,25,23,.4); }
+.hg--c15 .hg-c{ padding:8px 8px 10px; background:var(--cream); border-radius:5px; outline:1px solid rgba(244,242,237,.3); outline-offset:4px;
+  --tx:var(--ink); --meta:rgba(27,25,23,.66); }
+.hg--c16 .hg-c, .hg--c18 .hg-c, .hg--c20 .hg-c{ padding:8px 8px 10px; background:var(--cream);
+  --tx:var(--ink); --meta:rgba(27,25,23,.66); }
+.hg--c20 .hg-c{ border:1px solid rgba(27,25,23,.2); }
+.hg--c17 .hg-c{ padding:8px; border:1.5px solid rgba(27,25,23,.55); }
+.hg--c19 .hg-c{ text-align:center; }
+.hg--c19 .hg-c .cov{ aspect-ratio:1; object-fit:cover; border-radius:50%; outline:6px solid #C99A62; outline-offset:0; }
+
+/* story frames */
+.card--story.c20{ display:block; }
+.card--story.c20 .cz-label{ height:100%; }
+.card--story .mo-head--c13 .mo-cut{ margin-top:10px; }
+.st-frame--c13{ width:100%; padding:18px 0; border-top:1.5px dashed rgba(27,25,23,.45); border-bottom:1.5px dashed rgba(27,25,23,.45); }
+.st-frame--c14{ padding:12px 12px 10px; border:1.5px solid rgba(27,25,23,.5); }
+.st-frame--c14 .st-no{ margin-top:8px; text-align:center; }
+.st-frame--c15{ padding:12px 12px 14px; background:var(--cream); border-radius:10px; outline:1px solid rgba(244,242,237,.3); outline-offset:6px; transform:rotate(-.8deg); }
+.st-frame--c15 .c15-top{ margin-bottom:8px; color:rgba(27,25,23,.66); }
+.st-frame--c15 .st-cov{ border-radius:5px; }
+.st-frame--c16{ padding:14px 14px 22px; background:var(--cream); transform:rotate(.7deg); }
+.st-frame--c16 .st-cov{ border-radius:0; box-shadow:none; }
+.st-frame--c17{ padding:14px; border:1.5px solid rgba(27,25,23,.55); }
+.st-frame--c17 .c17-no{ text-align:center; margin-bottom:9px; }
+.st-frame--c18{ padding:0 14px 16px; background:var(--cream); border-radius:2px 2px 8px 8px; transform:rotate(-.6deg); }
+.st-frame--c18 .c18-fold{ margin:0 -14px 14px; }
+.st-frame--c19{ padding:12px; border-radius:50%; background:#C99A62; border:3px solid #9C6E3C; }
+.st-frame--c19 .st-cov{ aspect-ratio:1; object-fit:cover; border-radius:50%; width:var(--st-cov); box-shadow:none; }
+.st-frame--c20{ padding:12px; border:1px solid rgba(27,25,23,.2); }
+
 @media print{
   .share-page{ margin:0 auto; page-break-after:always; box-shadow:none; }
   .share-page:last-child{ page-break-after:auto; }

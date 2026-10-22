@@ -84,6 +84,13 @@
   --apricot:#F2BC97;
   --quartz:#E5BDD0;
   --teal:#1E4645;
+  /* the eight that came in with Receipt, Library Card, Trading Card, Photo
+     Booth, Bingo Card, Seed Packet, Embroidery Hoop and Chintz. Screened against
+     every ground above and each other: tightest new pair tangerine/apricot at
+     dE 9.4, wider than butter/sage (8.8). Cobalt and curtain are the two new
+     darks; cream on them measures 7.40 and 6.41. */
+  --canary:#F7EE8E; --manila:#E8D5A6; --cobalt:#284A9A; --curtain:#A32A2E;
+  --tangerine:#F6A55E; --pistachio:#C8E39A; --periwinkle:#B9C6F0; --rose:#F49FB4;
 
   --serif:"Playfair Display",Georgia,serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;

@@ -622,6 +622,301 @@ function specimen(rec: Review): string {
   </article>`
 }
 
+/* A fact as a label and a value on one line, the value wrapping before it is
+   crushed (see the "value lane" decision). Shared by the eight cards below,
+   each of which dresses the row in its own class. */
+function fact(cls: string, label: string, value: string): string {
+  return `<div class="${cls}"><span class="lbl">${label}</span><span class="fx-val">${value}</span></div>`
+}
+function facts(rec: Review, cls: string, { dates = true, author = true } = {}): string {
+  return [
+    author ? fact(cls, 'Author', escapeHtml(rec.author)) : '',
+    dates ? fact(cls, 'Started', prettyDate(rec.started)) : '',
+    dates ? fact(cls, 'Finished', prettyDate(rec.finished)) : '',
+    rec.pages ? fact(cls, 'Pages', String(rec.pages)) : '',
+    rec.series ? fact(cls, 'Series', seriesLine(rec)) : '',
+    rec.tags?.length ? fact(cls, 'Tags', tagsText(rec)) : '',
+  ].join('')
+}
+function root(rec: Review, cls: string, rot: string): string {
+  return `<article class="card ${cls}" style="--rot:${rot}deg;${handVars(rec.hand)}" data-hand="${rec.hand ?? 'kalam'}">`
+}
+
+/* A barcode drawn from the title, so every receipt's is its own and the same
+   book always prints the same one. Bars are flex children with whole-pixel
+   widths — no gradient, so nothing for the rasterizer to resample. */
+function barcode(seed: string): string {
+  let h = 2166136261
+  for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
+  let out = ''
+  for (let i = 0; i < 44; i++) {
+    h = Math.imul(h ^ (h >>> 13), 1274126177)
+    const w = 1 + ((h >>> 3) & 3) % 3
+    out += `<i style="width:${w}px;margin-right:${1 + ((h >>> 7) & 1) * 2}px"></i>`
+  }
+  return `<div class="rc-bar" aria-hidden="true">${out}</div>`
+}
+
+/* ── S13 · Receipt — the reading rung up as a till receipt (canary). The
+   facts are line items on dotted leaders, the rating is the total, and the
+   chosen formats are the items on the bill. ── */
+function receipt(rec: Review): string {
+  return `${root(rec, 'card--canary rc', '-.4')}
+    ${patch(170)}
+    <div class="rc-head">
+      ${mark(18)}
+      <div class="rc-shop">Flyleaf Press</div>
+      <div class="lbl">Receipt · Nº ${rec.no}</div>
+    </div>
+    <hr class="rc-cut">
+    <h2 class="title rc-title">${escapeHtml(rec.title)}</h2>
+    <div class="by rc-by">${escapeHtml(rec.author)}</div>
+    <div class="rc-items">${facts(rec, 'rc-line')}</div>
+    <div class="rc-fmt-row">
+      <span class="lbl">Format</span>
+      ${fmtRow(rec, 'rc-fmt', false)}
+    </div>
+    <hr class="rc-cut">
+    <div class="rc-total">
+      <span class="lbl">Rating</span>
+      <span class="rc-sum"><span class="r-num">${fmtRating(rec.rating)}</span><span class="rate-of">/ 5</span></span>
+    </div>
+    ${starRow(rec.rating, 18)}
+    <hr class="rc-cut">
+    ${body(rec, 18)}
+    ${plateRow(rec)}
+    ${barcode(rec.title + rec.author)}
+    ${colophon(rec)}
+  </article>`
+}
+
+/* ── S14 · Library Card — the book's own date-due card (manila). The two
+   dates are stamped into the register in the card's red, the way a desk
+   stamp lands; the formats are punched holes. ── */
+function library(rec: Review): string {
+  const stampD = (label: string, d: string | undefined, rot: number) =>
+    `<div class="lb-cell"><span class="lbl">${label}</span><span class="lb-stamp" style="--srot:${rot}deg">${escapeHtml(prettyDate(d))}</span></div>`
+  return `${root(rec, 'card--manila lb', '.5')}
+    ${patch(170)}
+    <div class="lb-head">
+      <span class="lbl">Library card · Flyleaf Press</span>
+      <span class="lbl">Nº ${rec.no}</span>
+    </div>
+    <div class="lb-top">
+      <div class="lb-cov">${cover(rec)}</div>
+      <div class="lb-data">
+        <h2 class="title lb-title">${escapeHtml(rec.title)}</h2>
+        ${facts(rec, 'lb-line', { dates: false })}
+      </div>
+    </div>
+    <div class="lb-reg">
+      ${stampD('Started', rec.started, -2.5)}
+      ${stampD('Finished', rec.finished, 1.8)}
+    </div>
+    <div class="lb-row">
+      <span class="lbl">Format</span>
+      ${fmtRow(rec, 'lb-fmt', false)}
+    </div>
+    <div class="lb-row">
+      <span class="lbl">Rating</span>
+      <span class="lb-rate"><span class="r-num">${fmtRating(rec.rating)}</span>${starRow(rec.rating, 17)}</span>
+    </div>
+    ${body(rec, 22)}
+    ${plateRow(rec)}
+    ${colophon(rec)}
+  </article>`
+}
+
+/* ── S15 · Trading Card — a collectible card (cobalt). The cover is the
+   card's art window, the rating is its headline number, and three stat tiles
+   carry the figures a back-of-card would. ── */
+function trading(rec: Review): string {
+  const tile = (label: string, value: string) =>
+    `<div class="tc-tile"><span class="tc-big">${value}</span><span class="lbl">${label}</span></div>`
+  return `${root(rec, 'card--cobalt tc', '-.5')}
+    <div class="tc-frame">
+      ${patch(170)}
+      <div class="tc-top">
+        <h2 class="title tc-title">${escapeHtml(rec.title)}</h2>
+        <span class="tc-hp"><span class="r-num">${fmtRating(rec.rating)}</span><span class="lbl">/ 5</span></span>
+      </div>
+      <div class="tc-art">${cover(rec)}</div>
+      <div class="tc-type">${escapeHtml(rec.author)}${rec.series ? ` · ${seriesLine(rec)}` : ''}</div>
+      <div class="tc-tiles">
+        ${rec.pages ? tile('Pages', String(rec.pages)) : ''}
+        ${tile('Started', escapeHtml(prettyDate(rec.started)))}
+        ${tile('Finished', escapeHtml(prettyDate(rec.finished)))}
+      </div>
+      <div class="tc-row">
+        <span class="lbl">Rating</span>${starRow(rec.rating, 17)}
+      </div>
+      <div class="tc-row">
+        <span class="lbl">Format</span>${fmtRow(rec, 'tc-fmt', false)}
+      </div>
+      ${rec.tags?.length ? `<div class="tc-row"><span class="lbl">Tags</span><span class="fx-val">${tagsText(rec)}</span></div>` : ''}
+      ${body(rec, 20)}
+      ${plateRow(rec)}
+      <div class="tc-set">
+        <span class="lbl">Flyleaf Press · Card Nº ${rec.no}</span>
+        ${mark(13)}
+      </div>
+    </div>
+  </article>`
+}
+
+/* ── S16 · Photo Booth — a strip of four frames on the curtain (curtain).
+   The cover is the first frame; the other three are the reading's own
+   moments, started, finished and the verdict. ── */
+function booth(rec: Review): string {
+  const frame = (label: string, inner: string) =>
+    `<div class="pb-shot"><span class="lbl">${label}</span>${inner}</div>`
+  return `${root(rec, 'card--curtain pb', '.4')}
+    ${patch(170)}
+    <div class="pb-head">
+      <span class="lbl">Photo booth · Flyleaf Press</span>
+      <span class="lbl">Nº ${rec.no}</span>
+    </div>
+    <div class="pb-top">
+      <div class="pb-strip">
+        <div class="pb-pose">${cover(rec)}</div>
+        ${frame('Started', `<span class="pb-big">${escapeHtml(prettyDate(rec.started))}</span>`)}
+        ${frame('Finished', `<span class="pb-big">${escapeHtml(prettyDate(rec.finished))}</span>`)}
+        ${frame('Rating', `<span class="pb-big"><span class="r-num">${fmtRating(rec.rating)}</span> / 5</span>`)}
+      </div>
+      <div class="pb-data">
+        <h2 class="title pb-title">${escapeHtml(rec.title)}</h2>
+        <div class="by pb-by">${escapeHtml(rec.author)}</div>
+        ${starRow(rec.rating, 18)}
+        <div class="pb-facts">${facts(rec, 'pb-line', { author: false, dates: false })}</div>
+        <div class="pb-fmt-row">
+          <span class="lbl">Format</span>
+          ${fmtRow(rec, 'pb-fmt', false)}
+        </div>
+      </div>
+    </div>
+    ${body(rec, 24)}
+    ${plateRow(rec)}
+    ${colophon(rec)}
+  </article>`
+}
+
+/* ── S17 · Bingo Card — the facts are the squares and the cover is the free
+   space (tangerine). Every square the book filled is daubed; a fact nothing
+   knew leaves its square open, which on a bingo card is just a number not
+   yet called. ── */
+function bingo(rec: Review): string {
+  const sq = (label: string, value?: string) => value
+    ? `<div class="bg-sq" data-hit="true"><span class="lbl">${label}</span><span class="bg-v">${value}</span></div>`
+    : `<div class="bg-sq"><span class="lbl">${label}</span></div>`
+  return `${root(rec, 'card--tangerine bg', '-.3')}
+    ${patch(170)}
+    <div class="bg-head">
+      <span class="bg-word" aria-hidden="true">BINGO</span>
+      <span class="lbl">Flyleaf Press · Nº ${rec.no}</span>
+    </div>
+    <h2 class="title bg-title">${escapeHtml(rec.title)}</h2>
+    <div class="by bg-by">${escapeHtml(rec.author)}</div>
+    <div class="bg-grid">
+      ${sq('Started', escapeHtml(prettyDate(rec.started)))}
+      ${sq('Pages', rec.pages ? String(rec.pages) : undefined)}
+      ${sq('Finished', escapeHtml(prettyDate(rec.finished)))}
+      ${sq('Series', rec.series ? seriesLine(rec) : undefined)}
+      <div class="bg-sq bg-free">${cover(rec)}</div>
+      ${sq('Rating', `<span class="r-num">${fmtRating(rec.rating)}</span> / 5`)}
+      ${sq('Tags', rec.tags?.length ? tagsText(rec) : undefined)}
+      <div class="bg-sq bg-sq--wide" data-hit="true"><span class="lbl">Format</span>${fmtRow(rec, 'bg-fmt', false)}</div>
+    </div>
+    ${starRow(rec.rating, 18)}
+    ${body(rec, 16)}
+    ${plateRow(rec)}
+    ${colophon(rec)}
+  </article>`
+}
+
+/* ── S18 · Seed Packet — the book as a packet of seeds (pistachio). The
+   cover is the packet's picture window, the rating sits on the price
+   roundel, and the facts are the sowing table on the back panel. ── */
+function seedpacket(rec: Review): string {
+  return `${root(rec, 'card--pistachio sp', '.4')}
+    ${patch(170)}
+    <div class="sp-head">
+      <span class="lbl">Seed packet · Flyleaf Press</span>
+      <span class="lbl">Nº ${rec.no}</span>
+    </div>
+    <div class="sp-win">
+      ${cover(rec)}
+      <span class="sp-price"><span class="r-num">${fmtRating(rec.rating)}</span><span class="lbl">/ 5</span></span>
+    </div>
+    <h2 class="title sp-title">${escapeHtml(rec.title)}</h2>
+    <div class="by sp-by">${escapeHtml(rec.author)}</div>
+    ${starRow(rec.rating, 18)}
+    <div class="sp-table">${facts(rec, 'sp-line', { author: false })}</div>
+    <div class="sp-fmt-row">
+      <span class="lbl">Format</span>
+      ${fmtRow(rec, 'sp-fmt', false)}
+    </div>
+    ${body(rec, 22)}
+    ${plateRow(rec)}
+    ${colophon(rec)}
+  </article>`
+}
+
+/* ── S19 · Embroidery Hoop — the cover stretched in a wooden hoop
+   (periwinkle). The rules between facts are running stitches, and a chosen
+   format is cross-stitched. ── */
+function hoop(rec: Review): string {
+  return `${root(rec, 'card--periwinkle eh', '-.4')}
+    ${patch(170)}
+    <div class="eh-head">
+      <span class="lbl">Embroidery hoop · Flyleaf Press</span>
+      <span class="lbl">Nº ${rec.no}</span>
+    </div>
+    <div class="eh-hoop"><span class="eh-screw" aria-hidden="true"></span><div class="eh-cloth">${cover(rec)}</div></div>
+    <h2 class="title eh-title">${escapeHtml(rec.title)}</h2>
+    <div class="by eh-by">${escapeHtml(rec.author)}</div>
+    <div class="eh-rate"><span class="r-num">${fmtRating(rec.rating)}</span>${starRow(rec.rating, 18)}</div>
+    <div class="eh-facts">${facts(rec, 'eh-line', { author: false })}</div>
+    <div class="eh-fmt-row">
+      <span class="lbl">Format</span>
+      ${fmtRow(rec, 'eh-fmt', false)}
+    </div>
+    ${body(rec, 22)}
+    ${plateRow(rec)}
+    ${colophon(rec)}
+  </article>`
+}
+
+/* ── S20 · Chintz — a printed floral cloth with a paper label laid on it
+   (rose). The pattern is the card's border; everything printed sits on the
+   label, so the writing is on paper and never on the flowers. ── */
+function chintz(rec: Review): string {
+  return `${root(rec, 'card--rose cz', '.3')}
+    <div class="cz-label">
+      ${patch(170)}
+      <div class="cz-head">
+        <span class="lbl">Chintz · Flyleaf Press</span>
+        <span class="lbl">Nº ${rec.no}</span>
+      </div>
+      <div class="cz-top">
+        <div class="cz-cov">${cover(rec)}</div>
+        <div class="cz-data">
+          <h2 class="title cz-title">${escapeHtml(rec.title)}</h2>
+          <div class="by cz-by">${escapeHtml(rec.author)}</div>
+          <div class="cz-rate"><span class="r-num">${fmtRating(rec.rating)}</span>${starRow(rec.rating, 17)}</div>
+        </div>
+      </div>
+      <div class="cz-facts">${facts(rec, 'cz-line', { author: false })}</div>
+      <div class="cz-fmt-row">
+        <span class="lbl">Format</span>
+        ${fmtRow(rec, 'cz-fmt', false)}
+      </div>
+      ${body(rec, 22)}
+      ${plateRow(rec)}
+      ${colophon(rec)}
+    </div>
+  </article>`
+}
+
 export const REVIEW_RENDERERS: Record<StyleId, (rec: Review) => string> = {
   archive,
   masthead,
@@ -635,6 +930,14 @@ export const REVIEW_RENDERERS: Record<StyleId, (rec: Review) => string> = {
   jcard,
   passport,
   specimen,
+  receipt,
+  library,
+  trading,
+  booth,
+  bingo,
+  seedpacket,
+  hoop,
+  chintz,
 }
 
 export function renderReviewCard(rec: Review, style?: StyleId): string {
