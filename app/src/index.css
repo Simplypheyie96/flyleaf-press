@@ -1498,3 +1498,12 @@ button.tab-add{ padding:0; cursor:pointer; font:inherit; }
 :root:not([data-theme="dark"]){ --card-w:color-mix(in srgb, var(--paper) 70%, #fff); }
 /* Dawn's ground is the peach→lilac sky, not --paper: card tone from its middle */
 :root[data-skin="dawn"]:not([data-theme="dark"]){ --card-w:color-mix(in srgb, #F5E8EC 75%, #fff); }
+
+/* Home: this month's hopefuls as a sideways row of covers */
+.cover-rail{ display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory;
+  margin:0 calc(-1 * var(--gutter)); padding:4px var(--gutter) 8px; scroll-padding-inline:var(--gutter); scrollbar-width:none; }
+.cover-rail::-webkit-scrollbar{ display:none; }
+.cover-tile{ flex:0 0 84px; scroll-snap-align:start; text-decoration:none; color:var(--ink); }
+.cover-tile .lib-cover, .cover-tile .lib-cover-miss{ width:84px; }
+.cover-tile-t{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  margin-top:8px; font-family:var(--serif); font-weight:600; font-size:12.5px; line-height:1.25; }

@@ -91,30 +91,19 @@ export function Home({ settings }: { settings: Settings }) {
           <span className="ui-lbl">Hopefuls · {monthName(nowKey)}</span>
           <Link className="ui-lbl" to={`/hopefuls/${nowKey}`}>Open list →</Link>
         </div>
-        {/* this month's books still to read, rows as on the month's own page */}
-        <div className="field">
-          <div className="mo-list">
-            {toRead.length ? toRead.map((h) => (
-              <div className="hope-row" key={h.id}>
-                {h.cover ? <img src={h.cover} alt="" /> : <span className="hope-miss">No cover</span>}
-                <span className="hope-txt">
-                  <span className="res-t">{h.title}</span>
-                  <span className="res-a" style={{ display: 'block' }}>{h.author}</span>
-                </span>
-                <span className="hope-acts">
-                  <button
-                    type="button"
-                    className="btn btn--ghost btn--sm"
-                    aria-pressed={!!h.startedAt}
-                    onClick={() => db.hopefuls.update(h.id!, { startedAt: h.startedAt ? undefined : Date.now(), editedAt: Date.now() })}
-                  >
-                    {h.startedAt ? 'Reading' : 'Start'}
-                  </button>
-                </span>
-              </div>
-            )) : <HopeRow k={nowKey} hopes={hopes} />}
+        {/* this month's books still to read, as a row of covers */}
+        {toRead.length ? (
+          <div className="cover-rail">
+            {toRead.map((h) => (
+              <Link className="cover-tile" key={h.id} to={`/hopefuls/${nowKey}`}>
+                {h.cover ? <img className="lib-cover" src={h.cover} alt="" /> : <span className="lib-cover-miss">No cover</span>}
+                <span className="cover-tile-t">{h.title}</span>
+              </Link>
+            ))}
           </div>
-        </div>
+        ) : (
+          <div className="field"><div className="mo-list"><HopeRow k={nowKey} hopes={hopes} /></div></div>
+        )}
 
         {thisMonth.length > 0 && (
           <div className="notice">
