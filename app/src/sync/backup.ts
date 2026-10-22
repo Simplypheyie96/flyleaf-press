@@ -146,6 +146,18 @@ export async function dropHopeful(h: Hopeful): Promise<void> {
   await db.hopefuls.delete(h.id as number)
 }
 
+/** Carry books to another month's list. The month is part of a hopeful's
+    print, so the old print gets a headstone or the next sync would bring the
+    book back to the month it left. A book already on the new list just goes. */
+export async function moveHopefuls(books: Hopeful[], month: string): Promise<void> {
+  const there = new Set((await db.hopefuls.where('month').equals(month).toArray()).map(hopefulPrint))
+  for (const h of books) {
+    if (there.has(hopefulPrint({ ...h, month }))) { await dropHopeful(h); continue }
+    await db.graves.put({ key: hopefulPrint(h), at: Date.now() })
+    await db.hopefuls.update(h.id as number, { month, editedAt: Date.now() })
+  }
+}
+
 /** How each synced table names a row on its headstone. Typed over SYNCED, so
     a table cannot be added there without saying how its deletions travel. */
 const PRINTS: { [T in (typeof SYNCED)[number]]: (row: never) => string } = {

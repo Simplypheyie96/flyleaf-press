@@ -5,7 +5,7 @@ import type { Settings } from '../types'
 import { STYLE_GROUNDS } from '../types'
 import { Face } from '../components/Face'
 import { InstallNotice } from '../components/InstallNotice'
-import { HopeRow, ReadingList, useHopes } from '../components/Hopes'
+import { CarryOver, HopeRail, HopeRow, ReadingList, shiftMonth, useHopes } from '../components/Hopes'
 import { fmtRating, monthKey, monthName, currentMonthKey } from '../format'
 import calendar from '../assets/emoji/tear-off-calendar.svg'
 import books from '../assets/emoji/books.svg'
@@ -39,7 +39,8 @@ export function Home({ settings }: { settings: Settings }) {
     ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 4) / 4
     : 0
   const latest = reviews.slice(0, 3)
-  const toRead = hopes.ofMonth(nowKey).filter((h) => !hopes.isRead(h))
+  // in hand already shows under Reading now
+  const toRead = hopes.ofMonth(nowKey).filter((h) => !hopes.isRead(h) && !h.startedAt)
 
   return (
     <div className="page">
@@ -93,17 +94,12 @@ export function Home({ settings }: { settings: Settings }) {
         </div>
         {/* this month's books still to read, as a row of covers */}
         {toRead.length ? (
-          <div className="cover-rail">
-            {toRead.map((h) => (
-              <Link className="cover-tile" key={h.id} to={`/hopefuls/${nowKey}`}>
-                {h.cover ? <img className="lib-cover" src={h.cover} alt="" /> : <span className="lib-cover-miss">No cover</span>}
-                <span className="cover-tile-t">{h.title}</span>
-              </Link>
-            ))}
-          </div>
+          <HopeRail books={toRead} month={nowKey} />
         ) : (
           <div className="field"><div className="mo-list"><HopeRow k={nowKey} hopes={hopes} /></div></div>
         )}
+        {/* last month's leftovers, once the month has turned */}
+        <CarryOver month={shiftMonth(nowKey, -1)} />
 
         {thisMonth.length > 0 && (
           <div className="notice">

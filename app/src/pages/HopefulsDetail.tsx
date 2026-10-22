@@ -7,6 +7,7 @@ import type { ExportShape, Hopeful, Review, Settings, StyleId } from '../types'
 import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, liveStyle } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
 import { CoverModal } from '../components/CoverModal'
+import { CarryOver } from '../components/Hopes'
 import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
 import { faceUri } from '../components/Face'
@@ -396,6 +397,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
                 </div>
               </div>
             )}
+            <CarryOver month={key} />
           </>
         )}
 

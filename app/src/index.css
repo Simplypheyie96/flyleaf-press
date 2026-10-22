@@ -1378,120 +1378,9 @@ body::before{
 /* the round + is a button now (it opens the three-way sheet) */
 button.tab-add{ padding:0; cursor:pointer; font:inherit; }
 
-/* a book in hand: actions sit under the title so two buttons never squeeze it */
-.read-row{ grid-template-columns:52px minmax(0,1fr); grid-template-rows:auto auto; align-items:start; }
-.read-row > :first-child{ grid-row:span 2; }
-.read-day{ display:block; margin-top:6px; font-size:11.5px; color:var(--ink-soft); }
-.read-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-
-/* one month's hopefuls as a card: name, progress, a row of covers */
-
-/* ── SKINS — each re-tints the chrome tokens on the same clean, flat ground;
-   the hue lives in the ink, the page only leans towards it. The cards keep
-   their printed palette in every skin (restored below). ── */
-:root[data-skin] .card-wrap, :root[data-skin] .share-page{
-  --paper:#F4F2ED; --ink:#1B1917; --ink-soft:#6B655C; --rule:#E0DBD1; --accent-fg:#FAF8F4;
-}
-/* Dawn — plum ink on a page with a breath of peach */
-:root[data-skin="dawn"]{ --paper:#F9F2EE; --card-w:#FDF9F7; --ink:#2B2238; --ink-soft:#6A5F74; --rule:#EEE2DC; }
-:root[data-skin="dawn"][data-theme="dark"]{ --paper:#0F0D1A; --card-w:#191626; --ink:#EEE8F6; --ink-soft:#A49DBA; --rule:#29253A; --accent-fg:#0F0D1A; }
-/* Herbarium — forest-green ink on a page with a breath of sage */
-:root[data-skin="herb"]{ --paper:#F2F5EF; --card-w:#F9FBF7; --ink:#1D2B21; --ink-soft:#4B5A4F; --rule:#E2E8DD; }
-:root[data-skin="herb"][data-theme="dark"]{ --paper:#0B100D; --card-w:#141B16; --ink:#E2EBE1; --ink-soft:#94A697; --rule:#222D25; --accent-fg:#0B100D; }
-/* Orbit — deep navy ink on a cool white page */
-:root[data-skin="orbit"]{ --paper:#F4F5F8; --card-w:#FAFBFC; --ink:#16213D; --ink-soft:#4A5470; --rule:#E4E6EC; }
-:root[data-skin="orbit"][data-theme="dark"]{ --paper:#0A0A0C; --card-w:#131317; --ink:#E6E8EE; --ink-soft:#9298A8; --rule:#232329; --accent-fg:#0A0A0C; }
-/* Frame — ultramarine ink on a page with a breath of blue */
-:root[data-skin="frame"]{ --paper:#F4F4F9; --card-w:#FAFAFD; --ink:#232C7A; --ink-soft:#545A7A; --rule:#E3E4EE; }
-:root[data-skin="frame"][data-theme="dark"]{ --paper:#0C0D16; --card-w:#151624; --ink:#E3E5F7; --ink-soft:#9A9EBE; --rule:#25283C; --accent-fg:#0C0D16; }
-
-/* the background details each skin lays over its clean ground: a pattern,
-   and one ornament for the section dividers */
-:root[data-skin] body::after{
-  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-  background:var(--pat);
-}
-:root[data-skin] .sec-h{ flex-wrap:wrap; }
-:root[data-skin] .sec-h::before{
-  content:""; flex-basis:100%; height:20px; margin-bottom:16px;
-  --hl:linear-gradient(color-mix(in srgb, var(--ink-soft) 40%, transparent) 0 0);
-  background:var(--orn) center/20px no-repeat, var(--hl) left center/calc(50% - 22px) 1px no-repeat, var(--hl) right center/calc(50% - 22px) 1px no-repeat;
-}
-
-/* 1 · Dawn — the sky before sunrise: peach into lilac, a few sparkles; plum ink.
-   Dark is the same sky an hour earlier. Stats become three separate chips. */
-:root[data-skin="dawn"]{
-  --orn:url('./assets/emoji/rose.svg');
-  --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='%237A5C8E' fill-opacity='.22'%3E%3Cpath transform='translate%2818 22%29 scale%28.55%29' d='M14 4.4375C15.3462 4.4375 16.4375 3.34619 16.4375 2H17.5625C17.5625 3.34619 18.6538 4.4375 20 4.4375V5.5625C18.6538 5.5625 17.5625 6.65381 17.5625 8H16.4375C16.4375 6.65381 15.3462 5.5625 14 5.5625V4.4375ZM1 11C4.31371 11 7 8.31371 7 5H9C9 8.31371 11.6863 11 15 11V13C11.6863 13 9 15.6863 9 19H7C7 15.6863 4.31371 13 1 13V11ZM4.87601 12C6.18717 12.7276 7.27243 13.8128 8 15.124 8.72757 13.8128 9.81283 12.7276 11.124 12 9.81283 11.2724 8.72757 10.1872 8 8.87601 7.27243 10.1872 6.18717 11.2724 4.87601 12ZM17.25 14C17.25 15.7949 15.7949 17.25 14 17.25V18.75C15.7949 18.75 17.25 20.2051 17.25 22H18.75C18.75 20.2051 20.2051 18.75 22 18.75V17.25C20.2051 17.25 18.75 15.7949 18.75 14H17.25Z'/%3E%3Cpath transform='translate%28112 92%29 scale%28.4%29' d='M14 4.4375C15.3462 4.4375 16.4375 3.34619 16.4375 2H17.5625C17.5625 3.34619 18.6538 4.4375 20 4.4375V5.5625C18.6538 5.5625 17.5625 6.65381 17.5625 8H16.4375C16.4375 6.65381 15.3462 5.5625 14 5.5625V4.4375ZM1 11C4.31371 11 7 8.31371 7 5H9C9 8.31371 11.6863 11 15 11V13C11.6863 13 9 15.6863 9 19H7C7 15.6863 4.31371 13 1 13V11ZM4.87601 12C6.18717 12.7276 7.27243 13.8128 8 15.124 8.72757 13.8128 9.81283 12.7276 11.124 12 9.81283 11.2724 8.72757 10.1872 8 8.87601 7.27243 10.1872 6.18717 11.2724 4.87601 12ZM17.25 14C17.25 15.7949 15.7949 17.25 14 17.25V18.75C15.7949 18.75 17.25 20.2051 17.25 22H18.75C18.75 20.2051 20.2051 18.75 22 18.75V17.25C20.2051 17.25 18.75 15.7949 18.75 14H17.25Z'/%3E%3C/g%3E%3Cg fill='%237A5C8E' fill-opacity='.22'%3E%3Ccircle cx='84' cy='30' r='1.2'/%3E%3Ccircle cx='40' cy='120' r='1'/%3E%3Ccircle cx='140' cy='44' r='.9'/%3E%3Ccircle cx='70' cy='78' r='.8'/%3E%3Ccircle cx='128' cy='146' r='1.1'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(180deg,#F9E2D3 0%,#F5E8EC 50%,#ECE8F4 100%);
-}
-:root[data-skin="dawn"][data-theme="dark"]{
-  --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='%23E9DDFB' fill-opacity='.32'%3E%3Cpath transform='translate%2818 22%29 scale%28.55%29' d='M14 4.4375C15.3462 4.4375 16.4375 3.34619 16.4375 2H17.5625C17.5625 3.34619 18.6538 4.4375 20 4.4375V5.5625C18.6538 5.5625 17.5625 6.65381 17.5625 8H16.4375C16.4375 6.65381 15.3462 5.5625 14 5.5625V4.4375ZM1 11C4.31371 11 7 8.31371 7 5H9C9 8.31371 11.6863 11 15 11V13C11.6863 13 9 15.6863 9 19H7C7 15.6863 4.31371 13 1 13V11ZM4.87601 12C6.18717 12.7276 7.27243 13.8128 8 15.124 8.72757 13.8128 9.81283 12.7276 11.124 12 9.81283 11.2724 8.72757 10.1872 8 8.87601 7.27243 10.1872 6.18717 11.2724 4.87601 12ZM17.25 14C17.25 15.7949 15.7949 17.25 14 17.25V18.75C15.7949 18.75 17.25 20.2051 17.25 22H18.75C18.75 20.2051 20.2051 18.75 22 18.75V17.25C20.2051 17.25 18.75 15.7949 18.75 14H17.25Z'/%3E%3Cpath transform='translate%28112 92%29 scale%28.4%29' d='M14 4.4375C15.3462 4.4375 16.4375 3.34619 16.4375 2H17.5625C17.5625 3.34619 18.6538 4.4375 20 4.4375V5.5625C18.6538 5.5625 17.5625 6.65381 17.5625 8H16.4375C16.4375 6.65381 15.3462 5.5625 14 5.5625V4.4375ZM1 11C4.31371 11 7 8.31371 7 5H9C9 8.31371 11.6863 11 15 11V13C11.6863 13 9 15.6863 9 19H7C7 15.6863 4.31371 13 1 13V11ZM4.87601 12C6.18717 12.7276 7.27243 13.8128 8 15.124 8.72757 13.8128 9.81283 12.7276 11.124 12 9.81283 11.2724 8.72757 10.1872 8 8.87601 7.27243 10.1872 6.18717 11.2724 4.87601 12ZM17.25 14C17.25 15.7949 15.7949 17.25 14 17.25V18.75C15.7949 18.75 17.25 20.2051 17.25 22H18.75C18.75 20.2051 20.2051 18.75 22 18.75V17.25C20.2051 17.25 18.75 15.7949 18.75 14H17.25Z'/%3E%3C/g%3E%3Cg fill='%23E9DDFB' fill-opacity='.32'%3E%3Ccircle cx='84' cy='30' r='1.2'/%3E%3Ccircle cx='40' cy='120' r='1'/%3E%3Ccircle cx='140' cy='44' r='.9'/%3E%3Ccircle cx='70' cy='78' r='.8'/%3E%3Ccircle cx='128' cy='146' r='1.1'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(180deg,#221B3C 0%,#17142C 55%,#111022 100%);
-}
-:root[data-skin="dawn"] .tab-pill{ background:color-mix(in srgb, var(--card-w) 88%, transparent); }
-
-/* 2 · Herbarium — sage paper, forest-green ink, a 96px grid with pale sage
-   cells in stepped clusters (Creatio hero); leaf dividers.
-   Stats sit in one pressed-specimen panel with the numbers in serif green. */
-:root[data-skin="herb"]{
-  --orn:url('./assets/emoji/herb.svg');
-  --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='864' height='672'%3E%3Crect x='0' y='96' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='96' y='96' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='96' y='192' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='192' y='192' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='288' y='0' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='576' y='0' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='576' y='96' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='672' y='96' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='768' y='288' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='672' y='288' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='672' y='384' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='192' y='384' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='288' y='480' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='384' y='480' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Crect x='480' y='192' width='96' height='96' fill='rgba%2870%2C115%2C80%2C.10%29'/%3E%3Cpath d='M0.5 0V672M96.5 0V672M192.5 0V672M288.5 0V672M384.5 0V672M480.5 0V672M576.5 0V672M672.5 0V672M768.5 0V672M0 0.5H864M0 96.5H864M0 192.5H864M0 288.5H864M0 384.5H864M0 480.5H864M0 576.5H864' stroke='rgba%2829%2C43%2C33%2C.06%29' fill='none'/%3E%3C/svg%3E");
-}
-:root[data-skin="herb"][data-theme="dark"]{
-  --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='864' height='672'%3E%3Crect x='0' y='96' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='96' y='96' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='96' y='192' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='192' y='192' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='288' y='0' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='576' y='0' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='576' y='96' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='672' y='96' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='768' y='288' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='672' y='288' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='672' y='384' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='192' y='384' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='288' y='480' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='384' y='480' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Crect x='480' y='192' width='96' height='96' fill='rgba%28150%2C200%2C155%2C.06%29'/%3E%3Cpath d='M0.5 0V672M96.5 0V672M192.5 0V672M288.5 0V672M384.5 0V672M480.5 0V672M576.5 0V672M672.5 0V672M768.5 0V672M0 0.5H864M0 96.5H864M0 192.5H864M0 288.5H864M0 384.5H864M0 480.5H864M0 576.5H864' stroke='rgba%28220%2C235%2C220%2C.05%29' fill='none'/%3E%3C/svg%3E");
-}
-
-/* 3 · Bookcloth — two blue skins, Orbit and Frame, sharing the blue-book
-   ornament. */
-:root[data-skin="orbit"], :root[data-skin="frame"]{
-  --orn:url('./assets/emoji/blue-book.svg');
-}
-/* Orbit — near-white page, deep navy ink, thin orbital rings with node
-   dots behind the masthead and a navy glow rising from the foot of the screen */
-:root[data-skin="orbit"]{ --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640' fill='none' stroke='rgba%2822%2C33%2C61%2C.16%29'%3E%3Cpath d='M96 220A250 250 0 0 1 544 220M96 420A250 250 0 0 0 544 420'/%3E%3Cellipse cx='320' cy='250' rx='300' ry='60'/%3E%3Cellipse cx='320' cy='390' rx='300' ry='60'/%3E%3Cpath d='M320 70V190M320 450V570'/%3E%3Cg fill='rgba%2822%2C33%2C61%2C.16%29' stroke='none'%3E%3Ccircle cx='96' cy='220' r='3'/%3E%3Ccircle cx='544' cy='220' r='3'/%3E%3Ccircle cx='96' cy='420' r='3'/%3E%3Ccircle cx='544' cy='420' r='3'/%3E%3Ccircle cx='320' cy='70' r='3'/%3E%3Ccircle cx='320' cy='570' r='3'/%3E%3C/g%3E%3C/svg%3E") center -150px/640px auto no-repeat, linear-gradient(to top, rgba(60,82,150,.16), transparent 40%); }
-:root[data-skin="orbit"][data-theme="dark"]{ --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640' fill='none' stroke='rgba%28230%2C232%2C238%2C.16%29'%3E%3Cpath d='M96 220A250 250 0 0 1 544 220M96 420A250 250 0 0 0 544 420'/%3E%3Cellipse cx='320' cy='250' rx='300' ry='60'/%3E%3Cellipse cx='320' cy='390' rx='300' ry='60'/%3E%3Cpath d='M320 70V190M320 450V570'/%3E%3Cg fill='rgba%28230%2C232%2C238%2C.16%29' stroke='none'%3E%3Ccircle cx='96' cy='220' r='3'/%3E%3Ccircle cx='544' cy='220' r='3'/%3E%3Ccircle cx='96' cy='420' r='3'/%3E%3Ccircle cx='544' cy='420' r='3'/%3E%3Ccircle cx='320' cy='70' r='3'/%3E%3Ccircle cx='320' cy='570' r='3'/%3E%3C/g%3E%3C/svg%3E") center -150px/640px auto no-repeat, linear-gradient(to top, #1B2A55, transparent 45%); }
-/* Frame — off-white page, deep ultramarine ink, a faint isometric line
-   grid with a "+" at every other node, and the dividers become cross-hatched
-   strips between two hairlines */
-:root[data-skin="frame"]{ --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='208' height='120' fill='none' stroke='rgba%2835%2C44%2C122%2C.07%29'%3E%3Cpath d='M0 0L208 120M0 120L208 0M0 0L0 0M104 0L208 60M0 60L104 0M0 60L104 120M104 120L208 60'/%3E%3Cpath d='M0.5 0V120M52.5 0V120M104.5 0V120M156.5 0V120' stroke-dasharray='3 4'/%3E%3Cpath d='M156 54v12M150 60h12' stroke='rgba%2835%2C44%2C122%2C.2%29' stroke-width='1.5'/%3E%3C/svg%3E"); --hatch:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='rgba%2835%2C44%2C122%2C.14%29'%3E%3Cpath d='M0 0L14 14M14 0L0 14'/%3E%3C/svg%3E"); }
-:root[data-skin="frame"][data-theme="dark"]{ --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='208' height='120' fill='none' stroke='rgba%28200%2C205%2C245%2C.06%29'%3E%3Cpath d='M0 0L208 120M0 120L208 0M0 0L0 0M104 0L208 60M0 60L104 0M0 60L104 120M104 120L208 60'/%3E%3Cpath d='M0.5 0V120M52.5 0V120M104.5 0V120M156.5 0V120' stroke-dasharray='3 4'/%3E%3Cpath d='M156 54v12M150 60h12' stroke='rgba%28200%2C205%2C245%2C.16%29' stroke-width='1.5'/%3E%3C/svg%3E"); --hatch:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='rgba%28200%2C205%2C245%2C.12%29'%3E%3Cpath d='M0 0L14 14M14 0L0 14'/%3E%3C/svg%3E"); }
-:root[data-skin="frame"] .sec-h::before{
-  height:14px; background:var(--hatch) center/14px 14px repeat-x;
-  box-shadow:inset 0 1px var(--rule), inset 0 -1px var(--rule);
-}
-
-/* Settings → Theme: five swatches, the chosen one ringed */
-.skin-pick{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
-.skin-pick button{
-  display:flex; flex-direction:column; align-items:center; gap:6px; padding:4px 0 2px;
-  border:0; background:none; cursor:pointer; color:var(--ink-soft);
-  font-size:11px; font-weight:500; min-width:0;
-}
-.skin-pick-sw{
-  width:100%; height:44px; display:grid; place-items:center; border-radius:9px;
-  font-family:var(--serif); font-size:18px; font-weight:600; text-transform:none; letter-spacing:0;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
-}
 .skin-pick button[aria-checked="true"]{ color:var(--ink); }
 .skin-pick button[aria-checked="true"] .skin-pick-sw{ box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--ink); }
 
-/* Reading now: the book bobs, a page turns over it now and then, rows arrive in turn */
-.read-cover{ position:relative; grid-row:span 2; perspective:300px; animation:read-bob 4s ease-in-out infinite; }
-.read-page{
-  position:absolute; inset:2px 2px 2px 50%; border-radius:0 2px 2px 0;
-  background:var(--card-w); box-shadow:0 0 0 1px rgba(0,0,0,.06);
-  transform-origin:left center; opacity:0;
-  animation:read-turn 5s cubic-bezier(.45,0,.25,1) infinite; animation-delay:calc(var(--i, 0) * .8s + 1s);
-}
-.read-row{ animation:read-in .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 90ms); }
-@keyframes read-bob{ 50%{ transform:translateY(-3px) rotate(-1.5deg); } }
-@keyframes read-turn{
-  0%, 62%{ opacity:0; transform:rotateY(0); }
-  66%{ opacity:1; transform:rotateY(0); }
-  86%{ opacity:1; transform:rotateY(-175deg); }
-  90%, 100%{ opacity:0; transform:rotateY(-180deg); }
-}
-@keyframes read-in{ from{ opacity:0; transform:translateY(8px); } }
-@media (prefers-reduced-motion:reduce){ .read-cover, .read-page, .read-row{ animation:none; } }
 
 /* ── light cards sit one small, solid step off their own ground, so a card
    on Dawn reads as Dawn, not as white. Shared cards (.card-wrap) keep #FFF. ── */
@@ -1505,5 +1394,32 @@ button.tab-add{ padding:0; cursor:pointer; font:inherit; }
 .cover-rail::-webkit-scrollbar{ display:none; }
 .cover-tile{ flex:0 0 84px; scroll-snap-align:start; text-decoration:none; color:var(--ink); }
 .cover-tile .lib-cover, .cover-tile .lib-cover-miss{ width:84px; }
+button.cover-tile{ padding:0; border:0; background:none; font:inherit; text-align:left; cursor:pointer; }
+.cover-tile-s{ display:block; margin-top:3px; font-size:11px; color:var(--ink-soft); }
 .cover-tile-t{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
   margin-top:8px; font-family:var(--serif); font-weight:600; font-size:12.5px; line-height:1.25; }
+/* a month's hopefuls show up to three of their covers, fanned */
+.mo-covers{ display:flex; flex:none; }
+.mo-covers img{ width:30px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--r-img);
+  box-shadow:0 0 0 1.5px var(--card-w), var(--sh-plate); }
+.mo-covers img + img{ margin-left:-12px; }
+
+/* a book's options: a drawer from the bottom edge, not a slip in the middle */
+.drawer-scrim{ justify-content:flex-end; padding:0; }
+.drawer{
+  width:100%; max-width:560px;
+  background:var(--paper); border:1px solid var(--rule); border-bottom:0;
+  border-radius:var(--r-lg) var(--r-lg) 0 0;
+  padding:20px var(--gutter) calc(16px + env(safe-area-inset-bottom));
+  animation:drawer-up 240ms var(--ease) both;
+}
+@keyframes drawer-up{ from{ transform:translateY(100%); } }
+@media (prefers-reduced-motion:reduce){ .drawer{ animation:none; } }
+.drawer-book{ display:grid; grid-template-columns:44px minmax(0,1fr); gap:14px; align-items:center;
+  padding-bottom:16px; border-bottom:1px solid var(--rule); }
+.drawer-book .lib-cover, .drawer-book .lib-cover-miss{ width:44px; }
+.drawer-acts{ display:grid; gap:8px; margin-top:16px; }
+.drawer-acts .btn{ width:100%; height:48px; font-size:14.5px; }
+/* Cancel is the way out, not one more option: no fill, no ring */
+.drawer-cancel{ width:100%; min-height:48px; margin-top:4px; background:none; box-shadow:none; color:var(--ink-soft); }
+.mo-open-tag--under{ display:table; margin-top:10px; }

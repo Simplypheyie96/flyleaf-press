@@ -1,4 +1,8 @@
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
+import { CoverModal } from './CoverModal'
+import { dropHopeful, moveHopefuls } from '../sync/backup'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import type { Hopeful } from '../types'
@@ -24,56 +28,164 @@ export type Hopes = NonNullable<ReturnType<typeof useHopes>>
 
 /* The month after this one, as a key. A hopefuls list is written BEFORE the
    month it is for, so next month has to be reachable. */
-export function nextMonthKey(): string {
-  const now = new Date()
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
-  return d.toISOString().slice(0, 7)
+export const shiftMonth = (k: string, by: number) => {
+  const [y, m] = k.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1 + by, 1)).toISOString().slice(0, 7)
 }
+export const nextMonthKey = () => shiftMonth(currentMonthKey(), 1)
 
 /* this month, next month, and any month a list was started for — newest first */
 export function hopeMonths(h: Hopes) {
   return [...new Set([nextMonthKey(), currentMonthKey(), ...h.all.map((b) => b.month)])].sort().reverse()
 }
 
-const fmtDay = (t: number) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
-
-export function ReadingList({ books }: { books: Hopeful[] }) {
-  const nav = useNavigate()
+/* A row of covers; a cover, as on a shelf, says what it is and nothing else */
+export function CoverTile({ h, sub, onClick }: { h: Hopeful; sub?: string; onClick: () => void }) {
   return (
-    <div className="lib">
-      {books.map((h, i) => (
-        <div key={h.id} className="lib-row read-row" style={{ '--i': i } as React.CSSProperties}>
-          <span className="read-cover">
-            {h.cover ? <img className="lib-cover" src={h.cover} alt="" /> : <span className="lib-cover-miss">No cover</span>}
-            <span className="read-page" aria-hidden />
-          </span>
+    <button type="button" className="cover-tile" onClick={onClick}>
+      {h.cover ? <img className="lib-cover" src={h.cover} alt="" /> : <span className="lib-cover-miss">No cover</span>}
+      <span className="cover-tile-t">{h.title}</span>
+      {sub && <span className="cover-tile-s">{sub}</span>}
+    </button>
+  )
+}
+
+export interface DrawerAct { label: string; onClick: () => void; danger?: boolean }
+
+/* A book's options rise from the bottom edge, under the thumb, with the book
+   itself at the top so it is clear which one they act on. */
+export function BookDrawer({ h, sub, acts, onClose }: { h: Hopeful; sub?: string; acts: DrawerAct[]; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+  return createPortal(
+    <div className="share-scrim drawer-scrim" onClick={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-label={h.title}>
+      <div className="drawer">
+        <div className="drawer-book">
+          {h.cover ? <img className="lib-cover" src={h.cover} alt="" /> : <span className="lib-cover-miss">No cover</span>}
           <span>
-            <span className="lib-t">{h.title}</span>
-            <span className="lib-a" style={{ display: 'block' }}>{h.author}</span>
-            <span className="read-day">Day {dayOf(h.startedAt!)} · since {fmtDay(h.startedAt!)}</span>
-          </span>
-          <span className="read-acts">
-            <button className="btn btn--sm" onClick={() => nav('/write', { state: writeState(h) })}>Review</button>
-            <button className="btn btn--ghost btn--sm" onClick={() => db.hopefuls.update(h.id!, { startedAt: undefined, editedAt: Date.now() })}>Put back</button>
+            <span className="res-t" style={{ display: 'block' }}>{h.title}</span>
+            <span className="res-a" style={{ display: 'block' }}>{h.author}</span>
+            {sub && <span className="cover-tile-s">{sub}</span>}
           </span>
         </div>
-      ))}
-    </div>
+        {/* the first option is the likeliest, so it is the filled one */}
+        <div className="drawer-acts">
+          {acts.map((a, i) => (
+            <button key={a.label} type="button" className={`btn${a.danger ? ' btn--danger' : i ? ' btn--ghost' : ''}`} onClick={() => { a.onClick(); onClose() }}>
+              {a.label}
+            </button>
+          ))}
+          <button type="button" className="btn btn--ghost drawer-cancel" onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+/* Books in hand: review it, or put it back on its month's list. */
+export function ReadingList({ books }: { books: Hopeful[] }) {
+  const nav = useNavigate()
+  const [open, setOpen] = useState<Hopeful | null>(null)
+  return (
+    <>
+      <div className="cover-rail">
+        {books.map((h) => <CoverTile key={h.id} h={h} sub={`Day ${dayOf(h.startedAt!)}`} onClick={() => setOpen(h)} />)}
+      </div>
+      {open && (
+        <BookDrawer
+          h={open}
+          sub={`Day ${dayOf(open.startedAt!)}`}
+          acts={[
+            { label: 'Review it', onClick: () => nav('/write', { state: writeState(open) }) },
+            { label: `Put back on ${monthName(open.month)}`, onClick: () => db.hopefuls.update(open.id!, { startedAt: undefined, editedAt: Date.now() }) },
+          ]}
+          onClose={() => setOpen(null)}
+        />
+      )}
+    </>
+  )
+}
+
+/* A month's books still to read; each opens the same options its row has on
+   the month's page, less Share, which needs that page's card builder. */
+export function HopeRail({ books, month }: { books: Hopeful[]; month: string }) {
+  const nav = useNavigate()
+  const [openId, setOpenId] = useState<number | null>(null)
+  const [coverFor, setCoverFor] = useState<number | null>(null)
+  const open = books.find((b) => b.id === openId)
+  const editing = useLiveQuery(() => (coverFor == null ? undefined : db.hopefuls.get(coverFor)), [coverFor])
+  return (
+    <>
+      <div className="cover-rail">
+        {books.map((h) => <CoverTile key={h.id} h={h} onClick={() => setOpenId(h.id!)} />)}
+      </div>
+      {open && (
+        <BookDrawer
+          h={open}
+          acts={[
+            { label: 'Start reading', onClick: () => db.hopefuls.update(open.id!, { startedAt: Date.now(), editedAt: Date.now() }) },
+            { label: 'Review it', onClick: () => nav('/write', { state: writeState(open) }) },
+            { label: 'Change cover', onClick: () => setCoverFor(open.id!) },
+            { label: `Open ${monthName(month)}`, onClick: () => nav(`/hopefuls/${month}`) },
+            { label: 'Remove', danger: true, onClick: () => dropHopeful(open) },
+          ]}
+          onClose={() => setOpenId(null)}
+        />
+      )}
+      {editing && (
+        <CoverModal
+          covers={editing.covers ?? []}
+          current={editing.cover}
+          seed={`${editing.title} ${editing.author}`}
+          onCovers={(next) => db.hopefuls.update(editing.id!, { covers: next, editedAt: Date.now() })}
+          onPick={(cover) => db.hopefuls.update(editing.id!, { cover, editedAt: Date.now() })}
+          onClose={() => setCoverFor(null)}
+        />
+      )}
+    </>
   )
 }
 
 export function HopeRow({ k, hopes }: { k: string; hopes: Hopes }) {
-  const count = hopes.ofMonth(k).length
+  const books = hopes.ofMonth(k)
+  const count = books.length
+  const covers = books.filter((b) => b.cover).slice(0, 3)
   const tag = k === currentMonthKey() ? 'This month' : k === nextMonthKey() ? 'Next month' : undefined
   return (
     <Link className="mo-row" to={`/hopefuls/${k}`}>
-      <span>
+      {covers.length > 0 && (
+        <span className="mo-covers" aria-hidden>
+          {covers.map((b) => <img key={b.id} src={b.cover} alt="" />)}
+        </span>
+      )}
+      <span style={{ flex: 1, minWidth: 0 }}>
         <span className="mo-row-t" style={{ display: 'block' }}>{monthName(k)}</span>
         <span className="mo-row-s">
           {count === 0 ? 'Nothing picked yet' : `${count} hopeful${count === 1 ? '' : 's'}`}
         </span>
+        {tag && <span className="mo-open-tag mo-open-tag--under">{tag}</span>}
       </span>
-      {tag && <span className="mo-open-tag">{tag}</span>}
     </Link>
+  )
+}
+
+/* A month that ran out before its books did: carry the unread ones over to
+   the month after it in one go. In-hand books travel too; they stay in hand. */
+export function CarryOver({ month }: { month: string }) {
+  const hopes = useHopes()
+  const left = hopes?.ofMonth(month).filter((h) => !hopes.isRead(h)) ?? []
+  if (!left.length || month > currentMonthKey()) return null
+  const to = shiftMonth(month, 1)
+  return (
+    <div className="notice">
+      <div className="notice-txt"><p>{left.length} book{left.length === 1 ? '' : 's'} from {monthName(month).split(' ')[0]} not read yet.</p></div>
+      <button type="button" className="btn btn--ghost btn--sm" onClick={() => moveHopefuls(left, to)}>
+        Move to {monthName(to).split(' ')[0]}
+      </button>
+    </div>
   )
 }
