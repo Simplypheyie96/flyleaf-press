@@ -14,7 +14,7 @@
 
    ONE FORMAT, ONE MERGE, THREE DOORS. This file does not write to the
    database. It converts a CSV into the same `LibraryFile` that a hand-carried
-   backup and a Drive sync both arrive as, and hands it to `mergeLibrary`.
+   backup and a sync both arrive as, and hands it to `mergeLibrary`.
    Dedupe, idempotency, and the rule that a review you deliberately deleted
    does not come back are all properties of that fold; reimplementing them here
    would mean two readers of the same intent, and the one with less testing

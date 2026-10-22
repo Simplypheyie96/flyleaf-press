@@ -5,7 +5,7 @@
    reminded which of their own devices they were sitting at. A wrong-but-
    plausible "iPad" is a smaller failure than "another device", which is what
    it replaces. Nothing here identifies a person: it is a category of hardware,
-   written into the user's own Drive, readable by nobody but them. */
+   written into the user's own account copy, private to them. */
 
 const KEY = 'flyleaf-press-device'
 

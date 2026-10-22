@@ -4,7 +4,7 @@ import { useInstall, promptInstall } from '../pwa'
 /* Offered on the home page, once, and only when there is a real prompt behind
    it. Dismissal is a localStorage flag rather than a settings field: it is a
    fact about this browser, not about the reader, so it has no business
-   travelling to another device in a Drive backup. */
+   travelling to another device in a sync. */
 const DISMISSED = 'flyleaf.install-dismissed'
 
 export function InstallNotice() {

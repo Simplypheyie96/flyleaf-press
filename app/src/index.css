@@ -886,6 +886,8 @@ body::before{
      the page in — and the rule above would otherwise SHRINK it on a phone.
      Equal specificity, written later, so it wins. */
   .field input.rate-input-num{ font-size:26px; }
+  /* Settings rows are tapped, not clicked: a full 44px target on a phone */
+  .set-row .btn--sm, .set-row-acts .btn--sm{ height:44px; }
 }
 
 /* Finished sits UNDER started, at every width. They read as a pair, which is
@@ -1112,6 +1114,13 @@ body::before{
 .set-row--stack > .set-row-note{ margin-top:12px; }
 .set-row--stack > .set-row-note{ display:block; }
 .set-row-txt{ min-width:0; }
+/* two actions under one stacked row, wrapping onto their own lines at 360px */
+.set-row-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+/* Google draws its own sign-in button into this box (GoogleButton.tsx). It
+   starts at the row's left edge like every other stacked button, and is light
+   inside because Google's iframe is: a dark scheme here paints a white box
+   around it. */
+.google-btn{ width:100%; max-width:400px; min-height:44px; margin-top:12px; display:flex; align-items:center; color-scheme:light; }
 .set-row-txt p{ font-size:12px; line-height:1.55; color:var(--ink-soft); margin-top:4px; }
 .set-row-txt .ui-lbl{ color:var(--ink); }
 /* stands in the button's place when a row has a state to report rather than
@@ -1229,12 +1238,13 @@ body::before{
 .empty .ui-h{ color:var(--ink); font-size:22px; margin-bottom:10px; }
 .empty p{ font-size:13px; line-height:1.7; max-width:340px; margin:0 auto 22px; }
 /* the second answer to an empty shelf — a new DEVICE rather than a new
-   reader. Below a hairline and in the ghost button, so it reads as the
-   alternative to "Write the first review" rather than a rival to it. */
+   reader. Below a hairline, so it reads as the alternative to "Write the
+   first review" rather than a rival to it. */
 .empty-alt{ margin-top:30px; padding-top:24px; border-top:1px solid var(--rule); }
 .empty-alt p{ margin-bottom:12px; }
 .empty-alt-err{ margin:12px auto 0; color:var(--danger); }
 .empty-alt-note{ margin:12px auto 0; color:var(--ink-soft); }
+.empty-alt .google-btn{ margin:0 auto; justify-content:center; max-width:340px; }
 /* on the first-run screen the same block is the last thing on a centred
    column, so it takes the column's alignment rather than fighting it */
 .onb .empty-alt{ text-align:center; }

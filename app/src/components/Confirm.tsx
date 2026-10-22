@@ -8,6 +8,7 @@ export function Confirm({
   body,
   action,
   tone = 'danger',
+  cancel = 'Cancel',
   onConfirm,
   onCancel,
 }: {
@@ -18,11 +19,13 @@ export function Confirm({
   /**
    * Whether the thing being confirmed actually destroys something. Nearly all
    * of them do, so that is the default — but not every sheet is a warning: the
-   * Drive merge asks a real question and then keeps everything from both
+   * sync merge asks a real question and then keeps everything from both
    * sides, and painting THAT button crimson would be a lie about what it does,
    * as well as teaching people that the colour means nothing.
    */
   tone?: 'danger' | 'neutral'
+  /** the backing-out button's label, when it is an answer rather than a Cancel */
+  cancel?: string
   onConfirm: () => void
   onCancel: () => void
 }) {
@@ -51,7 +54,7 @@ export function Confirm({
           >
             {action}
           </button>
-          <button className="btn btn--ghost" onClick={onCancel}>Cancel</button>
+          <button className="btn btn--ghost" onClick={onCancel}>{cancel}</button>
         </div>
       </div>
     </div>
