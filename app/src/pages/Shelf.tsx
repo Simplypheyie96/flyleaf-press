@@ -1,16 +1,26 @@
 import { useState } from 'react'
 import { RestoreNotice } from '../components/RestoreNotice'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import type { Settings, ShelfView, Review } from '../types'
 import { STYLE_GROUNDS } from '../types'
 import { fmtRating, monthKey, monthName } from '../format'
 import { Select } from '../components/Select'
+import { HopeRow, hopeMonths, useHopes } from '../components/Hopes'
 
 /* The Shelf — the whole library in the reader's choice of display (rows or a
    wall of covers; the choice persists), searchable and sortable. Date sorts keep the month groupings; rating and title sorts are
-   one flat run — a month heading over a rating order would lie about both. */
+   one flat run — a month heading over a rating order would lie about both.
+
+   Two tabs: Reviews (the library) and Hopefuls (a list per month); books in
+   hand live on Home. The tab lives in the URL so Back and a shared link keep it. */
+
+const TABS = [
+  { id: 'reviews', label: 'Reviews' },
+  { id: 'hopefuls', label: 'Hopefuls' },
+] as const
+type Tab = (typeof TABS)[number]['id']
 
 type SortKey = 'newest' | 'oldest' | 'rating-hi' | 'rating-lo' | 'title'
 
@@ -41,7 +51,14 @@ export function Shelf({ settings }: { settings: Settings }) {
   const [openSugg, setOpenSugg] = useState(false)
   const [activeSugg, setActiveSugg] = useState(-1)
   const navigate = useNavigate()
-  if (!reviews) return null
+  const [params, setParams] = useSearchParams()
+  const tab: Tab = TABS.find((t) => t.id === params.get('tab'))?.id ?? 'reviews'
+  const hopes = useHopes()
+  if (!reviews || !hopes) return null
+  const counts: Record<Tab, number> = {
+    reviews: reviews.length,
+    hopefuls: hopes.all.filter((h) => !hopes.isRead(h)).length,
+  }
 
   const view = settings.shelfView
   const setView = (shelfView: ShelfView) => db.settings.put({ ...settings, shelfView })
@@ -152,8 +169,32 @@ export function Shelf({ settings }: { settings: Settings }) {
       <div className="page-inner">
         <header className="app-head">
           <h1>Shelf</h1>
-          <span>{reviews.length} review{reviews.length === 1 ? '' : 's'}</span>
+          <span>{tab === 'hopefuls'
+            ? `${hopes.all.length} hopeful${hopes.all.length === 1 ? '' : 's'}`
+            : `${reviews.length} review${reviews.length === 1 ? '' : 's'}`}</span>
         </header>
+
+        <div className="seg seg--full" role="tablist" aria-label="Shelf">
+          {TABS.map((t) => (
+            <button key={t.id} role="tab" aria-selected={tab === t.id}
+              onClick={() => setParams(t.id === 'reviews' ? {} : { tab: t.id }, { replace: true })}>
+              {t.label}<span>{counts[t.id]}</span>
+            </button>
+          ))}
+        </div>
+
+        {tab === 'hopefuls' && (
+          <>
+            <p className="mo-note">Books you mean to read, listed by the month you mean to read them.</p>
+            <div className="field">
+              <div className="mo-list">
+                {hopeMonths(hopes).map((k) => <HopeRow key={k} k={k} hopes={hopes} />)}
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === 'reviews' && <>
 
         {reviews.length > 0 && (
           <div className="shelf-tools">
@@ -247,6 +288,7 @@ export function Shelf({ settings }: { settings: Settings }) {
             {rowsView(g.rows)}
           </section>
         ))}
+        </>}
       </div>
     </div>
   )

@@ -1,4 +1,7 @@
-import { Link, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ChoiceSheet } from './ChoiceSheet'
+import { currentMonthKey, monthName } from '../format'
 
 /* The shell, per Flyleaf's nav (mechanics only): a floating capsule bar of
    icon-only tabs where the ACTIVE tab grows into an icon + label pill, and
@@ -78,6 +81,9 @@ const TABS = [
 
 export function Nav() {
   const { pathname } = useLocation()
+  const nav = useNavigate()
+  const [sheet, setSheet] = useState<'what' | 'month'>()
+  if (import.meta.env.DEV && pathname === '/lab') return null // PROTOTYPE: /lab draws its own nav
   /* review pages belong to the shelf's world — keep its tab lit there */
   const active = (to: string, end: boolean) =>
     end ? pathname === to : pathname.startsWith(to) || (to === '/shelf' && pathname.startsWith('/review'))
@@ -95,11 +101,44 @@ export function Nav() {
           )
         })}
       </div>
-      <Link className="tab-add" to="/add" aria-label="Add a book and write its review">
+      <button className="tab-add" aria-label="Add a book" onClick={() => setSheet('what')}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
           <path d="M12 5v14M5 12h14" />
         </svg>
-      </Link>
+      </button>
+      {sheet === 'what' && (
+        <ChoiceSheet
+          title="Add a book"
+          choices={[
+            { id: 'review', label: 'Review a book', detail: 'You finished it. Rate it and write it up.' },
+            { id: 'reading', label: 'Start reading', detail: 'It waits on Home until you review it.' },
+            { id: 'hope', label: 'Add to hopefuls', detail: 'Pick it for a month’s reading list.' },
+          ]}
+          onPick={(id) => {
+            if (id === 'hope') return setSheet('month')
+            setSheet(undefined)
+            nav(id === 'review' ? '/add' : '/add?for=reading')
+          }}
+          onCancel={() => setSheet(undefined)}
+        />
+      )}
+      {sheet === 'month' && (
+        <ChoiceSheet
+          title="Which month’s list?"
+          choices={nextMonths().map((m, i) => ({ id: m, label: monthName(m), detail: ['This month', 'Next month', 'The month after'][i] }))}
+          onPick={(m) => { setSheet(undefined); nav(`/hopefuls/${m}`) }}
+          onCancel={() => setSheet(undefined)}
+        />
+      )}
     </nav>
   )
+}
+
+/* this month and the two after it, as YYYY-MM */
+function nextMonths() {
+  const [y, m] = currentMonthKey().split('-').map(Number)
+  return [0, 1, 2].map((i) => {
+    const d = new Date(y, m - 1 + i, 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })
 }

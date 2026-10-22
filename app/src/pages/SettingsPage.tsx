@@ -6,7 +6,7 @@ import { Tip, TIP_JAR } from '../components/Tip'
 import { FROM_YEAR } from '../import/goodreads'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import type { Settings, ThemeChoice } from '../types'
+import type { Settings, SkinChoice, ThemeChoice } from '../types'
 import { Face, FacePicker } from '../components/Face'
 import { Mark } from '../components/Mark'
 import { Confirm } from '../components/Confirm'
@@ -20,6 +20,15 @@ const THEMES: { id: ThemeChoice; label: string }[] = [
   { id: 'system', label: 'System' },
   { id: 'light', label: 'Light' },
   { id: 'dark', label: 'Dark' },
+]
+
+/* swatch colours mirror each skin's light tokens in index.css */
+const SKINS: { id: SkinChoice; label: string; paper: string; ink: string }[] = [
+  { id: 'paper', label: 'Paper', paper: '#F6F5F2', ink: '#141312' },
+  { id: 'dawn', label: 'Dawn', paper: '#F9F2EE', ink: '#2B2238' },
+  { id: 'herb', label: 'Herbarium', paper: '#F2F5EF', ink: '#1D2B21' },
+  { id: 'orbit', label: 'Orbit', paper: '#F4F5F8', ink: '#16213D' },
+  { id: 'frame', label: 'Frame', paper: '#F4F4F9', ink: '#232C7A' },
 ]
 
 /* Settings — personalization and the housekeeping. PDF export lives HERE,
@@ -242,6 +251,18 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               ))}
             </div>
             <p className="field-hint">Cards stay paper-light in both themes.</p>
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <span className="ui-lbl">Theme</span>
+            <div className="skin-pick" role="radiogroup" aria-label="Theme">
+              {SKINS.map((s) => (
+                <button key={s.id} type="button" role="radio" aria-checked={settings.skin === s.id}
+                  onClick={() => put({ skin: s.id })}>
+                  <span className="skin-pick-sw" style={{ background: s.paper, color: s.ink }}>Aa</span>
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 export interface Choice {
   id: string
@@ -32,7 +33,9 @@ export function ChoiceSheet({
     return () => window.removeEventListener('keydown', onKey)
   }, [onCancel])
 
-  return (
+  /* portalled to body: the tab bar's transform would otherwise make it the
+     containing block for this fixed scrim and clip the sheet to the bar */
+  return createPortal(
     <div
       className="share-scrim"
       onClick={(e) => e.target === e.currentTarget && onCancel()}
@@ -60,6 +63,7 @@ export function ChoiceSheet({
           <button className="btn btn--ghost" onClick={onCancel}>Cancel</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

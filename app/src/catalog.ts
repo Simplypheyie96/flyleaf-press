@@ -154,7 +154,7 @@ export function isbn10Of(isbn: string): string | undefined {
     `coverToDataUrl`'s `blob.size < 500` guard exists to reject, so a blank
     can never be saved as somebody's cover. */
 export function amazonCover(isbn10: string): string {
-  return `https://images-na.ssl-images-amazon.com/images/P/${encodeURIComponent(isbn10)}.01.LZZ.jpg`
+  return `https://images-na.ssl-images-amazon.com/images/P/${encodeURIComponent(isbn10)}.01._SCRM_SL1200_.jpg`
 }
 
 /* Open Library only returns the fields you ask for, and the page count is not
@@ -204,7 +204,7 @@ async function searchApple(q: string): Promise<Candidate[]> {
     title: r.trackName,
     author: r.artistName || 'Unknown',
     year: r.releaseDate ? r.releaseDate.slice(0, 4) : undefined,
-    covers: r.artworkUrl100 ? [r.artworkUrl100.replace('100x100', '600x600')] : [],
+    covers: r.artworkUrl100 ? [r.artworkUrl100.replace('100x100', '1400x1400')] : [],
     subjects: r.genres?.length ? { apple: r.genres } : undefined,
     source: 'apple',
   }))
@@ -222,7 +222,7 @@ async function searchGoogle(q: string): Promise<Candidate[]> {
     const v = it.volumeInfo || {}
     const isbn13 = (v.industryIdentifiers || []).find((x: any) => x.type === 'ISBN_13')?.identifier
     const covers: string[] = []
-    if (v.imageLinks?.thumbnail) covers.push(v.imageLinks.thumbnail.replace('http://', 'https://').replace('zoom=1', 'zoom=2'))
+    if (v.imageLinks?.thumbnail) covers.push(v.imageLinks.thumbnail.replace('http://', 'https://').replace('&edge=curl', '') + '&fife=w1200')
     return {
       title: v.title,
       author: (v.authors || []).join(', ') || 'Unknown',
@@ -236,6 +236,9 @@ async function searchGoogle(q: string): Promise<Candidate[]> {
     }
   })
 }
+
+const sharpness = (u: string) =>
+  u.includes('openlibrary.org') ? 2 : u.includes('amazon.com') ? 1 : 0
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 
@@ -279,8 +282,8 @@ export async function searchBooks(q: string): Promise<SearchResult> {
   }
   /* Amazon's cover host as a last candidate for anything carrying an ISBN —
      it is how an Amazon-imprint book (which Open Library returns coverless
-     and Apple does not carry at all) still shows its art at Add time. Last,
-     because catalogue art is usually cleaner when it exists. */
+     and Apple does not carry at all) still shows its art at Add time. Pushed
+     last here; the sharpness sort below then ranks it above Open Library. */
   for (const c of merged) {
     c.tags = c.subjects
       ? canonTags(
@@ -296,6 +299,10 @@ export async function searchBooks(q: string): Promise<SearchResult> {
     const u = amazonCover(ten)
     if (!c.covers.includes(u)) c.covers.push(u)
   }
+  /* Sharpest art first, so the default pick is never the one that prints soft.
+     A story cover is ~870px wide in the file; measured, Open Library's largest
+     is 325×500, Amazon's 795×1200, Apple's 908×1400, Google's 1200×1800. */
+  for (const c of merged) c.covers.sort((a, b) => sharpness(a) - sharpness(b))
   return { candidates: merged.slice(0, 12), answered, asked: 3, limited }
 }
 
@@ -384,11 +391,21 @@ export async function pagesForIsbn(isbn: string): Promise<number | undefined> {
   }
 }
 
+/* Rows saved before covers were fetched large still carry the small catalogue
+   URLs in `covers`, so a re-pick from one of those has to ask for the large
+   size too. Already-large URLs pass through unchanged. */
+function sharpen(u: string): string {
+  if (u.includes('mzstatic.com')) return u.replace(/\/\d+x\d+bb\./, '/1400x1400bb.')
+  if (u.includes('books.google') && !u.includes('fife=')) return u.replace('&edge=curl', '') + '&fife=w1200'
+  if (u.includes('amazon.com')) return u.replace('.01.LZZ.jpg', '.01._SCRM_SL1200_.jpg')
+  return u
+}
+
 /* Fetch a cover into a dataURL at pick time so the saved review renders
    offline and the share export never trips on a cross-origin canvas. */
 export async function coverToDataUrl(url: string): Promise<string | undefined> {
   try {
-    const res = await fetch(url, { mode: 'cors' })
+    const res = await fetch(sharpen(url), { mode: 'cors' })
     if (!res.ok) return undefined
     const blob = await res.blob()
     if (!blob.type.startsWith('image/') || blob.size < 500) return undefined

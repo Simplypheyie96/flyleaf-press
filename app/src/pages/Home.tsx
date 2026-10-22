@@ -5,11 +5,18 @@ import type { Settings } from '../types'
 import { STYLE_GROUNDS } from '../types'
 import { Face } from '../components/Face'
 import { InstallNotice } from '../components/InstallNotice'
+import { HopeRow, ReadingList, nextMonthKey, useHopes } from '../components/Hopes'
 import { fmtRating, monthKey, monthName, currentMonthKey } from '../format'
+import calendar from '../assets/emoji/tear-off-calendar.svg'
+import books from '../assets/emoji/books.svg'
+import star from '../assets/emoji/glowing-star.svg'
 
 /* Home is the reader's, not the library's: a greeting with their face on it,
-   the month in progress, and only the latest few reviews. The full library
-   lives on its own Shelf tab so this page never turns into a scroll. */
+   the books in hand, this month's hopefuls, and only the latest few reviews.
+   Everything in full lives on the Shelf's three tabs. */
+
+/* Fluent Emoji (flat), one per stat cell */
+const StatIcon = ({ src }: { src: string }) => <img className="home-stat-i" src={src} alt="" />
 
 function partOfDay(): string {
   const hour = new Date().getHours()
@@ -21,7 +28,8 @@ function partOfDay(): string {
 
 export function Home({ settings }: { settings: Settings }) {
   const reviews = useLiveQuery(() => db.reviews.orderBy('finished').reverse().toArray(), [])
-  if (!reviews) return null
+  const hopes = useHopes()
+  if (!reviews || !hopes) return null
 
   const nowKey = currentMonthKey()
   const year = new Date().getFullYear()
@@ -36,25 +44,28 @@ export function Home({ settings }: { settings: Settings }) {
     <div className="page">
       <div className="page-inner">
         <header className="home-mast">
-          {settings.face && <Face seed={settings.face} size={54} />}
           <div>
             <div className="home-hello">{partOfDay()}{settings.name ? ',' : ''}</div>
             {settings.name && <div className="home-who">{settings.name}</div>}
             <div className="home-tally">Flyleaf Press · {year}</div>
           </div>
+          {settings.face && <Face seed={settings.face} size={54} />}
         </header>
 
         {reviews.length > 0 && (
           <div className="home-stats">
             <div className="home-stat">
+              <StatIcon src={calendar} />
               <div className="home-stat-n">{thisMonth.length}</div>
               <div className="ui-lbl">This month</div>
             </div>
             <div className="home-stat">
+              <StatIcon src={books} />
               <div className="home-stat-n">{thisYear.length}</div>
               <div className="ui-lbl">This year</div>
             </div>
             <div className="home-stat">
+              <StatIcon src={star} />
               <div className="home-stat-n">{fmtRating(avg)}</div>
               <div className="ui-lbl">Avg rating</div>
             </div>
@@ -62,6 +73,28 @@ export function Home({ settings }: { settings: Settings }) {
         )}
 
         <InstallNotice />
+
+        <div className="sec-h">
+          <span className="ui-lbl">Reading now</span>
+        </div>
+        {hopes.reading.length ? (
+          <ReadingList books={hopes.reading} />
+        ) : (
+          <div className="notice">
+            <div className="notice-txt"><p>Nothing in your hands. Start a book and it waits here until you review it.</p></div>
+            <Link className="btn btn--ghost btn--sm" to="/add?for=reading">Start reading</Link>
+          </div>
+        )}
+
+        <div className="sec-h">
+          <span className="ui-lbl">Hopefuls</span>
+          <Link className="ui-lbl" to="/shelf?tab=hopefuls">All months →</Link>
+        </div>
+        <div className="field">
+          <div className="mo-list">
+            {[nextMonthKey(), nowKey].map((k) => <HopeRow key={k} k={k} hopes={hopes} />)}
+          </div>
+        </div>
 
         {thisMonth.length > 0 && (
           <div className="notice">
@@ -79,7 +112,7 @@ export function Home({ settings }: { settings: Settings }) {
 
         {reviews.length === 0 && (
           <div className="empty">
-            <div className="ui-h">Nothing here yet</div>
+            <div className="ui-h">No reviews yet</div>
             <p>Finish a book, search it, and write as much as you want.</p>
             <Link className="btn" to="/add">Write the first review</Link>
           </div>

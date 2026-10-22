@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { searchBooks, isIsbn, type SearchResult, type Candidate } from '../catalog'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { searchBooks, isIsbn, coverToDataUrl, type SearchResult, type Candidate } from '../catalog'
+import { db } from '../db'
+import { currentMonthKey } from '../format'
 
 /* how long to sit still before asking three catalogues anything. Long enough
    that ordinary typing doesn't fire a request per keystroke, short enough that
@@ -14,6 +16,9 @@ const MIN_CHARS = 3
    where you finish a phrase and then go looking for a button. */
 export function AddBook() {
   const nav = useNavigate()
+  /* ?for=reading: the same search, but the pick goes in hand instead of to
+     the editor — a started hopeful on this month's list */
+  const reading = useSearchParams()[0].get('for') === 'reading'
   const [q, setQ] = useState('')
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<SearchResult | null>(null)
@@ -46,14 +51,23 @@ export function AddBook() {
     return () => clearTimeout(t)
   }, [q])
 
-  const pick = (c: Candidate) => nav('/write', { state: { candidate: c } })
+  const pick = async (c: Candidate) => {
+    if (!reading) return nav('/write', { state: { candidate: c } })
+    const cover = c.covers[0] ? await coverToDataUrl(c.covers[0]) : undefined
+    const now = Date.now()
+    await db.hopefuls.add({
+      month: currentMonthKey(), title: c.title, author: c.author, series: c.series, isbn: c.isbn,
+      cover, covers: c.covers, pages: c.pages, startedAt: now, createdAt: now,
+    })
+    nav('/')
+  }
 
   return (
     <div className="page">
       <div className="page-inner">
         <header className="app-head">
-          <h1>Add a book</h1>
-          <span>Step 1 of 2 · Find it</span>
+          <h1>{reading ? 'Start reading' : 'Review a book'}</h1>
+          <span>{reading ? 'Find the book in your hands' : 'Step 1 of 2 · Find it'}</span>
         </header>
 
         <form onSubmit={(e) => { e.preventDefault(); if (q.trim()) run(q.trim()) }}>
@@ -75,11 +89,11 @@ export function AddBook() {
                   : 'Results appear as you type.'}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {!reading && <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button className="btn btn--ghost" type="button" onClick={() => nav('/write')}>
               Enter details by hand
             </button>
-          </div>
+          </div>}
         </form>
 
         {result && (

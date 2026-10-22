@@ -4,31 +4,18 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import { monthKey, monthName, currentMonthKey, yearKey, currentYearKey, fmtRating } from '../format'
 
-/* The month after this one, as a key. A hopefuls list is written BEFORE the
-   month it is for, so next month has to be reachable — otherwise the one list
-   you would sit down to make on the 28th is the one the page cannot open. */
-function nextMonthKey(): string {
-  const now = new Date()
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
-  return d.toISOString().slice(0, 7)
-}
-
 interface Span { key: string; label: string; count: number; avg: number }
 
 /* What each tab actually holds, in one line under the control.
 
-   Three words — Months, Years, Hopefuls — name three different objects and
-   describe none of them, and the first two are the ambiguous ones: "Months"
-   could as easily be a filter on the shelf as a card per month, and a reader
-   who has never opened one has no way to find out except by pressing it.
-   Hopefuls says what it is because the word is unusual enough to be a name;
-   the other two are ordinary words doing a specific job. So the line says what
+   "Months" could as easily be a filter on the shelf as a card per month, and
+   a reader who has never opened one has no way to find out except by pressing
+   it. So the line says what
    the tab makes, not what the tab contains — the page is a set of cards you
    hand out, and the count in the header already reports how many there are. */
 const TAB_NOTE = {
   months: 'One card for each month, holding every book you finished in it.',
   years: 'A whole year on one card — the books, and the month you read most.',
-  hopefuls: 'Books you mean to read, listed by the month you mean to read them.',
 }
 
 /* Group finished reviews by a key derived from their finish date, newest
@@ -58,22 +45,6 @@ function SpanRow({ s, open }: { s: Span; open: boolean }) {
     </Link>
   )}
 
-function HopeRow({ k, count, tag }: { k: string; count: number; tag?: string }) {
-  return (
-    <Link className="mo-row" to={`/hopefuls/${k}`}>
-      <span>
-        <span className="mo-row-t" style={{ display: 'block' }}>{monthName(k)}</span>
-        <span className="mo-row-s">
-          {count === 0
-            ? 'Nothing picked yet'
-            : `${count} hopeful${count === 1 ? '' : 's'}`}
-        </span>
-      </span>
-      {tag && <span className="mo-open-tag">{tag}</span>}
-    </Link>
-  )
-}
-
 /* Every month — and every year — with at least one finished book, newest
    first. The current one is just as viewable as a closed one: a collage isn't
    a month-end reward, it's a running tally you can share any day.
@@ -85,19 +56,12 @@ function HopeRow({ k, count, tag }: { k: string; count: number; tag?: string }) 
    headings once there is more than one year — FOLDED, all but the newest, so a
    long history reads as chapters instead of a single column and a new year
    clears the page behind it. The Years tab appears only once a year
-   qualifies — before that it would be an empty tab — but the control itself is
-   always up, because HOPEFULS is always offered: every month has a list of
-   books somebody means to read, including the one that has not started yet.
-
-   Hopefuls is a tab here rather than a fifth item in the nav because the nav
-   has no room for one: at 360px the bar is 340px wide, and five tabs plus the
-   active tab's label overflow it. It belongs on this page anyway — a hopefuls
-   list is a collage, made of the same seven printed objects, and the only
-   thing that differs is that the books have not been read. */
+   qualifies — before that it would be an empty tab — and so does the control.
+   Hopefuls used to be a third tab here; they live on the Reading home now,
+   beside the book in hand, because they are what you read next, not a span. */
 export function Months() {
   const reviews = useLiveQuery(() => db.reviews.orderBy('finished').reverse().toArray(), [])
-  const hopefuls = useLiveQuery(() => db.hopefuls.toArray(), [])
-  const [tab, setTab] = useState<'months' | 'years' | 'hopefuls'>('months')
+  const [tab, setTab] = useState<'months' | 'years'>('months')
   /* Which year sections have been opened or shut BY HAND. Only the exceptions
      are held, never the whole state — the default is a rule (the newest year
      is open, every earlier one is a single line), and a Set seeded once from
@@ -106,7 +70,7 @@ export function Months() {
      for: the first book finished in January makes a new year the newest one,
      and nothing here has to be told. */
   const [flipped, setFlipped] = useState<Record<string, boolean>>({})
-  if (!reviews || !hopefuls) return null
+  if (!reviews) return null
 
   const months = group(reviews, monthKey, monthName)
   /* A year is only worth offering once it holds more than one month —
@@ -115,16 +79,6 @@ export function Months() {
   const years = group(reviews, yearKey, (k) => k)
     .filter((y) => months.filter((m) => m.key.startsWith(y.key)).length > 1)
   const tabbed = years.length > 0
-
-  /* The hopefuls tab always has somewhere to go: this month, next month, and
-     any other month a list has already been started for — deduped, newest
-     first. A tab that could open on nothing would be a dead end on a feature
-     whose whole job is to be filled in. */
-  const hopeCount = new Map<string, number>()
-  for (const h of hopefuls) hopeCount.set(h.month, (hopeCount.get(h.month) ?? 0) + 1)
-  const here = currentMonthKey()
-  const next = nextMonthKey()
-  const hopeKeys = [...new Set([next, here, ...hopeCount.keys()])].sort().reverse()
 
   /* Year headings inside the Months tab, newest first — and under a heading
      that already says the year, the row says only the month. */
@@ -147,9 +101,7 @@ export function Months() {
         <header className="app-head">
           <h1>Collage</h1>
           <span>
-            {tab === 'hopefuls'
-              ? `${hopefuls.length} hopeful${hopefuls.length === 1 ? '' : 's'}`
-              : tab === 'years'
+            {tab === 'years'
                 ? `${years.length} year${years.length === 1 ? '' : 's'}`
                 : `${months.length} month${months.length === 1 ? '' : 's'}`}
           </span>
@@ -163,30 +115,14 @@ export function Months() {
           </div>
         )}
 
-        <div className="seg mo-seg mo-seg--noted" role="group" aria-label="Collage span">
-          <button aria-pressed={tab === 'months'} onClick={() => setTab('months')}>Months</button>
-          {tabbed && (
+        {tabbed && (
+          <div className="seg mo-seg mo-seg--noted" role="group" aria-label="Collage span">
+            <button aria-pressed={tab === 'months'} onClick={() => setTab('months')}>Months</button>
             <button aria-pressed={tab === 'years'} onClick={() => setTab('years')}>Years</button>
-          )}
-          <button aria-pressed={tab === 'hopefuls'} onClick={() => setTab('hopefuls')}>Hopefuls</button>
-        </div>
-
-        <p className="mo-note">{TAB_NOTE[tab]}</p>
-
-        {tab === 'hopefuls' && (
-          <div className="field">
-            <div className="mo-list">
-              {hopeKeys.map((k) => (
-                <HopeRow
-                  key={k}
-                  k={k}
-                  count={hopeCount.get(k) ?? 0}
-                  tag={k === here ? 'This month' : k === next ? 'Next month' : undefined}
-                />
-              ))}
-            </div>
           </div>
         )}
+
+        <p className="mo-note">{TAB_NOTE[tab]}</p>
 
         {tab === 'years' && years.length > 0 && (
           <div className="field">

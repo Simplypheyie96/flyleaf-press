@@ -227,6 +227,8 @@ export interface Hopeful {
   /** every candidate cover the catalogues offered, in trust order */
   covers?: string[]
   pages?: number
+  /** set when the book is picked up — it then shows under Reading now on Home */
+  startedAt?: number
   /** decides the order on the card — first added, first printed */
   createdAt: number
   editedAt?: number
@@ -245,6 +247,8 @@ export interface Grave {
 }
 
 export type ThemeChoice = 'system' | 'light' | 'dark'
+/** chrome palette and ground pattern; 'paper' is the original ink on paper */
+export type SkinChoice = 'paper' | 'dawn' | 'herb' | 'orbit' | 'frame'
 export type ShelfView = 'list' | 'covers'
 
 /* Which COLUMN the review is laid on, and therefore what shape the file is.
@@ -299,6 +303,7 @@ export interface Settings {
   pdfEnabled: boolean
   /** chrome theme only — the cards are printed objects and never go dark */
   theme: ThemeChoice
+  skin: SkinChoice
   shelfView: ShelfView
   /** remembered from the download sheet, and reused by Share */
   exportShape: ExportShape

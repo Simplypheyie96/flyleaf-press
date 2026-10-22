@@ -31,6 +31,14 @@ db.version(3).stores({
   graves: 'key, at',
   hopefuls: '++id, month, createdAt, editedAt',
 })
+/* v4 indexes startedAt — a hopeful picked up is "currently reading". Additive:
+   no row changes, a book is simply not started until someone starts it. */
+db.version(4).stores({
+  reviews: '++id, no, title, author, finished, createdAt, editedAt',
+  settings: 'id',
+  graves: 'key, at',
+  hopefuls: '++id, month, createdAt, editedAt, startedAt',
+})
 
 const SETTINGS_DEFAULTS: Settings = {
   id: 1,
@@ -41,6 +49,7 @@ const SETTINGS_DEFAULTS: Settings = {
   defaultCollage: 'archive',
   pdfEnabled: false,
   theme: 'system',
+  skin: 'paper',
   shelfView: 'list',
   /* the paper layout by default — it's the card as the app composed it, and
      the compact one is a deliberate choice for posting from a phone */

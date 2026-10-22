@@ -22,8 +22,8 @@
     <meta name="twitter:title" content="Flyleaf Press" />
     <meta name="twitter:description" content="Write long book reviews and share them whole, as printed cards — and every month as a collage." />
     <meta name="twitter:image" content="https://press.flyleaf.cc/icons/og-2.png" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F4F2ED" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#151515" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F6F5F2" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0B0B" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Flyleaf Press" />
@@ -71,7 +71,7 @@
       #splash{
         position:fixed; inset:0; z-index:9999;
         display:flex; align-items:center; justify-content:center;
-        background:#F4F2ED; color:#1B1917;
+        background:var(--s-paper, #F6F5F2); color:var(--s-ink, #141312);
         /* 420ms, not 260: the exit should read as the screen settling out of
            the way, not as a cut. Must stay under the 600ms removal fallback
            in main.tsx, which is what guarantees the overlay never sticks. */
@@ -103,7 +103,7 @@
       }
       #splash.is-out{ opacity:0; pointer-events:none; }
       @media (prefers-color-scheme: dark){
-        #splash{ background:#151515; color:#E9E9E9; }
+        #splash{ background:var(--s-paper, #0B0B0B); color:var(--s-ink, #F3F3F3); }
       }
     </style>
     <div id="splash" aria-hidden="true">
@@ -114,6 +114,16 @@
         <small>And every month as a collage</small>
       </div>
     </div>
+    <!-- the last theme and skin the app resolved (written by useTheme), so a
+         cold start opens on the reader's own paper rather than the default -->
+    <script>
+      try {
+        var c = JSON.parse(localStorage.getItem('fp-splash'))
+        var st = document.getElementById('splash').style
+        if (c[0]) st.setProperty('--s-paper', c[0])
+        if (c[1]) st.setProperty('--s-ink', c[1])
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

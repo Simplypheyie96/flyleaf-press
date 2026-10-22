@@ -16,6 +16,7 @@ import {
 } from '../share/export'
 import { monthName, currentMonthKey } from '../format'
 import { coverToDataUrl, isIsbn, searchBooks, type Candidate, type SearchResult } from '../catalog'
+import { useReviewed, writeState } from '../hopefuls'
 
 const DEBOUNCE = 350
 const MIN_CHARS = 3
@@ -28,10 +29,6 @@ const MIN_CHARS = 3
    on every keystroke anywhere on the page. */
 const STORY_SHAPES = ['phone'] as const
 
-/** The same flattening the Goodreads dedupe uses, for the same reason: two
-    catalogues, or a catalogue and a hand edit, disagree about spacing and case
-    long before they disagree about the book. */
-const flat = (s: string) => (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
 
 /* A hopeful stands in for a Review only where the card is concerned. The
    collage renderers are typed on Review because that is what they print for a
@@ -127,26 +124,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
      megabytes pulled in order to read two fields off each row, on a page that
      redraws whenever anything in the database changes. Index keys are strings
      and nothing else, and the second query is normally nought or one row. */
-  const stamp = (rows ?? []).map((h) => `${h.id}:${flat(h.title)}|${flat(h.author)}`).join('~')
-  const reviewed = useLiveQuery(async () => {
-    const found = new Map<number, number>()
-    const want = rows ?? []
-    if (want.length === 0) return found
-    const wanted = new Set(want.map((h) => flat(h.title)))
-    const keys = (await db.reviews.orderBy('title').keys()) as string[]
-    const hits = [...new Set(keys.filter((t) => wanted.has(flat(t))))]
-    if (hits.length === 0) return found
-    const mine = await db.reviews.where('title').anyOf(hits).toArray()
-    for (const h of want) {
-      if (h.id == null) continue
-      const hit = mine.find(
-        (r) => flat(r.title) === flat(h.title) && flat(r.author) === flat(h.author)
-      )
-      if (hit?.id != null) found.set(h.id, hit.id)
-    }
-    return found
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stamp])
+  const reviewed = useReviewed(rows)
 
   /* A REVIEWED HOPEFUL SINKS. The list is read from the top, and the top is
      where the books still to be read belong: a row whose only remaining
@@ -227,21 +205,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
      NOT travel: saving a review never removes a hopeful. The row is matched
      by content and sunk to the bottom instead, which is also what happens
      when the same book is reviewed from the shelf. */
-  const write = (h: Hopeful) =>
-    nav('/write', {
-      state: {
-        candidate: {
-          title: h.title,
-          author: h.author,
-          series: h.series,
-          isbn: h.isbn,
-          pages: h.pages,
-          covers: h.covers ?? [],
-          source: 'openlibrary',
-        } satisfies Candidate,
-        cover: h.cover,
-      },
-    })
+  const write = (h: Hopeful) => nav('/write', { state: writeState(h) })
 
   /* the card takes the list's order, so what you hand out is arranged the way
      the page you built it on is */
@@ -282,7 +246,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
         <header className="app-head">
           <h1>{monthName(key)}</h1>
           <span>
-            <Link to="/collage" style={{ color: 'inherit', textDecoration: 'none' }}>← Collage</Link>
+            <Link to="/shelf?tab=hopefuls" style={{ color: 'inherit', textDecoration: 'none' }}>← Hopefuls</Link>
           </span>
         </header>
 
@@ -374,6 +338,18 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
                             onClick={() => write(h)}
                           >
                             Review it
+                          </button>
+                        )}
+                        {/* in hand: it shows under Reading now on Home, and
+                            stays on this month's list either way */}
+                        {reviewed?.get(h.id!) == null && (
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            aria-pressed={!!h.startedAt}
+                            onClick={() => db.hopefuls.update(h.id!, { startedAt: h.startedAt ? undefined : Date.now(), editedAt: Date.now() })}
+                          >
+                            {h.startedAt ? 'Reading' : 'Start'}
                           </button>
                         )}
                         {/* A Share here is not the hopefuls card — that is

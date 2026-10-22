@@ -70,3 +70,12 @@ export function paragraphs(body: string): string[] {
     .map((p) => p.replace(/\s*\n\s*/g, ' ').trim())
     .filter(Boolean)
 }
+
+/* The month after this one, as a key. A hopefuls list is written BEFORE the
+   month it is for, so next month has to be reachable — otherwise the one list
+   you would sit down to make on the 28th is the one the app cannot open. */
+export function nextMonthKey(): string {
+  const now = new Date()
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
+  return d.toISOString().slice(0, 7)
+}

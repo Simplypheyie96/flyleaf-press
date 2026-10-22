@@ -16,6 +16,9 @@ import { SettingsPage } from './pages/SettingsPage'
 import { backfillTags } from './import/tags'
 import type { Settings } from './types'
 
+
+const SKIN_IDS: Settings['skin'][] = ['paper', 'dawn', 'herb', 'orbit', 'frame']
+
 /* Chrome theme only — the cards re-pin the printed palette in CSS. 'system'
    resolves live, so the app follows the phone when the phone flips. */
 function useTheme(settings?: Settings) {
@@ -25,11 +28,21 @@ function useTheme(settings?: Settings) {
     const apply = () => {
       const t = settings.theme === 'system' ? (mq.matches ? 'dark' : 'light') : settings.theme
       document.documentElement.dataset.theme = t
+      /* a skin that was cut (the Bookcloth and Clean prototypes) falls back to paper */
+      const skin = SKIN_IDS.includes(settings.skin) ? settings.skin : 'paper'
+      if (skin === 'paper') delete document.documentElement.dataset.skin
+      else document.documentElement.dataset.skin = skin
+      /* the launch screen in index.html paints before any CSS, so it reads
+         the resolved colours and ground from here on the next cold start */
+      const cs = getComputedStyle(document.documentElement)
+      try {
+        localStorage.setItem('fp-splash', JSON.stringify(['--paper', '--ink'].map((k) => cs.getPropertyValue(k).trim())))
+      } catch { /* private mode: the splash keeps its default paper */ }
     }
     apply()
     mq.addEventListener('change', apply)
     return () => mq.removeEventListener('change', apply)
-  }, [settings?.theme, settings])
+  }, [settings?.theme, settings?.skin, settings])
 }
 
 /* old bookmarks: /months/2026-07 → /collage/2026-07 */
