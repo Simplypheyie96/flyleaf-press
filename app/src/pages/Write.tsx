@@ -210,12 +210,13 @@ export function Write() {
   /* a typed tag joins the list the same way a catalogue's does — trimmed,
      collapsed, and folded in only if nothing already there means the same
      word. `mergeTags` is the fold the search runs on, so "epic fantasy"
-     cannot land beside "Epic Fantasy". */
-  const addTag = (raw: string) => {
-    const t = raw.replace(/\s+/g, ' ').trim()
-    setTagDraft('')
-    if (!tagKey(t)) return
-    setTags((cur) => mergeTags(cur, [t]).slice(0, MAX_TAGS))
+     cannot land beside "Epic Fantasy". A comma ends a tag, so a pasted
+     "Epic fantasy, fantasy," is two; whatever follows the last comma stays
+     in the field to be finished. */
+  const addTag = (raw: string, rest = '') => {
+    const ts = raw.split(',').map((t) => t.replace(/\s+/g, ' ').trim()).filter((t) => tagKey(t))
+    setTagDraft(rest)
+    if (ts.length) setTags((cur) => mergeTags(cur, ts).slice(0, MAX_TAGS))
   }
 
   const addPlate = async (file: File) => {
@@ -340,7 +341,11 @@ export function Write() {
             <input id="w-tag" type="text" value={tagDraft} autoComplete="off"
               disabled={tags.length >= MAX_TAGS}
               placeholder={tags.length >= MAX_TAGS ? `${MAX_TAGS} tags is all a card prints` : 'e.g. Epic Fantasy'}
-              onChange={(e) => setTagDraft(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value, i = v.lastIndexOf(',')
+                if (i < 0) setTagDraft(v)
+                else addTag(v.slice(0, i), v.slice(i + 1).trimStart())
+              }}
               onBlur={() => addTag(tagDraft)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagDraft) }
