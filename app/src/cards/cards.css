@@ -1767,7 +1767,9 @@
 /* the passport lays everything inside its own page, so the column is there */
 .card--story.c11{ display:block; }
 .card--story .st-in{ display:flex; flex-direction:column; height:100%; }
-.card--story .mo-head{ flex:none; }
+.card--story .mo-head{ flex:none; text-align:center; justify-content:center; }
+/* the per-style head rows lay their parts out from the left; on a story card each row centres as a group */
+.card--story .mo-head :is(.mo-line,.mo-air,.mo-sub,.mo-doc,.mo-set){ justify-content:center; }
 /* The head's single line is the card naming itself, so it takes the weight a
    masthead takes — 600 is the heaviest Playfair the cards embed, and a 700
    would be synthesised on screen and drawn differently in the file. The
@@ -1881,7 +1883,8 @@
    The clamps are not what makes the cover fit — the fit is measured — they are
    what stops a catalogue title of sixty words from taking the whole card and
    leaving the picture a stripe. */
-.st-book{ flex:none; }
+/* centred under the cover, which is centred in the hero: one axis down the card */
+.st-book{ flex:none; text-align:center; }
 .card--story .st-title{
   font-size:40px; line-height:1.06; max-height:3.18em; overflow:hidden;
 }
