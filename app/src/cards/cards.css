@@ -1779,11 +1779,9 @@
    note cost the cover height rather than the card its shape. */
 .st-hero{
   flex:1 1 auto; min-height:0;
-  display:flex; align-items:center;
+  display:flex; align-items:center; justify-content:center;
   padding:2px 0 6px;
 }
-/* the two styles whose heads are centred keep the axis all the way down */
-.c3 .st-hero, .c7 .st-hero{ justify-content:center; }
 /* The cover is sized in ONE place and nothing downstream renegotiates it.
    Two constructions were measured and rejected before this one. `max-height`
    on the cover is inert — a percentage against an auto-height frame resolves
@@ -1801,7 +1799,7 @@
    would take if it were ever rendered without going through that door. */
 .st-frame{ position:relative; width:fit-content; max-width:100%; }
 .card--story .st-cov{
-  display:block; width:auto; height:var(--st-cov); margin:0;
+  display:block; width:auto; height:var(--st-cov); margin:0 auto;
 }
 .st-no{ display:block; }
 
@@ -1841,7 +1839,6 @@
 /* c7 · the feature keeps its number, the board its rule */
 .st-frame--c7{ width:100%; text-align:center; border-top:1px solid rgba(27,25,23,.30); padding-top:16px; }
 .st-frame--c7 .st-no{ margin-bottom:11px; }
-.st-frame--c7 .st-cov{ margin-inline:auto; }
 
 /* c8 · mounted on its sheet, held by four paper corners */
 .st-frame--c8{ padding:17px; background:rgba(252,251,248,.62); border:1px solid rgba(27,25,23,.22); }
