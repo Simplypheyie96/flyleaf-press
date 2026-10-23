@@ -27,6 +27,11 @@ import serif500 from '@fontsource/playfair-display/files/playfair-display-latin-
 import serif600 from '@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff2?url'
 import shantell400 from '@fontsource/shantell-sans/files/shantell-sans-latin-400-normal.woff2?url'
 import notes400 from './fonts/handwritten-notes-400-normal.woff2?url'
+import delius400 from '@fontsource/delius/files/delius-latin-400-normal.woff2?url'
+import patrick400 from '@fontsource/patrick-hand/files/patrick-hand-latin-400-normal.woff2?url'
+import indie400 from '@fontsource/indie-flower/files/indie-flower-latin-400-normal.woff2?url'
+import nanum400 from '@fontsource/nanum-pen-script/files/nanum-pen-script-latin-400-normal.woff2?url'
+import annie400 from '@fontsource/annie-use-your-telescope/files/annie-use-your-telescope-latin-400-normal.woff2?url'
 import sans400 from '@fontsource/archivo/files/archivo-latin-400-normal.woff2?url'
 import sans500 from '@fontsource/archivo/files/archivo-latin-500-normal.woff2?url'
 import sans600 from '@fontsource/archivo/files/archivo-latin-600-normal.woff2?url'
@@ -69,14 +74,21 @@ const CHROME_FACES: Face[] = [
    sxHeight and a canvas probe both lied here, the canvas one by silently
    falling back on every face): Kalam .511, Shantell Sans .503, Handwritten
    Notes .490. Set them all at 17px and they read as three different sizes.
+   The five added later were read off the glyph itself — the top of `x` over
+   the em, which reproduces Kalam's and Shantell's figures exactly: Delius
+   .515, Patrick Hand .468, Indie Flower .388, Nanum Pen Script .481, Annie
+   Use Your Telescope .487.
 
    So each hand carries its OWN size and line-height, derived rather than
    guessed. The size matches Kalam's x-height at 17px (8.69px), rounded to the
    nearest half pixel. The line-height is Kalam's absolute leading (29.24px)
    over that size, with the face's own default line box as a FLOOR, since a
    face that writes on a bouncing baseline asks for more leading than even
-   spacing gives it and that is where lines start touching. Neither survivor
-   needs the floor; the rule stays because the next face added might.
+   spacing gives it and that is where lines start touching. Only Indie Flower
+   meets the floor (1.46 at 22.5px, which is also exactly Kalam's leading).
+
+   Nanum Pen Script has no em dash, en dash or ellipsis; the Kalam fallback
+   supplies them, which is what FALLBACK is for.
 
    Every size here clears 16px after the editor textarea's .97 compact trim,
    under which iOS zooms the whole page in and never zooms back out.
@@ -88,7 +100,7 @@ const CHROME_FACES: Face[] = [
    Kalam is the default, and its faces stay in CARD_FACES rather than moving
    here: the 700 cut is the pinboard collage's rating numeral, which has
    nothing to do with a review body and must ship whatever hand is chosen. The
-   other two are installed for the screen but reach a PNG only when the review
+   others are installed for the screen but reach a PNG only when the review
    being exported is actually written in one — see fontEmbedCss. */
 type Hand = { family: string; size: number; lh: number; faces: Face[] }
 
@@ -101,6 +113,26 @@ export const HANDS: Record<HandId, Hand> = {
   shantell: {
     family: 'Shantell Sans', size: 17.5, lh: 1.67,
     faces: [{ family: 'Shantell Sans', weight: 400, style: 'normal', url: shantell400 }],
+  },
+  delius: {
+    family: 'Delius', size: 17, lh: 1.72,
+    faces: [{ family: 'Delius', weight: 400, style: 'normal', url: delius400 }],
+  },
+  patrick: {
+    family: 'Patrick Hand', size: 18.5, lh: 1.58,
+    faces: [{ family: 'Patrick Hand', weight: 400, style: 'normal', url: patrick400 }],
+  },
+  indie: {
+    family: 'Indie Flower', size: 22.5, lh: 1.46,
+    faces: [{ family: 'Indie Flower', weight: 400, style: 'normal', url: indie400 }],
+  },
+  nanum: {
+    family: 'Nanum Pen Script', size: 18, lh: 1.62,
+    faces: [{ family: 'Nanum Pen Script', weight: 400, style: 'normal', url: nanum400 }],
+  },
+  annie: {
+    family: 'Annie Use Your Telescope', size: 18, lh: 1.62,
+    faces: [{ family: 'Annie Use Your Telescope', weight: 400, style: 'normal', url: annie400 }],
   },
 }
 

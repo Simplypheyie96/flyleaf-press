@@ -682,26 +682,17 @@ body::before{
 .tag-chip:hover{ border-color:var(--ink); }
 .tag-chip:hover i{ color:var(--ink); }
 
-/* The hand picker. Chips like the format ones, except the label is a SAMPLE —
-   each name is drawn in the face it names, at that face's own size, because
-   three identical words in one font are three choices nobody can tell apart.
-   The chip height is FIXED at 40 rather than padded, because the label's own
-   line box scales with the sample: a face asking for a 1.98 line box of its
-   own accord stood taller than Kalam's for no reason the reader could see.
-   The names are `nowrap` — a two-word name broke to two lines in a narrow
-   column and that chip was 53px tall beside 40px neighbours. It wraps to the
-   next ROW instead, which is what the flex container is for. */
-.hand-pick{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-.hand-pick button{
-  padding:0 16px; height:40px; cursor:pointer;
-  display:flex; align-items:center;
-  border:1px solid var(--rule); border-radius:999px; background:var(--card-w);
-  line-height:1.15; white-space:nowrap; color:var(--ink-soft);
-  transition:color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
+/* The hand sheet. Same tiles as the style sheet, but the label is a SAMPLE:
+   each name is set in its own face at its own size (inline), so the tile is
+   sentence case with no tracking — uppercase would hide the very letterforms
+   being chosen between. Long names ("Annie Use Your Telescope") wrap inside
+   the tile at a word boundary, and the tile height is fixed so a two-line
+   name does not make its row taller than the others. */
+.style-pick.style-pick--faces button{   /* out-specifies .style-pick button, later in the file */
+  height:64px; min-height:0; padding:6px 8px;
+  text-transform:none; letter-spacing:0; font-weight:400; line-height:1.1;
 }
-.hand-pick button[aria-pressed="true"]{
-  background:var(--ink); border-color:var(--ink); color:var(--paper);
-}
+.disclose .disclose-val--face{ text-transform:none; letter-spacing:0; color:var(--ink); }
 
 /* interactive stars (write flow) */
 .stars-input{

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 
 /* Twenty styles per picker. Folded inline it opened ten rows deep and pushed
    the card it was choosing for off the screen, so the closed row stays where
@@ -7,7 +7,10 @@ import { useState } from 'react'
 
    Picking does NOT close it. With twenty styles nobody picks blind, they
    flip, and closing on every pick meant reopening between each one. It closes
-   from Done or from the row that opened it. */
+   from Done or from the row that opened it.
+
+   The review's hand uses the same sheet: no ground dots, and each name is
+   drawn in the face it names (`nameStyle`), so the choice can be seen. */
 export function StylePicker<T extends string>({
   ids,
   names,
@@ -15,13 +18,15 @@ export function StylePicker<T extends string>({
   value,
   onChange,
   label = 'Style',
+  nameStyle,
 }: {
   ids: readonly T[]
   names: Record<T, string>
-  grounds: Record<T, string>
+  grounds?: Record<T, string>
   value: T
   onChange: (id: T) => void
   label?: string
+  nameStyle?: (id: T) => CSSProperties
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -29,8 +34,8 @@ export function StylePicker<T extends string>({
       <button type="button" className="disclose" aria-expanded={open} onClick={() => setOpen(!open)}>
         <span className="ui-lbl">{label}</span>
         <span className="disclose-right">
-          <span className="style-dot" style={{ background: grounds[value] }} />
-          <span className="disclose-val">{names[value]}</span>
+          {grounds && <span className="style-dot" style={{ background: grounds[value] }} />}
+          <span className={nameStyle ? 'disclose-val disclose-val--face' : 'disclose-val'} style={nameStyle?.(value)}>{names[value]}</span>
           <span className="disclose-chev" aria-hidden="true">{open ? '▲' : '▼'}</span>
         </span>
       </button>
@@ -40,7 +45,7 @@ export function StylePicker<T extends string>({
             <span className="ui-lbl">{label}</span>
             <button type="button" className="btn btn--sm" onClick={() => setOpen(false)}>Done</button>
           </div>
-          <div className="style-pick" role="group" aria-label={label}>
+          <div className={nameStyle ? 'style-pick style-pick--faces' : 'style-pick'} role="group" aria-label={label}>
           {ids.map((id) => (
             <button
               key={id}
@@ -48,8 +53,8 @@ export function StylePicker<T extends string>({
               aria-pressed={id === value}
               onClick={() => onChange(id)}
             >
-              <span className="style-dot" style={{ background: grounds[id] }} />
-              <span className="style-pick-name">{names[id]}</span>
+              {grounds && <span className="style-dot" style={{ background: grounds[id] }} />}
+              <span className="style-pick-name" style={nameStyle?.(id)}>{names[id]}</span>
             </button>
           ))}
           </div>

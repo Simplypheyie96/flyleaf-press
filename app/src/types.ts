@@ -101,12 +101,17 @@ export const STYLE_NAMES: Record<StyleId, string> = {
    also the one face with holes in it — no em dash, en dash or ellipsis — which
    is why every hand's family stack falls through to Kalam rather than to the
    generic `cursive` (see `handVars`). */
-export type HandId = 'kalam' | 'notes' | 'shantell'
-export const HAND_IDS: HandId[] = ['kalam', 'notes', 'shantell']
+export type HandId = 'kalam' | 'notes' | 'shantell' | 'delius' | 'patrick' | 'indie' | 'nanum' | 'annie'
+export const HAND_IDS: HandId[] = ['kalam', 'notes', 'shantell', 'delius', 'patrick', 'indie', 'nanum', 'annie']
 export const HAND_NAMES: Record<HandId, string> = {
   kalam: 'Kalam',
   notes: 'Handwritten Notes',
   shantell: 'Shantell Sans',
+  delius: 'Delius',
+  patrick: 'Patrick Hand',
+  indie: 'Indie Flower',
+  nanum: 'Nanum Pen Script',
+  annie: 'Annie Use Your Telescope',
 }
 
 /** The hand a stored row should be EDITED in. A review saved under a face that
