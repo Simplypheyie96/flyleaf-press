@@ -411,6 +411,16 @@ export function Write() {
 
         <section className="form-sec">
           <h2 className="ui-lbl form-sec-h">The review</h2>
+          {/* Font type is part of the writing, not part of the card's clothes,
+              so it sits here rather than in "The card" — and above the canvas,
+              so it is chosen before a word is written and the review is
+              written in the face it gets printed in. Each name is drawn in its
+              own face at its own size: the sample IS the label. */}
+          <div className="field">
+            <StylePicker ids={HAND_IDS} names={HAND_NAMES} value={hand} onChange={setHand}
+              label="Font type"
+              nameStyle={(h) => ({ fontFamily: `"${HANDS[h].family}", 'Kalam', cursive`, fontSize: HANDS[h].size * 0.88 })} />
+          </div>
           <div className="field">
           <label className="ui-lbl" htmlFor="w-body">Your note — optional</label>
           <div className="canvas-wrap">
@@ -436,19 +446,6 @@ export function Write() {
                 aria-label="The review" />
             </div>
           )}
-          </div>
-
-          {/* The hand is part of the writing, not part of the card's clothes,
-              so it sits here rather than in "The card" — and the canvas above
-              is already set in it, so the review is written in the face it
-              gets printed in. Each name is drawn in its own face at its own
-              size: the sample IS the label. Eight of them open in the same
-              sheet as the style picker, so the canvas stays in view while
-              you flip. */}
-          <div className="field">
-            <StylePicker ids={HAND_IDS} names={HAND_NAMES} value={hand} onChange={setHand}
-              label="The hand"
-              nameStyle={(h) => ({ fontFamily: `"${HANDS[h].family}", 'Kalam', cursive`, fontSize: HANDS[h].size * 0.88 })} />
           </div>
         </section>
 

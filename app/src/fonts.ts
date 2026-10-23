@@ -107,7 +107,7 @@ type Hand = { family: string; size: number; lh: number; faces: Face[] }
 export const HANDS: Record<HandId, Hand> = {
   kalam: { family: 'Kalam', size: 17, lh: 1.72, faces: [] },
   notes: {
-    family: 'Handwritten Notes', size: 18.5, lh: 1.58,
+    family: 'Handwritten Notes', size: 20, lh: 1.48,
     faces: [{ family: 'Handwritten Notes', weight: 400, style: 'normal', url: notes400 }],
   },
   shantell: {
