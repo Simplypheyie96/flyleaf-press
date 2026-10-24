@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { registerSW } from 'virtual:pwa-register'
-import { storeApp } from './native'
 
 /* Installing the app, and asking whether there's a newer one.
 
@@ -84,7 +83,7 @@ type InstallState = {
 export function useInstall(): InstallState {
   const read = (): InstallState => ({
     canPrompt: deferred !== null,
-    installed: storeApp || installed || isStandalone(),
+    installed: installed || isStandalone(),
     manualOnly: isIOS() && !isStandalone(),
   })
   const [state, setState] = useState(read)

@@ -14,7 +14,7 @@ import { MonthDetail } from './pages/MonthDetail'
 import { HopefulsDetail } from './pages/HopefulsDetail'
 import { SettingsPage } from './pages/SettingsPage'
 import { backfillTags } from './import/tags'
-import { statusBar } from './native'
+import { statusBar, storeApp } from './native'
 import type { Settings } from './types'
 
 
@@ -29,7 +29,7 @@ function useTheme(settings?: Settings) {
     const apply = () => {
       const t = settings.theme === 'system' ? (mq.matches ? 'dark' : 'light') : settings.theme
       document.documentElement.dataset.theme = t
-      void statusBar(t)
+      if (storeApp) void statusBar(t)
       /* a skin that was cut (the Bookcloth and Clean prototypes) falls back to paper */
       const skin = SKIN_IDS.includes(settings.skin) ? settings.skin : 'paper'
       if (skin === 'paper') delete document.documentElement.dataset.skin
