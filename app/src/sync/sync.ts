@@ -20,7 +20,7 @@
 
 import { db } from '../db'
 import { SYNCED, exportForCloud, mergeLibrary } from './backup'
-import { drop, fetchMedia, optedIn, peek, pull, push, sendMedia, SYNC_EVENT } from './cloud'
+import { deleteAccount, drop, fetchMedia, optedIn, peek, pull, push, sendMedia, SYNC_EVENT } from './cloud'
 import { deviceName } from './device'
 import { dropLibraries, findLibrary, readLibrary } from './drive'
 import { optedIn as usedDriveFlag, signIn as driveSignIn, signOut as driveSignOut, silentToken } from './google'
@@ -220,11 +220,20 @@ export async function bringTogether(): Promise<SyncResult> {
 
     Nothing on the device is touched. Every review stays where it is — this
     removes the copy, not the writing. */
-export async function forgetCopy(): Promise<void> {
+export function forgetCopy(): Promise<void> {
+  return forget(drop)
+}
+
+/** The same for the whole account, which also signs this device out. */
+export function forgetAccount(): Promise<void> {
+  return forget(deleteAccount)
+}
+
+async function forget(remove: () => Promise<void>): Promise<void> {
   pauseAutoSync()
   try {
     await running?.catch(() => {})
-    await drop()
+    await remove()
     write(MARK_KEY, '')
     write(SYNCED_AT_KEY, '')
     /* Everything here is now unshared by definition, so signing in again is a

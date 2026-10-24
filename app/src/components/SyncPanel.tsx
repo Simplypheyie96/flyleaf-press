@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Confirm } from './Confirm'
+import { storeApp } from '../native'
 import { GoogleButton } from './GoogleButton'
 import { SYNC_AVAILABLE, SYNC_EVENT, account, optedIn, signOut } from '../sync/cloud'
 import {
   bringTogether,
   broughtInDrive,
+  forgetAccount,
   forgetCopy,
   forgetDrive,
   fromDrive,
@@ -53,7 +55,7 @@ export function SyncPanel() {
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [asking, setAsking] = useState<{ device: string; at: number } | null>(null)
-  const [sure, setSure] = useState<'copy' | 'drive' | null>(null)
+  const [sure, setSure] = useState<'copy' | 'account' | 'drive' | null>(null)
 
   const refresh = useCallback(() => {
     setOn(optedIn())
@@ -154,6 +156,19 @@ export function SyncPanel() {
     }
   }
 
+  const dropAccount = async () => {
+    setSure(null)
+    setBusy('account')
+    try {
+      await forgetAccount()
+      say('Your Flyleaf account is deleted. This device is signed out, and everything written on it remains here.')
+    } catch (e) {
+      fail(e, 'That could not be deleted.')
+    } finally {
+      setBusy('')
+    }
+  }
+
   const bringDrive = async () => {
     setBusy('drive-in')
     try {
@@ -233,6 +248,18 @@ export function SyncPanel() {
               {busy === 'drop' ? 'Removing…' : 'Remove my library from Flyleaf'}
             </button>
           </div>
+          {/* The store apps must let a reader close the account they made there. */}
+          {storeApp && (
+            <div className="set-row set-row--stack">
+              <div className="set-row-txt">
+                <div className="ui-lbl">Delete account</div>
+                <p>Closes your Flyleaf account for Press, Journal and eReader. Your library here is untouched.</p>
+              </div>
+              <button className="btn btn--danger btn--sm" onClick={() => setSure('account')} disabled={!!busy}>
+                {busy === 'account' ? 'Deleting…' : 'Delete my Flyleaf account'}
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -285,6 +312,15 @@ export function SyncPanel() {
           body="This deletes your library and covers from Flyleaf and signs this device out. Everything stays on this device, but your other devices will have nothing to sync with."
           action="Yes, remove it"
           onConfirm={dropCopy}
+          onCancel={() => setSure(null)}
+        />
+      )}
+      {sure === 'account' && (
+        <Confirm
+          title="Delete your Flyleaf account?"
+          body="This deletes your account and everything it holds for Press, Journal and eReader, and signs this device out. Everything stays on this device. A purchase comes back with Restore."
+          action="Yes, delete my account"
+          onConfirm={dropAccount}
           onCancel={() => setSure(null)}
         />
       )}
