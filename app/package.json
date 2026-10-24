@@ -8,9 +8,18 @@
     "build": "npm run check:sync && tsc -b && vite build",
     "preview": "vite preview",
     "icons": "node scripts/make-icons.mjs",
-    "check:sync": "tsx scripts/sync-check.ts"
+    "check:sync": "tsx scripts/sync-check.ts",
+    "ios": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "android": "npm run build && npx cap sync android",
+    "android:bundle": "npm run android && cd android && ./gradlew bundleRelease",
+    "check:unlock": "tsx scripts/unlock-check.ts"
   },
   "dependencies": {
+    "@capacitor/core": "8.5.3",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/share": "8.0.3",
+    "@capgo/native-purchases": "8.8.2",
     "@dicebear/core": "^10.6.0",
     "@dicebear/styles": "^10.5.0",
     "@fontsource/annie-use-your-telescope": "^5.3.0",
@@ -30,6 +39,9 @@
     "react-router-dom": "^7.6.0"
   },
   "devDependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/cli": "8.5.3",
+    "@capacitor/ios": "8.5.3",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/playfair-display": "^5.3.0",
     "@types/react": "^19.1.0",

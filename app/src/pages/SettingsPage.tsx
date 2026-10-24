@@ -16,6 +16,9 @@ import { bury, deleteEverything, exportLibrary, mergeLibrary } from '../sync/bac
 import { SyncPanel } from '../components/SyncPanel'
 import { clearAccount } from '../sync/sync'
 import { useInstall, promptInstall, checkForUpdate } from '../pwa'
+import { shareFiles, storeApp } from '../native'
+import { useUnlocked } from '../unlock'
+import { UnlockSheet } from '../components/UnlockSheet'
 
 const THEMES: { id: ThemeChoice; label: string }[] = [
   { id: 'system', label: 'System' },
@@ -44,6 +47,8 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   const install = useInstall()
   const [checking, setChecking] = useState(false)
   const [updateMsg, setUpdateMsg] = useState('')
+  const unlocked = useUnlocked()
+  const [unlocking, setUnlocking] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
   const grRef = useRef<HTMLInputElement>(null)
   const [grFile, setGrFile] = useState<File | null>(null)
@@ -94,6 +99,12 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   const exportJson = async () => {
     const data = await exportLibrary()
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    if (storeApp) {
+      const name = 'flyleaf-press-library.json'
+      if (await shareFiles([new File([blob], name, { type: 'application/json' })], name))
+        setMsg(`Exported ${data.reviews.length} review${data.reviews.length === 1 ? '' : 's'}.`)
+      return
+    }
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = 'flyleaf-press-library.json'
@@ -119,7 +130,9 @@ export function SettingsPage({ settings }: { settings: Settings }) {
   const exportPdf = async () => {
     const rows = await db.reviews.toArray()
     printLibraryPdf(rows)
-    setMsg(`${rows.length} review${rows.length === 1 ? '' : 's'} sent to the print dialog — choose “Save as PDF” there.`)
+    setMsg(storeApp
+      ? `Making a PDF of ${rows.length} review${rows.length === 1 ? '' : 's'} — the share sheet opens when it's ready.`
+      : `${rows.length} review${rows.length === 1 ? '' : 's'} sent to the print dialog — choose “Save as PDF” there.`)
   }
 
   /* destructive actions confirm in-app — window.confirm() is unreliable in
@@ -280,12 +293,13 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           </div>
         </div>
 
-        <SyncPanel />
+        {/* Drive sign-in runs on Google's web script, which a webview refuses */}
+        {!storeApp && <SyncPanel />}
 
         {/* The app itself — putting it on the home screen, and asking whether
             there is a newer one. Both are about this device rather than about
             the library, so they sit apart from the housekeeping below. */}
-        <div className="panel">
+        {!storeApp && <div className="panel">
           <div className="set-row">
             <div className="set-row-txt">
               <div className="ui-lbl">Install the app</div>
@@ -305,7 +319,25 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               <button className="btn btn--ghost btn--sm" onClick={() => promptInstall()}>Install</button>
             ) : null}
           </div>
-        </div>
+        </div>}
+
+        {storeApp && (
+          <div className="panel">
+            <div className="set-row">
+              <div className="set-row-txt">
+                <div className="ui-lbl">Unlock everything</div>
+                <p>
+                  {unlocked
+                    ? 'Every style, collage, PDF and plate is yours. Thank you.'
+                    : 'Twenty card styles, monthly and yearly collages, PDF and image plates. Restore a purchase here too.'}
+                </p>
+              </div>
+              {unlocked
+                ? <span className="set-row-note">Unlocked</span>
+                : <button className="btn btn--ghost btn--sm" onClick={() => setUnlocking(true)}>Unlock</button>}
+            </div>
+          </div>
+        )}
 
         <div className="panel">
           <div className="set-row">
@@ -314,7 +346,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
               <p>Adds a Save as PDF button to each review's share sheet.</p>
             </div>
             <button className="toggle" role="switch" aria-checked={settings.pdfEnabled}
-              aria-label="PDF export" onClick={() => put({ pdfEnabled: !settings.pdfEnabled })} />
+              aria-label="PDF export" onClick={() => unlocked ? put({ pdfEnabled: !settings.pdfEnabled }) : setUnlocking(true)} />
           </div>
           <div className="set-row">
             <div className="set-row-txt">
@@ -493,10 +525,9 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             to. Every month becomes a collage of what you finished.
           </p>
           <p>
-            Your library lives on this device, in this browser, and the host counts page views and
-            nothing else. Nothing leaves unless you send it: Export library writes the whole shelf
-            to one file, and if you sign in to sync across devices, a copy is kept on Flyleaf’s
-            servers at Cloudflare, private to your account, until you remove it.
+            {storeApp
+              ? 'Your library lives on this device, and the app counts nothing. Nothing leaves unless you send it: Export library writes the whole shelf to one file.'
+              : 'Your library lives on this device, in this browser, and the host counts page views and nothing else. Nothing leaves unless you send it: Export library writes the whole shelf to one file, and if you sign in to sync across devices, a copy is kept on Flyleaf’s servers at Cloudflare, private to your account, until you remove it.'}
           </p>
           <p>
             <a href="https://feyidesigns.com/apps/flyleaf-bookprint/privacy/" target="_blank" rel="noopener noreferrer">Privacy policy</a>
@@ -513,14 +544,18 @@ export function SettingsPage({ settings }: { settings: Settings }) {
                 there is no way to tell a stale installed app from a current
                 one */}
             <span className="ui-lbl">Version {__APP_VERSION__} · {__APP_COMMIT__}</span>
-            <button className="btn btn--ghost btn--sm" disabled={checking} onClick={runUpdateCheck}>
-              {checking ? 'Checking…' : 'Check for updates'}
-            </button>
+            {/* the store updates the apps */}
+            {!storeApp && (
+              <button className="btn btn--ghost btn--sm" disabled={checking} onClick={runUpdateCheck}>
+                {checking ? 'Checking…' : 'Check for updates'}
+              </button>
+            )}
           </div>
           {updateMsg && <p className="field-hint" role="status" style={{ marginTop: 12 }}>{updateMsg}</p>}
         </div>
       </div>
 
+      {unlocking && <UnlockSheet onClose={() => setUnlocking(false)} />}
       {choosing === 'export' && (
         <ChoiceSheet
           title="Export as"
@@ -531,6 +566,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           onPick={(id) => {
             setChoosing(null)
             if (id === 'json') exportJson()
+            else if (!unlocked) setUnlocking(true)
             else exportPdf()
           }}
           onCancel={() => setChoosing(null)}

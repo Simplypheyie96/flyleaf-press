@@ -16,6 +16,7 @@ import { paragraphs } from '../format'
 import { fontEmbedCss } from '../fonts'
 import { isIOS } from '../pwa'
 import { encodePng, CAN_STREAM_PNG } from './png'
+import { shareFiles, storeApp } from '../native'
 
 /* Neither layout splits. The wide one stopped first, on the argument that a
    leaf which can grow is the whole point of a printed card and a page break
@@ -953,13 +954,14 @@ export interface ExportResult {
     library. iOS only: it is the single platform with no file download a
     person can find afterwards. */
 export function savesViaSystemSheet(): boolean {
-  return isIOS() && canShareFiles()
+  return storeApp || (isIOS() && canShareFiles())
 }
 
 export type ExportMode = 'share' | 'download'
 
 /* whether this device can hand image files to other apps (Web Share Level 2) */
 export function canShareFiles(): boolean {
+  if (storeApp) return true
   try {
     const probe = new File([new Blob(['x'], { type: 'image/png' })], 'probe.png', { type: 'image/png' })
     return !!navigator.canShare?.({ files: [probe] })
@@ -981,6 +983,11 @@ async function exportPages(
   mode: ExportMode
 ): Promise<ExportResult> {
   const files = await pagesToFiles(pages, baseName)
+  /* the store apps: both ways out are the native sheet (see native.ts) */
+  if (storeApp) {
+    const ok = await shareFiles(files, baseName)
+    return { ok, method: ok ? (mode === 'share' ? 'share' : 'save') : 'none', pages: files.length }
+  }
   if (mode === 'share') {
     if (!navigator.canShare?.({ files })) return { ok: false, method: 'none', pages: files.length }
     try {
@@ -1112,6 +1119,7 @@ export function pageCount(rec: Review, style: StyleId, shape: ExportShape = 'pho
 /* PDF is a settings thing, not a share thing: when the toggle is on, this
    opens the print dialog over the paginated pages (print → save as PDF). */
 export function printReviewPdf(rec: Review, style: StyleId): void {
+  if (storeApp) return void sharePdf([rec], `${reviewBaseName(rec)}.pdf`)
   const host = makeHost()
   host.style.cssText = 'position:fixed;left:0;top:0;width:720px;z-index:9999;background:#fff;'
   host.classList.add('print-host')
@@ -1129,6 +1137,7 @@ export function printReviewPdf(rec: Review, style: StyleId): void {
 /* Whole-library PDF: every review paginated in its own saved style, all the
    pages in one print host, oldest finish first — the shelf as one document. */
 export function printLibraryPdf(reviews: Review[]): void {
+  if (storeApp) return void sharePdf(reviews, 'flyleaf-press-library.pdf')
   const host = makeHost()
   host.style.cssText = 'position:fixed;left:0;top:0;width:720px;z-index:9999;background:#fff;'
   host.classList.add('print-host')
@@ -1150,3 +1159,21 @@ export function printLibraryPdf(reviews: Review[]): void {
   requestAnimationFrame(() => window.print())
 }
 
+
+/* A webview has no print dialog, so the store apps build the PDF here from
+   the same portrait leaves and hand it to the share sheet. */
+async function sharePdf(reviews: Review[], name: string): Promise<boolean> {
+  const { pngsToPdf } = await import('./pdf')
+  const host = makeHost()
+  try {
+    const sorted = [...reviews].sort((a, b) => a.finished.localeCompare(b.finished))
+    const pngs: Blob[] = []
+    for (const rec of sorted) {
+      pngs.push(...await pagesToPngs(paginateReview(rec, rec.style, host, 'phone')))
+    }
+    const pdf = await pngsToPdf(pngs)
+    return await shareFiles([new File([pdf], name, { type: 'application/pdf' })], name)
+  } finally {
+    host.remove()
+  }
+}

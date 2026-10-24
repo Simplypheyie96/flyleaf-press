@@ -1,0 +1,59 @@
+{
+  "appPolicies": {
+    "eula": "",
+    "policies": [
+      {
+        "locale": "en_US",
+        "policyText": "",
+        "policyURL": ""
+      }
+    ]
+  },
+  "identifier": "PRESS",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "3.99",
+      "familyShareable": true,
+      "internalID": "B0C4D001",
+      "localizations": [
+        {
+          "description": "Every card style, collages, PDF and image plates. Once, for good.",
+          "displayName": "Unlock",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.feyidesigns.press.unlock",
+      "referenceName": "unlock",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "7.99",
+      "familyShareable": true,
+      "internalID": "B0C4D002",
+      "localizations": [
+        {
+          "description": "The same unlock, paying a little more to keep the app going.",
+          "displayName": "Supporter",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.feyidesigns.press.supporter",
+      "referenceName": "supporter",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

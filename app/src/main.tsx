@@ -9,6 +9,8 @@ import { startAutoSync } from './sync/sync'
 import { initServiceWorker } from './pwa'
 import { sharpenCovers } from './import/covers'
 import { Analytics } from '@vercel/analytics/react'
+import { storeApp } from './native'
+import { checkUnlock } from './unlock'
 
 /* Before the first paint: the @font-face rules live in a module now, not
    in a third-party stylesheet, so they have to be installed by hand. */
@@ -25,14 +27,15 @@ createRoot(document.getElementById('root')!).render(
           pattern; a null return would drop the event entirely. It sits outside
           the router deliberately: it listens to history itself, so it needs no
           route context and keeps working on the pages App renders without one. */}
-      <Analytics
+      {/* the store apps count nothing — their privacy labels say so */}
+      {!storeApp && <Analytics
         beforeSend={(e) => ({
           ...e,
           url: e.url
             .replace(/\/review\/[^/?#]+/, '/review/:id')
             .replace(/\/collage\/[^/?#]+/, '/collage/:month'),
         })}
-      />
+      />}
     </ErrorBoundary>
   </StrictMode>
 )
@@ -46,7 +49,9 @@ startAutoSync()
 /* Importing ./pwa is itself load-bearing: the beforeinstallprompt listener
    goes on at module scope, and that event fires once, early. Register the
    worker from here too, so Settings has a registration to check. */
-initServiceWorker()
+if (!storeApp) initServiceWorker()
+/* the store apps bundle their files, and the store updates them */
+else void checkUnlock()
 
 /* Covers saved before art was fetched large are re-fetched once, quietly,
    after the app is up — see sharpenCovers. */

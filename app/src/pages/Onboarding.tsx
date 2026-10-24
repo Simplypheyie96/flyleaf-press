@@ -4,6 +4,7 @@ import type { Settings } from '../types'
 import { FacePicker } from '../components/Face'
 import { mark } from '../cards/assets'
 import { RestoreNotice } from '../components/RestoreNotice'
+import { storeApp } from '../native'
 
 /* Launch screen: a name and a face, nothing else. Style choices belong to
    share time (and defaults live in Settings) — the first run shouldn't ask
@@ -63,10 +64,12 @@ export function Onboarding({ settings, onDone }: { settings: Settings; onDone: (
             re-invent what the app is holding. An empty account leaves the screen
             exactly as it was: there is nothing to take the name from, so the
             fields still have a job. */}
-        <RestoreNotice
-          prompt="Already have a shelf on another device?"
-          onRestored={start}
-        />
+        {!storeApp && (
+          <RestoreNotice
+            prompt="Already have a shelf on another device?"
+            onRestored={start}
+          />
+        )}
       </div>
     </div>
   )

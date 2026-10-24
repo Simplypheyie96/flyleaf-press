@@ -10,6 +10,7 @@ import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
 import { renderReviewCard } from '../cards/review'
 import { bury } from '../sync/backup'
+import { styleFree, useUnlocked } from '../unlock'
 import {
   paginateReview, shareReviewImages, printReviewPdf, reviewBaseName,
   type ExportMode,
@@ -29,6 +30,7 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
   const rec = useLiveQuery(() => db.reviews.get(Number(id)).then((r) => r ?? null), [id])
   const [sharing, setSharing] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const unlocked = useUnlocked()
 
   /* The preview builds in the review's own saved style — the picker inside the
      sheet writes the pick straight to the record, so there is only ever one
@@ -113,6 +115,7 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
               grounds={STYLE_GROUNDS}
               value={rec.style}
               onChange={(style: StyleId) => db.reviews.update(rec.id!, { style })}
+              free={unlocked ? undefined : styleFree}
             />
           }
           shape={settings.exportShape}
@@ -120,7 +123,8 @@ export function ReviewDetail({ settings }: { settings: Settings }) {
           build={build}
           exportImages={(mode: ExportMode, shape: ExportShape) =>
             shareReviewImages(rec, rec.style, mode, shape)}
-          printPdf={settings.pdfEnabled ? () => printReviewPdf(rec, rec.style) : undefined}
+          printPdf={settings.pdfEnabled && unlocked ? () => printReviewPdf(rec, rec.style) : undefined}
+          locked={unlocked || styleFree(rec.style) ? undefined : 'Archive and Masthead share free. The other styles come with the unlock.'}
           onClose={() => setSharing(false)}
         />
       )}

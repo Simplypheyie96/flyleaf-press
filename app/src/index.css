@@ -5,6 +5,11 @@
    pickers) are the only colour the chrome carries.
    ───────────────────────────────────────────────────────────── */
 :root{
+  /* Safe areas. iOS gives env(); Android's WebView reports zero there, so
+     Capacitor's SystemBars writes --safe-area-inset-* instead. The web has
+     neither var and falls through to env(), unchanged. */
+  --sa-t:var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --sa-b:var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
   /* clean, Fuse-style: a near-white page and surfaces a small step lighter in
      the same hue (the dark modes' relationship, mirrored), a pale hairline */
   --paper:#F6F5F2;
@@ -328,7 +333,7 @@ body::before{
      which is what "the navbar sits too high" was. The inset is clearance, not
      a margin to stack on: sitting the bar AT the top of the safe area clears
      the indicator exactly, so the two numbers compete rather than accumulate. */
-  position:fixed; left:50%; bottom:max(14px, env(safe-area-inset-bottom));
+  position:fixed; left:50%; bottom:max(14px, var(--sa-b));
   transform:translateX(-50%);
   z-index:40;
   display:flex; align-items:center; gap:10px;
@@ -543,7 +548,7 @@ body::before{
   position:fixed; inset:0; z-index:120;
   display:flex; flex-direction:column;
   background:var(--paper);
-  padding:18px 20px calc(18px + env(safe-area-inset-bottom));
+  padding:18px 20px calc(18px + var(--sa-b));
 }
 .write-focus-head{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -753,7 +758,7 @@ body::before{
   max-height:min(56vh, 520px); display:flex; flex-direction:column;
   background:var(--paper); border-top:1px solid var(--rule);
   border-radius:var(--r-lg) var(--r-lg) 0 0;
-  padding:14px 16px max(16px, env(safe-area-inset-bottom));
+  padding:14px 16px max(16px, var(--sa-b));
   box-shadow:0 -10px 30px rgba(0,0,0,.12);
   animation:style-sheet-up 200ms var(--ease) both;
 }
@@ -1040,6 +1045,15 @@ body::before{
   margin:12px 0 20px;
 }
 .confirm-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+/* the store apps' unlock slip, and the lock on a style it opens */
+.unlock-sheet > p:first-of-type{ margin-bottom:18px; }
+.unlock-buys{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.unlock-buys .btn{ min-width:0; justify-content:center; padding:0 12px; }
+.unlock-sheet .share-note{ margin:10px 0 0; }
+.unlock-minor{ margin-top:16px; }
+.lock-ico{ flex:none; vertical-align:-0.125em; }
+.style-pick .lock-ico{ font-size:12px; color:var(--ink-soft); }
 
 /* the tip jar's amount presets — pressed chips, same clothing as the format
    chips on the editor: chrome stays black-on-white, the pressed one inverts */
@@ -1515,7 +1529,7 @@ button.cover-tile{ padding:0; border:0; background:none; font:inherit; text-alig
   width:100%; max-width:560px;
   background:var(--paper); border:1px solid var(--rule); border-bottom:0;
   border-radius:var(--r-lg) var(--r-lg) 0 0;
-  padding:20px var(--gutter) calc(16px + env(safe-area-inset-bottom));
+  padding:20px var(--gutter) calc(16px + var(--sa-b));
   animation:drawer-up 240ms var(--ease) both;
 }
 @keyframes drawer-up{ from{ transform:translateY(100%); } }
@@ -1556,3 +1570,9 @@ button.cover-tile{ padding:0; border:0; background:none; font:inherit; text-alig
 /* a radio row of plain segments (Settings → Appearance) fills its row evenly */
 .field > .seg{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); }
 .field:has(> .seg) + .field{ margin-top:20px; }
+
+/* The store apps draw under the status bar (the web PWA doesn't: its status
+   bar style is "default"), so the page and the full-screen sheets step down. */
+.store-app .page{ padding-top:calc(28px + var(--sa-t)); }
+.store-app .share-scrim{ padding-top:calc(20px + var(--sa-t)); padding-bottom:calc(20px + var(--sa-b)); }
+.store-app .write-focus{ padding-top:calc(18px + var(--sa-t)); }

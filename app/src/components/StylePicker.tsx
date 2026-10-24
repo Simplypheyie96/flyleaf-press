@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from 'react'
+import { LockIcon } from './UnlockSheet'
 
 /* Twenty styles per picker. Folded inline it opened ten rows deep and pushed
    the card it was choosing for off the screen, so the closed row stays where
@@ -10,7 +11,11 @@ import { useState, type CSSProperties } from 'react'
    from Done or from the row that opened it.
 
    The review's hand uses the same sheet: no ground dots, and each name is
-   drawn in the face it names (`nameStyle`), so the choice can be seen. */
+   drawn in the face it names (`nameStyle`), so the choice can be seen.
+
+   In the store apps before the unlock, `free` marks the styles that cost
+   nothing; the rest carry a lock but stay pickable, so the card can be seen
+   in them before anyone pays. The export is what waits. */
 export function StylePicker<T extends string>({
   ids,
   names,
@@ -19,6 +24,7 @@ export function StylePicker<T extends string>({
   onChange,
   label = 'Style',
   nameStyle,
+  free,
 }: {
   ids: readonly T[]
   names: Record<T, string>
@@ -27,6 +33,7 @@ export function StylePicker<T extends string>({
   onChange: (id: T) => void
   label?: string
   nameStyle?: (id: T) => CSSProperties
+  free?: (id: T) => boolean
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -55,6 +62,7 @@ export function StylePicker<T extends string>({
             >
               {grounds && <span className="style-dot" style={{ background: grounds[id] }} />}
               <span className="style-pick-name" style={nameStyle?.(id)}>{names[id]}</span>
+              {free && !free(id) && <LockIcon />}
             </button>
           ))}
           </div>

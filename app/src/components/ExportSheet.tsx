@@ -4,6 +4,8 @@ import {
   canShareFiles, fileName, pixelSize, savesViaSystemSheet,
   type ExportMode, type ExportResult,
 } from '../share/export'
+import { androidApp } from '../native'
+import { UnlockSheet, LockIcon } from './UnlockSheet'
 
 /* One sheet for both ways out. Share and Save used to be two buttons on the
    page with a preview behind only one of them, so sharing — the thing the app
@@ -25,6 +27,7 @@ export function ExportSheet({
   build,
   exportImages,
   printPdf,
+  locked,
   onClose,
 }: {
   heading: string
@@ -46,8 +49,11 @@ export function ExportSheet({
   exportImages: (mode: ExportMode, shape: ExportShape) => Promise<ExportResult>
   /** present only when the Settings PDF toggle is on */
   printPdf?: () => void
+  /** store apps, before the unlock: why this card waits for it */
+  locked?: string
   onClose: () => void
 }) {
+  const [unlocking, setUnlocking] = useState(false)
   /* desktop browsers mostly can't hand files to another app — Share stays
      visible there and says why, rather than vanishing */
   const [shareable] = useState(canShareFiles)
@@ -177,6 +183,11 @@ export function ExportSheet({
           </p>
         )}
 
+        {locked ? (
+          <div className="share-acts">
+            <button className="btn" onClick={() => setUnlocking(true)}><LockIcon /> Unlock to share</button>
+          </div>
+        ) : <>
         <div className="share-acts">
           <button className="btn" onClick={() => run('share')} disabled={busy || !shareable}
             title={shareable ? undefined : 'This browser can’t pass files to other apps'}>
@@ -197,15 +208,24 @@ export function ExportSheet({
             {pages > 1 ? ` the ${pages} images` : ' the image'} to this device instead.
           </p>
         )}
-        {viaSheet && (
+        {viaSheet && (androidApp ? (
+          <p className="share-note">
+            Saving opens the share sheet — choose Photos or Files to keep {pages > 1 ? 'them' : 'it'}.
+          </p>
+        ) : (
           <p className="share-note">
             Saving opens the iOS sheet — choose <b>Save {pages > 1 ? 'Images' : 'Image'}</b> in it.
           </p>
+        ))}
+        </>}
+        {locked && (
+          <p className="share-note">{locked}</p>
         )}
         {done && <p className="share-note" role="status">{done}</p>}
       </div>
 
       {busy && <div className="busy">Preparing images…</div>}
+      {unlocking && <UnlockSheet onClose={() => setUnlocking(false)} />}
     </div>
   )
 }

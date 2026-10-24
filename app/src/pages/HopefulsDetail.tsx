@@ -10,6 +10,7 @@ import { CoverModal } from '../components/CoverModal'
 import { CarryOver } from '../components/Hopes'
 import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
+import { styleFree, useUnlocked } from '../unlock'
 import { faceUri } from '../components/Face'
 import { renderCollage, type MonthData } from '../cards/collage'
 import {
@@ -73,6 +74,7 @@ export function StoryShare({ h, settings, style, onStyle, onClose }: {
   onStyle: (s: StyleId) => void
   onClose: () => void
 }) {
+  const unlocked = useUnlocked()
   const story: MonthData = {
     name: monthName(h.month),
     books: [asReview(h)],
@@ -96,6 +98,7 @@ export function StoryShare({ h, settings, style, onStyle, onClose }: {
           value={style}
           onChange={onStyle}
           label="Card style"
+          free={unlocked ? undefined : styleFree}
         />
       }
       build={build}
@@ -103,6 +106,7 @@ export function StoryShare({ h, settings, style, onStyle, onClose }: {
       shapes={STORY_SHAPES}
       onShape={() => {}}
       exportImages={(mode: ExportMode) => shareStoryImage(story, style, mode)}
+      locked={unlocked || styleFree(style) ? undefined : 'Archive and Masthead share free. The other styles come with the unlock.'}
       onClose={onClose}
     />
   )
@@ -137,6 +141,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
      screen while it is the one being done. */
   const [tab, setTab] = useState<'list' | 'card'>('list')
   const [sharing, setSharing] = useState(false)
+  const unlocked = useUnlocked()
   /* which row's cover is being changed — an id, so the modal always reads the
      live row rather than a copy taken when it opened */
   const [coverFor, setCoverFor] = useState<number | null>(null)
@@ -479,6 +484,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
           onShape={(s) => db.settings.update(1, { exportShape: s })}
           exportImages={(mode: ExportMode, shape: ExportShape) =>
             shareCollageImage(data, style, mode, shape)}
+          locked={unlocked ? undefined : 'Collages come with the unlock. Reviews in Archive and Masthead share free.'}
           onClose={() => setSharing(false)}
         />
       )}

@@ -8,6 +8,8 @@ import { HANDS, handProps } from '../fonts'
 import { StarInput } from '../components/StarInput'
 import { DateField } from '../components/DateField'
 import { StylePicker } from '../components/StylePicker'
+import { UnlockSheet, LockIcon } from '../components/UnlockSheet'
+import { styleFree, useUnlocked } from '../unlock'
 import { coverToDataUrl, lookupPages, searchBooks, type Candidate } from '../catalog'
 import { MAX_TAGS, mergeTags, tagKey } from '../tags'
 import { todayIso } from '../format'
@@ -76,6 +78,8 @@ export function Write() {
      migration, and a review saved in it carries no `hand` at all. */
   const [hand, setHand] = useState<HandId>('kalam')
   const [plates, setPlates] = useState<Plate[]>([])
+  const unlocked = useUnlocked()
+  const [unlocking, setUnlocking] = useState(false)
 
   /* cover: candidate index, an uploaded dataURL, or explicitly none.
      Candidates persist on the row (the Flyleaf pattern), so editing a review
@@ -466,7 +470,13 @@ export function Write() {
               </div>
             ))}
           </div>
-          {plates.length < 4 && (
+          {plates.length < 4 && !unlocked && (
+            <button type="button" className="btn btn--ghost btn--sm" style={{ width: 'max-content' }}
+              onClick={() => setUnlocking(true)}>
+              <LockIcon /> Add a photo
+            </button>
+          )}
+          {plates.length < 4 && unlocked && (
             <label className="btn btn--ghost btn--sm" style={{ width: 'max-content' }}>
               Add a photo
               <input type="file" accept="image/*" hidden
@@ -483,7 +493,8 @@ export function Write() {
         <section className="form-sec">
           <h2 className="ui-lbl form-sec-h">The card</h2>
           <div className="field">
-            <StylePicker ids={STYLE_IDS} names={STYLE_NAMES} grounds={STYLE_GROUNDS} value={style} onChange={setStyle} />
+            <StylePicker ids={STYLE_IDS} names={STYLE_NAMES} grounds={STYLE_GROUNDS} value={style} onChange={setStyle}
+              free={unlocked ? undefined : styleFree} />
           </div>
         </section>
 
@@ -567,6 +578,7 @@ export function Write() {
           </div>
         </div>
       )}
+      {unlocking && <UnlockSheet onClose={() => setUnlocking(false)} />}
     </div>
   )
 }

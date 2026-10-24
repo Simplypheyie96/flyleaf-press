@@ -7,6 +7,7 @@ import { STYLE_IDS, YEAR_COLLAGE_IDS, STYLE_NAMES, STYLE_GROUNDS, liveStyle } fr
 import { CollapsedCard } from '../components/CollapsedCard'
 import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
+import { useUnlocked } from '../unlock'
 import { renderCollage, type MonthData } from '../cards/collage'
 import {
   shareCollageImage, buildCollagePage, collageBaseName, type ExportMode,
@@ -41,6 +42,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
   /* one way out — the sheet shows the collage, its shape, and both
      destinations */
   const [sharing, setSharing] = useState(false)
+  const unlocked = useUnlocked()
 
   const books = useLiveQuery(
     () => db.reviews.orderBy('finished').toArray((all) => all.filter((r) => keyOf(r.finished) === key)),
@@ -137,6 +139,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
           onShape={(s) => db.settings.update(1, { exportShape: s })}
           exportImages={(mode: ExportMode, shape: ExportShape) =>
             shareCollageImage(month, shown, mode, shape)}
+          locked={unlocked ? undefined : 'Collages come with the unlock. Reviews in Archive and Masthead share free.'}
           onClose={() => setSharing(false)}
         />
       )}
