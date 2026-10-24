@@ -1571,6 +1571,18 @@ button.cover-tile{ padding:0; border:0; background:none; font:inherit; text-alig
 .store-app .tabbar{ bottom:max(14px, var(--sa-b)); }
 .store-app .style-sheet{ padding-bottom:max(16px, var(--sa-b)); }
 .store-app .drawer{ padding-bottom:calc(16px + var(--sa-b)); }
+/* A status column down the right edge (iPhone Duo) keeps its clock and camera in
+   the top corner; the page flows round that corner and uses the rest of the column. */
+@media (orientation:portrait){
+  .store-app{
+    --cw:var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+    --ch:calc(var(--cw) * 1.9);
+  }
+  .store-app .page-inner::before{ content:""; float:right; width:var(--cw); height:calc(var(--ch) - 28px - var(--sa-t)); margin-left:8px; }
+  .store-app .seg--full{ width:auto; }
+  .store-app .write-focus-head{ padding-right:var(--cw); }
+  .store-app .share-scrim{ padding-top:max(calc(20px + var(--sa-t)), var(--ch)); }
+}
 
 /* the store apps' unlock slip, and the lock on a style it opens */
 .unlock-sheet > p:first-of-type{ margin-bottom:18px; }
