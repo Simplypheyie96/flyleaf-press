@@ -16,7 +16,7 @@ import { paragraphs } from '../format'
 import { fontEmbedCss } from '../fonts'
 import { isIOS } from '../pwa'
 import { encodePng, CAN_STREAM_PNG } from './png'
-import { shareFiles, storeApp } from '../native'
+import { BRAND, shareFiles, storeApp } from '../native'
 
 /* Neither layout splits. The wide one stopped first, on the argument that a
    leaf which can grow is the whole point of a printed card and a page break
@@ -114,7 +114,7 @@ export function paginateReview(
     if (all.length > 1)
       all.forEach((p, i) => {
         ;(p.querySelector('.share-page-no') as HTMLElement).textContent =
-          `Flyleaf Press · Nº ${rec.no} · ${i + 1}`
+          `${BRAND} · Nº ${rec.no} · ${i + 1}`
       })
     return ground(all, shape)
   }
@@ -1137,7 +1137,7 @@ export function printReviewPdf(rec: Review, style: StyleId): void {
 /* Whole-library PDF: every review paginated in its own saved style, all the
    pages in one print host, oldest finish first — the shelf as one document. */
 export function printLibraryPdf(reviews: Review[]): void {
-  if (storeApp) return void sharePdf(reviews, 'flyleaf-press-library.pdf')
+  if (storeApp) return void sharePdf(reviews, 'bookprint-library.pdf')
   const host = makeHost()
   host.style.cssText = 'position:fixed;left:0;top:0;width:720px;z-index:9999;background:#fff;'
   host.classList.add('print-host')

@@ -8,7 +8,7 @@ import type { Plate, Review, StyleId } from '../types'
 import { FORMAT_NAMES } from '../types'
 import { escapeHtml, fmtRating, paragraphs, prettyDate } from '../format'
 import { handVars } from '../fonts'
-import { ART, cancel, mark, patch, pclip, staple, starSvg } from './assets'
+import { ART, BRAND, cancel, mark, patch, pclip, staple, starSvg } from './assets'
 
 function starRow(r: number, size: number): string {
   let out = ''
@@ -101,7 +101,7 @@ function body(rec: Review, marginTop: number, cls = ''): string {
 }
 
 function colophon(rec: Review): string {
-  return `<div class="colo">${mark(13)}<span>Flyleaf Press · Nº ${rec.no}</span></div>`
+  return `<div class="colo">${mark(13)}<span>${BRAND} · Nº ${rec.no}</span></div>`
 }
 
 function seriesLine(rec: Review): string {
@@ -291,7 +291,7 @@ function jacket(rec: Review): string {
     ${patch(150)}
     <div class="s6-band">
       <div class="s6-kick">
-        <span class="lbl">Flyleaf Press</span>
+        <span class="lbl">${BRAND}</span>
         <span class="lbl">Nº ${rec.no}</span>
       </div>
       <h2 class="title s6-title">${escapeHtml(rec.title)}</h2>
@@ -530,7 +530,7 @@ function passport(rec: Review): string {
     <div class="pp-in">
       ${patch(170)}
       <div class="pp-head">
-        <span class="lbl">Flyleaf Press · Reader's passport</span>
+        <span class="lbl">${BRAND} · Reader's passport</span>
         <span class="lbl">Nº ${rec.no}</span>
       </div>
       <hr class="pp-rule">
@@ -666,7 +666,7 @@ function receipt(rec: Review): string {
     ${patch(170)}
     <div class="rc-head">
       ${mark(18)}
-      <div class="rc-shop">Flyleaf Press</div>
+      <div class="rc-shop">${BRAND}</div>
       <div class="lbl">Receipt · Nº ${rec.no}</div>
     </div>
     <hr class="rc-cut">
@@ -703,7 +703,7 @@ function library(rec: Review): string {
     <div class="sheet">
     ${patch(170)}
     <div class="lb-head">
-      <span class="lbl">Library card · Flyleaf Press</span>
+      <span class="lbl">Library card · ${BRAND}</span>
       <span class="lbl">Nº ${rec.no}</span>
     </div>
     <div class="lb-top">
@@ -762,7 +762,7 @@ function trading(rec: Review): string {
       ${body(rec, 20)}
       ${plateRow(rec)}
       <div class="tc-set">
-        <span class="lbl">Flyleaf Press · Card Nº ${rec.no}</span>
+        <span class="lbl">${BRAND} · Card Nº ${rec.no}</span>
         ${mark(13)}
       </div>
     </div>
@@ -779,7 +779,7 @@ function booth(rec: Review): string {
     <div class="sheet">
     ${patch(170)}
     <div class="pb-head">
-      <span class="lbl">Photo booth · Flyleaf Press</span>
+      <span class="lbl">Photo booth · ${BRAND}</span>
       <span class="lbl">Nº ${rec.no}</span>
     </div>
     <div class="pb-top">
@@ -828,7 +828,7 @@ function bingo(rec: Review): string {
     ${patch(170)}
     <div class="bg-head">
       <span class="bg-word" aria-hidden="true">BINGO</span>
-      <span class="lbl">Flyleaf Press · Nº ${rec.no}</span>
+      <span class="lbl">${BRAND} · Nº ${rec.no}</span>
     </div>
     <h2 class="title bg-title">${escapeHtml(rec.title)}</h2>
     <div class="by bg-by">${escapeHtml(rec.author)}</div>
@@ -857,7 +857,7 @@ function seedpacket(rec: Review): string {
     <div class="sheet">
     ${patch(170)}
     <div class="sp-head">
-      <span class="lbl">Seed packet · Flyleaf Press</span>
+      <span class="lbl">Seed packet · ${BRAND}</span>
       <span class="lbl">Nº ${rec.no}</span>
     </div>
     <div class="sp-top">
@@ -891,7 +891,7 @@ function hoop(rec: Review): string {
     <div class="sheet">
     ${patch(170)}
     <div class="eh-head">
-      <span class="lbl">Embroidery hoop · Flyleaf Press</span>
+      <span class="lbl">Embroidery hoop · ${BRAND}</span>
       <span class="lbl">Nº ${rec.no}</span>
     </div>
     <div class="eh-top">
@@ -922,7 +922,7 @@ function chintz(rec: Review): string {
     <div class="cz-label">
       ${patch(170)}
       <div class="cz-head">
-        <span class="lbl">Chintz · Flyleaf Press</span>
+        <span class="lbl">Chintz · ${BRAND}</span>
         <span class="lbl">Nº ${rec.no}</span>
       </div>
       <div class="cz-top">

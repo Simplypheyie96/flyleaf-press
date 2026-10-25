@@ -5,7 +5,7 @@
 import type { Review, StyleId } from '../types'
 import { SHAPE_CARD_W } from '../types'
 import { escapeHtml, fmtRating, monthKey, monthName } from '../format'
-import { mark, starSvg } from './assets'
+import { BRAND, mark, starSvg } from './assets'
 
 export interface MonthData {
   name: string
@@ -137,7 +137,7 @@ function moHead(m: MonthData, id: HeadId): string {
      the month and the count is in frames */
   if (id === 'c1')
     return `<div class="mo-head mo-head--c1">
-      <div class="mo-kick">Contact sheet · Flyleaf Press</div>
+      <div class="mo-kick">Contact sheet · ${BRAND}</div>
       <div class="mo-title">${t}</div>
       ${cnt(`<div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} frame${n === 1 ? '' : 's'}`)}</span></div>`)}
     </div>`
@@ -153,7 +153,7 @@ function moHead(m: MonthData, id: HeadId): string {
   /* C3 · centred and perforated, like the top of a stub book */
   if (id === 'c3')
     return `<div class="mo-head mo-head--c3">
-      <div class="mo-kick">Box office · Flyleaf Press</div>
+      <div class="mo-kick">Box office · ${BRAND}</div>
       <div class="mo-title">${t}</div>
       <div class="mo-perf"></div>
       ${cnt(`<div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} stub${n === 1 ? '' : 's'}`)}</span></div>`)}
@@ -188,7 +188,7 @@ function moHead(m: MonthData, id: HeadId): string {
   if (id === 'c7')
     return `<div class="mo-head mo-head--c7">
       <div class="mo-lamps" aria-hidden="true"></div>
-      <div class="mo-kick">Now showing · Flyleaf Press</div>
+      <div class="mo-kick">Now showing · ${BRAND}</div>
       <div class="mo-title">${t}</div>
       ${cnt(`<div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} feature${n === 1 ? '' : 's'}`)}</span></div>`)}
       <div class="mo-lamps" aria-hidden="true"></div>
@@ -200,7 +200,7 @@ function moHead(m: MonthData, id: HeadId): string {
   if (id === 'c8')
     return `<div class="mo-head mo-head--c8">
       <div class="mo-label">
-        <div class="mo-kick">Cabinet of read things · Flyleaf Press</div>
+        <div class="mo-kick">Cabinet of read things · ${BRAND}</div>
         <div class="mo-title">${t}</div>
         ${cnt(`<div class="mo-sub">${mark(13)}<span class="lbl">${num(`${n} sheet${n === 1 ? '' : 's'}`)}</span></div>`)}
       </div>
@@ -213,7 +213,7 @@ function moHead(m: MonthData, id: HeadId): string {
   if (id === 'c9')
     return `<div class="mo-head mo-head--c9">
       <hr class="mo-bill-rule">
-      <div class="mo-kick">${cnt(`${num(`${n} turn${n === 1 ? '' : 's'}`)} · `)}Flyleaf Press presents</div>
+      <div class="mo-kick">${cnt(`${num(`${n} turn${n === 1 ? '' : 's'}`)} · `)}${BRAND} presents</div>
       <div class="mo-title">${t}</div>
       <div class="mo-sub">${mark(13)}<span class="lbl">One night only</span></div>
       <hr class="mo-bill-rule">
@@ -232,7 +232,7 @@ function moHead(m: MonthData, id: HeadId): string {
         </div>
         <span class="mo-hub" aria-hidden="true"></span>
       </div>
-      <div class="mo-sub">${mark(12)}<span class="lbl">Flyleaf Press · recorded at home</span></div>
+      <div class="mo-sub">${mark(12)}<span class="lbl">${BRAND} · recorded at home</span></div>
     </div>`
 
   /* C11 · a data page states its own type and code before anything else, in
@@ -241,7 +241,7 @@ function moHead(m: MonthData, id: HeadId): string {
   if (id === 'c11')
     return `<div class="mo-head mo-head--c11">
       <div class="mo-doc">
-        <span class="lbl">Type P · Flyleaf Press</span>
+        <span class="lbl">Type P · ${BRAND}</span>
         ${cnt(`<span class="lbl">${num(`${n} entr${n === 1 ? 'y' : 'ies'}`)}</span>`)}
       </div>
       <hr class="mo-doc-rule">
@@ -253,7 +253,7 @@ function moHead(m: MonthData, id: HeadId): string {
      because a case of type is counted in sorts. */
   if (id === 'c12')
     return `<div class="mo-head mo-head--c12">
-      <div class="mo-kick">Specimen sheet · Flyleaf Press</div>
+      <div class="mo-kick">Specimen sheet · ${BRAND}</div>
       <div class="mo-set">
         <div class="mo-title">${t}</div>
         ${cnt(`<span class="lbl">${num(`${n} sort${n === 1 ? '' : 's'}`)}</span>`)}
@@ -265,7 +265,7 @@ function moHead(m: MonthData, id: HeadId): string {
      it, and the tear-off rule a receipt is cut along */
   if (id === 'c13')
     return `<div class="mo-head mo-head--c13">
-      <div class="mo-kick">Flyleaf Press · Reading receipt</div>
+      <div class="mo-kick">${BRAND} · Reading receipt</div>
       <div class="mo-title">${t}</div>
       ${cnt(`<span class="lbl">${num(`${n} item${n === 1 ? '' : 's'}`)}</span>`)}
       <hr class="mo-cut">
@@ -275,7 +275,7 @@ function moHead(m: MonthData, id: HeadId): string {
      borrower line, and the loan count right, over a doubled rule */
   if (id === 'c14')
     return `<div class="mo-head mo-head--c14">
-      <div class="mo-kick">Library card · Flyleaf Press</div>
+      <div class="mo-kick">Library card · ${BRAND}</div>
       <div class="mo-set">
         <div class="mo-title">${t}</div>
         ${cnt(`<span class="lbl">${num(`${n} loan${n === 1 ? '' : 's'}`)}</span>`)}
@@ -315,7 +315,7 @@ function moHead(m: MonthData, id: HeadId): string {
   /* C18 · the rack's header board: centred, with a dashed fold under it */
   if (id === 'c18')
     return `<div class="mo-head mo-head--c18">
-      <div class="mo-kick">Seed rack · Flyleaf Press</div>
+      <div class="mo-kick">Seed rack · ${BRAND}</div>
       <div class="mo-title">${t}</div>
       ${cnt(`<span class="lbl">${num(`${n} packet${n === 1 ? '' : 's'}`)}</span>`)}
     </div>`
@@ -332,7 +332,7 @@ function moHead(m: MonthData, id: HeadId): string {
      own, because type cannot be read off the sprigs */
   if (id === 'c20')
     return `<div class="mo-head mo-head--c20">
-      <div class="mo-kick">Laid for tea · Flyleaf Press</div>
+      <div class="mo-kick">Laid for tea · ${BRAND}</div>
       <div class="mo-title">${t}</div>
       ${cnt(`<span class="lbl">${num(`${n} book${n === 1 ? '' : 's'}`)}</span>`)}
     </div>`
@@ -502,7 +502,7 @@ function moStats(m: MonthData, id: HeadId): string {
      The grid is what makes it a form rather than a list. */
   if (id === 'c6')
     return `<div class="mo-stats mo-stats--customs">
-      <div class="mo-cn"><span class="lbl">Declaration</span><span class="lbl">Flyleaf Press · CN22</span></div>
+      <div class="mo-cn"><span class="lbl">Declaration</span><span class="lbl">${BRAND} · CN22</span></div>
       <div class="mo-cells">
         ${st.map((x) => `<div class="mo-cell"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
       </div>
@@ -523,7 +523,7 @@ function moStats(m: MonthData, id: HeadId): string {
      A label states; a receipt adds up. */
   if (id === 'c8')
     return `<div class="mo-stats mo-stats--label">
-      <div class="mo-lab-head"><span class="lbl">Summary</span><span class="lbl">Flyleaf Press</span></div>
+      <div class="mo-lab-head"><span class="lbl">Summary</span><span class="lbl">${BRAND}</span></div>
       <div class="mo-lab-grid">
         ${st.map((x) => `<div class="mo-lab"><span class="lbl">${x.label}</span><b>${x.value}</b></div>`).join('')}
       </div>
@@ -1695,7 +1695,7 @@ export function renderStory(m: MonthData, style: StyleId): string {
     </div>
     <div class="st-foot">
       ${sig}
-      <div class="colo st-colo">${mark(13)}<span>Flyleaf Press</span></div>
+      <div class="colo st-colo">${mark(13)}<span>${BRAND}</span></div>
     </div>`
 
   /* Chintz sets its type on a cream place card, because nothing can be read

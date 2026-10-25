@@ -12,6 +12,8 @@ export const iosApp = platform === 'ios'
 export const androidApp = platform === 'android'
 export const storeApp = iosApp || androidApp
 export const STORE = androidApp ? 'Google Play' : 'the App Store'
+/* The store apps are Bookprint; the web keeps the Flyleaf Press name and rosette. */
+export const BRAND = storeApp ? 'Bookprint' : 'Flyleaf Press'
 
 if (storeApp) document.documentElement.classList.add('store-app')
 

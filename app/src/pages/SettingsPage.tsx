@@ -16,7 +16,7 @@ import { bury, deleteEverything, exportLibrary, mergeLibrary } from '../sync/bac
 import { SyncPanel } from '../components/SyncPanel'
 import { clearAccount } from '../sync/sync'
 import { useInstall, promptInstall, checkForUpdate } from '../pwa'
-import { shareFiles, storeApp } from '../native'
+import { BRAND, shareFiles, storeApp } from '../native'
 import { useUnlocked } from '../unlock'
 import { UnlockSheet } from '../components/UnlockSheet'
 
@@ -100,7 +100,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
     const data = await exportLibrary()
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     if (storeApp) {
-      const name = 'flyleaf-press-library.json'
+      const name = 'bookprint-library.json'
       if (await shareFiles([new File([blob], name, { type: 'application/json' })], name))
         setMsg(`Exported ${data.reviews.length} review${data.reviews.length === 1 ? '' : 's'}.`)
       return
@@ -512,7 +512,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           <div className="about-top">
             <Mark size={38} />
             <div>
-              <div className="about-name">{storeApp ? 'Bookprint' : 'Flyleaf Press'}</div>
+              <div className="about-name">{BRAND}</div>
               <div className="ui-lbl">Long book reviews, printed</div>
             </div>
           </div>
@@ -577,7 +577,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           title="Import from"
           body="Imported reviews are added to the shelf — nothing already here is replaced without asking."
           choices={[
-            { id: 'json', label: 'JSON · backup', detail: 'A file exported from Flyleaf Press on this or another device.' },
+            { id: 'json', label: 'JSON · backup', detail: storeApp ? 'A file exported from Bookprint, or from Flyleaf Press on the web.' : 'A file exported from Flyleaf Press on this or another device.' },
             /* Goodreads has had no API since December 2020 — no new keys were
                issued, existing ones answer 403, and it sends no CORS headers,
                so even the RSS feed is unreadable from a browser. The export

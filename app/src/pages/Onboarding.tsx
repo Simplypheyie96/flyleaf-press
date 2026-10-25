@@ -4,7 +4,7 @@ import type { Settings } from '../types'
 import { FacePicker } from '../components/Face'
 import { mark } from '../cards/assets'
 import { RestoreNotice } from '../components/RestoreNotice'
-import { storeApp } from '../native'
+import { BRAND, storeApp } from '../native'
 
 /* Launch screen: a name and a face, nothing else. Style choices belong to
    share time (and defaults live in Settings) — the first run shouldn't ask
@@ -33,7 +33,7 @@ export function Onboarding({ settings, onDone }: { settings: Settings; onDone: (
     <div className="onb">
       <div className="onb-inner">
         <div className="onb-mark" dangerouslySetInnerHTML={{ __html: mark(44) }} />
-        <h1>Flyleaf Press</h1>
+        <h1>{BRAND}</h1>
         {/* The line the launch image, the OG card and the About panel all
             carry. It is the app in two clauses; the paragraph that used to be
             here explained pagination to someone who had not written anything

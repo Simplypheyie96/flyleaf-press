@@ -6,6 +6,7 @@ import type { Hopeful, Settings, StyleId } from '../types'
 import { STYLE_GROUNDS, liveStyle } from '../types'
 import { Face } from '../components/Face'
 import { InstallNotice } from '../components/InstallNotice'
+import { BRAND } from '../native'
 import { StoryShare } from './HopefulsDetail'
 import { CarryOver, HopeRail, HopeRow, ReadingList, shiftMonth, useHopes } from '../components/Hopes'
 import { fmtRating, monthKey, monthName, currentMonthKey } from '../format'
@@ -53,7 +54,7 @@ export function Home({ settings }: { settings: Settings }) {
           <div>
             <div className="home-hello">{partOfDay()}{settings.name ? ',' : ''}</div>
             {settings.name && <div className="home-who">{settings.name}</div>}
-            <div className="home-tally">Flyleaf Press · {year}</div>
+            <div className="home-tally">{BRAND} · {year}</div>
           </div>
           {settings.face && <Face seed={settings.face} size={54} />}
         </header>

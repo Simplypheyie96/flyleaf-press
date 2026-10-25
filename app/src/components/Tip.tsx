@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { BRAND } from '../native'
 
 /* The tip jar — an invitation, never a gate.
 
@@ -196,7 +197,7 @@ export function Tip() {
       <div className="set-row">
         <div className="set-row-txt">
           <div className="ui-lbl">Thank you</div>
-          <p>That keeps Flyleaf Press free for everyone else.</p>
+          <p>That keeps {BRAND} free for everyone else.</p>
         </div>
         {stage.amount > 0 && (
           <span className="set-row-note">{money(stage.amount, stage.currency)}</span>

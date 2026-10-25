@@ -209,10 +209,10 @@ export async function mergeLibrary(
   try {
     data = JSON.parse(text) as LibraryFile
   } catch {
-    throw new Error('That file isn’t readable — it doesn’t look like a Flyleaf Press export.')
+    throw new Error('That file isn’t readable — it doesn’t look like a Flyleaf Press or Bookprint export.')
   }
   if (!Array.isArray(data?.reviews)) {
-    throw new Error('That file isn’t a Flyleaf Press library.')
+    throw new Error('That file isn’t a Flyleaf Press or Bookprint library.')
   }
 
   const [mine, myGraves] = await Promise.all([db.reviews.toArray(), db.graves.toArray()])

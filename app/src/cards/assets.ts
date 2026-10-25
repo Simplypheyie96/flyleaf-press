@@ -3,8 +3,19 @@
    fifth take: a thin, small, near-vertical silver wire matching the reference —
    no chunky loops, no heavy gradient, barely-there shadow. */
 
-export const MARK =
+import { BRAND, storeApp } from '../native'
+
+const ROSETTE =
   'M256 57.6 A74.67 59.73 -90 1 1 256 206.93 A74.67 59.73 -90 1 1 256 57.6 Z M444.69 194.69 A74.67 59.73 -18 1 1 302.66 240.85 A74.67 59.73 -18 1 1 444.69 194.69 Z M372.61 416.51 A74.67 59.73 54 1 1 284.84 295.68 A74.67 59.73 54 1 1 372.61 416.51 Z M139.39 416.51 A74.67 59.73 126 1 1 227.16 295.68 A74.67 59.73 126 1 1 139.39 416.51 Z M67.31 194.69 A74.67 59.73 198 1 1 209.34 240.85 A74.67 59.73 198 1 1 67.31 194.69 Z M217.6 256 A38.4 38.4 0 1 1 294.4 256 A38.4 38.4 0 1 1 217.6 256 Z'
+
+/* Bookprint's mark in the store apps: the shelf from its app icon, three
+   spines (the last one leaning) on a ledge, one colour like the rosette. */
+const SHELF =
+  'M96 136H172V392H96Z M190 104H266V392H190Z M352.39 145.51 L424.78 160.89 L372.38 407.39 L300 392Z M88 392H424A16 16 0 0 1 424 424H88A16 16 0 0 1 88 392Z'
+
+export const MARK = storeApp ? SHELF : ROSETTE
+
+export { BRAND }
 
 export function mark(size: number, cls?: string): string {
   return `<svg class="${cls || ''}" width="${size}" height="${size}" viewBox="0 0 512 512" aria-hidden="true"><path d="${MARK}" fill="currentColor"/></svg>`
