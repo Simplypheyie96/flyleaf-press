@@ -476,7 +476,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
 
         {msg && <p className="field-hint" role="status" style={{ marginTop: 14 }}>{msg}</p>}
 
-        {/* Companion apps — Flyleaf Journal and Flyleaf Ereader */}
+        {/* Companion apps — Flyleaf Journal and the reader (Octavo in the stores) */}
         <div className="panel">
           <div className="ui-lbl" style={{ marginBottom: 12 }}>Also from Flyleaf</div>
           <a
@@ -499,8 +499,8 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             style={{ textDecoration: 'none', color: 'inherit' }}
           >
             <div className="set-row-txt">
-              <div className="ui-lbl">Flyleaf Ereader ↗</div>
-              <p>Read your EPUB books in a clean, distraction-free web reader.</p>
+              <div className="ui-lbl">{storeApp ? 'Octavo' : 'Flyleaf eReader'} ↗</div>
+              <p>Read your EPUB and PDF books in a clean, distraction-free reader.</p>
             </div>
           </a>
         </div>
@@ -512,7 +512,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           <div className="about-top">
             <Mark size={38} />
             <div>
-              <div className="about-name">Flyleaf Press</div>
+              <div className="about-name">{storeApp ? 'Bookprint' : 'Flyleaf Press'}</div>
               <div className="ui-lbl">Long book reviews, printed</div>
             </div>
           </div>
