@@ -5,7 +5,7 @@
 import type { Review, StyleId } from '../types'
 import { SHAPE_CARD_W } from '../types'
 import { escapeHtml, fmtRating, monthKey, monthName } from '../format'
-import { BRAND, mark, starSvg } from './assets'
+import { BRAND, MRZ_BRAND, mark, starSvg } from './assets'
 
 export interface MonthData {
   name: string
@@ -1305,7 +1305,7 @@ function passport(m: MonthData): string {
           </div>`).join('')}
       </div>
       <div class="pp-mrz vp-mrz">
-        <div>P&lt;FLYPRESS&lt;${mrz(m.name, 30)}</div>
+        <div>P&lt;${MRZ_BRAND}&lt;${mrz(m.name, 30)}</div>
         <div>${mrz(`${n}${tbr(m) ? 'HOPEFULS' : 'BOOKS'}`, 20)}${mrz(monthKey(m.books[0]?.finished || ''), 14)}</div>
       </div>
     </div>

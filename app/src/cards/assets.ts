@@ -16,6 +16,8 @@ const SHELF =
 export const MARK = storeApp ? SHELF : ROSETTE
 
 export { BRAND }
+/** The passport cards' machine-readable line names the app. */
+export const MRZ_BRAND = storeApp ? 'BOOKPRINT' : 'FLYPRESS'
 
 export function mark(size: number, cls?: string): string {
   return `<svg class="${cls || ''}" width="${size}" height="${size}" viewBox="0 0 512 512" aria-hidden="true"><path d="${MARK}" fill="currentColor"/></svg>`

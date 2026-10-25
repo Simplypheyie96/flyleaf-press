@@ -8,7 +8,7 @@ import type { Plate, Review, StyleId } from '../types'
 import { FORMAT_NAMES } from '../types'
 import { escapeHtml, fmtRating, paragraphs, prettyDate } from '../format'
 import { handVars } from '../fonts'
-import { ART, BRAND, cancel, mark, patch, pclip, staple, starSvg } from './assets'
+import { ART, BRAND, MRZ_BRAND, cancel, mark, patch, pclip, staple, starSvg } from './assets'
 
 function starRow(r: number, size: number): string {
   let out = ''
@@ -557,7 +557,7 @@ function passport(rec: Review): string {
         ${fmtRow(rec, 'pp-fmt', false)}
       </div>
       <div class="pp-mrz">
-        <div>P&lt;FLYPRESS&lt;${mrz(rec.title, 30)}</div>
+        <div>P&lt;${MRZ_BRAND}&lt;${mrz(rec.title, 30)}</div>
         <div>${mrz(rec.author, 20)}${mrz(String(rec.no), 4)}${mrz((rec.finished || '').replace(/-/g, ''), 10)}</div>
       </div>
       ${body(rec, 26)}
