@@ -26,6 +26,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Bookprint uses the camera only when you choose to photograph a book cover.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Bookprint saves the review cards you make to your photo library.</string>
 	<key>UIApplicationSceneManifest</key>

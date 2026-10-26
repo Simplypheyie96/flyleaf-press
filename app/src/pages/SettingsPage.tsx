@@ -476,8 +476,9 @@ export function SettingsPage({ settings }: { settings: Settings }) {
 
         {msg && <p className="field-hint" role="status" style={{ marginTop: 14 }}>{msg}</p>}
 
-        {/* Companion apps — Flyleaf Journal and the reader (Octavo in the stores) */}
-        <div className="panel">
+        {/* Companion apps — Flyleaf Journal and the reader. Web only: the store
+            build doesn't send people out to web apps. */}
+        {!storeApp && <div className="panel">
           <div className="ui-lbl" style={{ marginBottom: 12 }}>Also from Flyleaf</div>
           <a
             href="https://flyleaf.cc/"
@@ -499,11 +500,11 @@ export function SettingsPage({ settings }: { settings: Settings }) {
             style={{ textDecoration: 'none', color: 'inherit' }}
           >
             <div className="set-row-txt">
-              <div className="ui-lbl">{storeApp ? 'Octavo' : 'Flyleaf eReader'} ↗</div>
+              <div className="ui-lbl">Flyleaf eReader ↗</div>
               <p>Read your EPUB and PDF books in a clean, distraction-free reader.</p>
             </div>
           </a>
-        </div>
+        </div>}
 
         {/* what this thing is, in the place people look when they want to know.
             The launch screen says the same in one line; this is the longer
@@ -532,6 +533,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           <p>
             <a href="https://feyidesigns.com/apps/flyleaf-bookprint/privacy/" target="_blank" rel="noopener noreferrer">Privacy policy</a>
             {' · '}
+            {storeApp && <><a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Terms of Use</a>{' · '}</>}
             <a href="https://feyidesigns.com/apps/flyleaf-bookprint/" target="_blank" rel="noopener noreferrer">Support</a>
           </p>
           {/* the check sits beside the number it checks, at the very bottom

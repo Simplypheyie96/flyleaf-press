@@ -66,6 +66,11 @@ export function UnlockSheet({ onClose }: { onClose: () => void }) {
           <button className="btn btn--ghost" onClick={onClose}>Not now</button>
         </div>
         {note && <p className="share-note" role="status">{note}</p>}
+        <p className="share-note">
+          <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Terms of Use</a>
+          {' · '}
+          <a href="https://feyidesigns.com/apps/flyleaf-bookprint/privacy/" target="_blank" rel="noopener noreferrer">Privacy</a>
+        </p>
       </div>
     </div>
   )
