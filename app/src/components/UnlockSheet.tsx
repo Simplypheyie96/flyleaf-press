@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { buy, cancelled, prices, restore, type Product } from '../unlock'
 import { STORE } from '../native'
 
@@ -15,57 +15,78 @@ export const LockIcon = () => (
    store's own sheet does the paying; this slip only says what is bought. */
 export function UnlockSheet({ onClose }: { onClose: () => void }) {
   const [price, setPrice] = useState<Partial<Record<Product, string>>>({})
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<Product | 'restore' | null>(null)
   const [note, setNote] = useState('')
+  const first = useRef<HTMLButtonElement>(null)
+  // A store sheet is up while busy: closing now would lose its answer.
+  const shut = () => { if (!busy) onClose() }
 
   useEffect(() => {
     prices().then(setPrice).catch(() => setNote(`Couldn’t reach ${STORE}. Check the connection and try again.`))
   }, [])
+  // Focus comes in with the sheet and goes back where it was when it leaves.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+    const back = document.activeElement as HTMLElement | null
+    first.current?.focus()
+    return () => back?.focus?.()
+  }, [])
+  // Capture, so Escape closes this slip and not the export sheet under it too.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      shut()
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  })
 
-  const act = async (f: () => Promise<boolean>, miss: string) => {
-    setBusy(true)
-    setNote('')
+  const act = async (which: Product | 'restore', f: () => Promise<boolean>, miss: string, done: string) => {
+    setBusy(which)
+    setNote(which === 'restore' ? `Checking with ${STORE}…` : '')
     try {
-      if (await f()) onClose()
-      else setNote(miss)
+      if (await f()) {
+        setNote(done)
+        window.setTimeout(onClose, 1400)
+      } else setNote(miss)
     } catch (e) {
-      if (!cancelled(e)) setNote(`${STORE} didn’t finish that. Nothing was charged.`)
+      setNote(cancelled(e) ? '' : 'The purchase did not go through. Nothing was charged.')
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
+  const label = (p: Product, name: string) =>
+    busy === p ? `Opening ${STORE}…` : `${name}${price[p] ? ` · ${price[p]}` : ''}`
 
   return (
-    <div className="share-scrim" role="dialog" aria-modal="true" aria-label="Unlock everything"
-      onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="share-scrim" role="dialog" aria-modal="true" aria-labelledby="unlock-title"
+      onClick={(e) => e.target === e.currentTarget && shut()}>
       <div className="confirm-sheet unlock-sheet">
-        <div className="ui-lbl">Unlock everything</div>
+        <h2 className="ui-lbl" id="unlock-title">Unlock everything</h2>
         <p>
           All twenty card styles, monthly and yearly collages, PDF, and image
           plates. Pay once and keep it, on this device and your next one.
         </p>
         <div className="unlock-buys">
-          <button className="btn" disabled={busy} onClick={() => act(() => buy('unlock'), 'The purchase is waiting on approval.')}>
-            Unlock{price.unlock ? ` · ${price.unlock}` : ''}
+          <button ref={first} className="btn" disabled={!!busy}
+            onClick={() => act('unlock', () => buy('unlock'), 'The purchase is waiting on approval.', 'Unlocked. Thank you.')}>
+            {label('unlock', 'Unlock')}
           </button>
-          <button className="btn btn--ghost" disabled={busy} onClick={() => act(() => buy('supporter'), 'The purchase is waiting on approval.')}>
-            Supporter{price.supporter ? ` · ${price.supporter}` : ''}
+          <button className="btn btn--ghost" disabled={!!busy}
+            onClick={() => act('supporter', () => buy('supporter'), 'The purchase is waiting on approval.', 'Unlocked. Thank you for the extra.')}>
+            {label('supporter', 'Supporter')}
           </button>
         </div>
         <p className="share-note">Both unlock the same things. Supporter pays a little more toward the app.</p>
         <div className="confirm-actions unlock-minor">
-          <button className="btn btn--ghost" disabled={busy}
-            onClick={() => act(restore, `No purchase found on this ${STORE === 'Google Play' ? 'Google' : 'Apple'} account.`)}>
-            Restore purchases
+          <button className="btn btn--ghost" disabled={!!busy}
+            onClick={() => act('restore', restore, `No purchase found on this ${STORE === 'Google Play' ? 'Google' : 'Apple'} account.`, 'Restored. Everything is open.')}>
+            {busy === 'restore' ? 'Checking…' : 'Restore purchases'}
           </button>
-          <button className="btn btn--ghost" onClick={onClose}>Not now</button>
+          <button className="btn btn--ghost" disabled={!!busy} onClick={onClose}>Not now</button>
         </div>
-        {note && <p className="share-note" role="status">{note}</p>}
+        {/* Always in the page, so a screen reader hears each change to it. */}
+        <p className="share-note" role="status" aria-live="polite">{note}</p>
         <p className="share-note">
           <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Terms of Use</a>
           {' · '}
