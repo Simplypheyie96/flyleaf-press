@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { buy, cancelled, prices, restore, useUnlocked, type Product } from '../unlock'
+import { TIPS, buy, cancelled, giveTip, prices, restore, tipPrices, useUnlocked, type Product, type Tip } from '../unlock'
 import { STORE } from '../native'
 
 /* Remix lock-line */
@@ -9,23 +9,26 @@ export const LockIcon = () => (
   </svg>
 )
 
-/* The one place the store apps ask for money. Two prices for the same
-   unlock: Supporter is there for people who want to pay more, and says so,
-   so nobody buys it thinking it opens something the other doesn't. The
+/* The one place the store apps ask for money. Locked, it sells the unlock;
+   unlocked, it takes tips, which open nothing and can be given again. The
    store's own sheet does the paying; this slip only says what is bought. */
+const TIER: Record<Tip, string> = { tip1: 'Small tip', tip2: 'Kind tip', tip3: 'Generous tip' }
+
 export function UnlockSheet({ onClose }: { onClose: () => void }) {
-  // After the unlock the sheet stays open to Supporter, as a tip.
   const unlocked = useUnlocked()
   const [price, setPrice] = useState<Partial<Record<Product, string>>>({})
-  const [busy, setBusy] = useState<Product | 'restore' | null>(null)
+  const [tips, setTips] = useState<Partial<Record<Tip, string>> | null>(null)
+  const [busy, setBusy] = useState<Product | Tip | 'restore' | null>(null)
   const [note, setNote] = useState('')
   const first = useRef<HTMLButtonElement>(null)
   // A store sheet is up while busy: closing now would lose its answer.
   const shut = () => { if (!busy) onClose() }
 
   useEffect(() => {
-    prices().then(setPrice).catch(() => setNote(`Couldn’t reach ${STORE}. Check the connection and try again.`))
-  }, [])
+    const away = () => setNote(`Couldn’t reach ${STORE}. Check the connection and try again.`)
+    if (unlocked) tipPrices().then(setTips, () => { setTips({}); away() })
+    else prices().then(setPrice).catch(away)
+  }, [unlocked])
   // Focus comes in with the sheet and goes back where it was when it leaves.
   useEffect(() => {
     const back = document.activeElement as HTMLElement | null
@@ -57,8 +60,18 @@ export function UnlockSheet({ onClose }: { onClose: () => void }) {
       setBusy(null)
     }
   }
-  const label = (p: Product, name: string) =>
-    busy === p ? `Opening ${STORE}…` : `${name}${price[p] ? ` · ${price[p]}` : ''}`
+  const tip = async (t: Tip) => {
+    setBusy(t)
+    setNote('')
+    try {
+      if (await giveTip(t)) setNote('Thank you for the tip. It means a lot.')
+    } catch {
+      setNote('The tip did not go through. Nothing was charged.')
+    } finally {
+      setBusy(null)
+    }
+  }
+  const noTips = tips !== null && TIPS.every((t) => !tips[t])
 
   return (
     <div className="share-scrim" role="dialog" aria-modal="true" aria-labelledby="unlock-title"
@@ -67,20 +80,27 @@ export function UnlockSheet({ onClose }: { onClose: () => void }) {
         <h2 className="ui-lbl" id="unlock-title">{unlocked ? 'Unlocked' : 'Unlock everything'}</h2>
         <p>
           {unlocked
-            ? 'Every style, collage, PDF and plate is yours. Supporter is a tip on top, and opens nothing more.'
+            ? 'Every style, collage, PDF and plate is yours. If Bookprint has earned a thank-you, you can leave a tip. It opens nothing more.'
             : 'All twenty card styles, monthly and yearly collages, PDF, and image plates. Pay once and keep it, on this device and your next one.'}
         </p>
-        <div className="unlock-buys">
-          {!unlocked && <button ref={first} className="btn" disabled={!!busy}
-            onClick={() => act('unlock', () => buy('unlock'), 'The purchase is waiting on approval.', 'Unlocked. Thank you.')}>
-            {label('unlock', 'Unlock')}
-          </button>}
-          <button ref={unlocked ? first : undefined} className={unlocked ? 'btn' : 'btn btn--ghost'} disabled={!!busy}
-            onClick={() => act('supporter', () => buy('supporter'), 'The purchase is waiting on approval.', 'Unlocked. Thank you for the extra.')}>
-            {label('supporter', 'Supporter')}
-          </button>
-        </div>
-        {!unlocked && <p className="share-note">Both unlock the same things. Supporter pays a little more toward the app.</p>}
+        {unlocked ? (
+          <div className="unlock-buys unlock-tips">
+            {TIPS.map((t, i) => (
+              <button key={t} ref={i === 0 ? first : undefined} className="btn btn--ghost unlock-tip"
+                disabled={!tips?.[t] || !!busy} onClick={() => void tip(t)}>
+                <span>{busy === t ? 'Opening…' : tips?.[t] ?? '…'}</span>
+                <span className="unlock-tip-name">{TIER[t]}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="unlock-buys">
+            <button ref={first} className="btn" disabled={!!busy}
+              onClick={() => act('unlock', () => buy('unlock'), 'The purchase is waiting on approval.', 'Unlocked. Thank you.')}>
+              {busy === 'unlock' ? `Opening ${STORE}…` : `Unlock${price.unlock ? ` · ${price.unlock}` : ''}`}
+            </button>
+          </div>
+        )}
         <div className="confirm-actions unlock-minor">
           {!unlocked && <button className="btn btn--ghost" disabled={!!busy}
             onClick={() => act('restore', restore, `No purchase found on this ${STORE === 'Google Play' ? 'Google' : 'Apple'} account.`, 'Restored. Everything is open.')}>
@@ -89,7 +109,9 @@ export function UnlockSheet({ onClose }: { onClose: () => void }) {
           <button className="btn btn--ghost" disabled={!!busy} onClick={onClose}>{unlocked ? 'Done' : 'Not now'}</button>
         </div>
         {/* Always in the page, so a screen reader hears each change to it. */}
-        <p className="share-note" role="status" aria-live="polite">{note}</p>
+        <p className="share-note" role="status" aria-live="polite">
+          {noTips && !note ? 'Tips are unavailable right now. Please try again later.' : note}
+        </p>
         <p className="share-note">
           <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Terms of Use</a>
           {' · '}

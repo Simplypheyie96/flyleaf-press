@@ -41,6 +41,51 @@
       "productID": "com.feyidesigns.press.supporter",
       "referenceName": "supporter",
       "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": true,
+      "internalID": "7000000001",
+      "localizations": [
+        {
+          "description": "Small tip",
+          "displayName": "Small tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.feyidesigns.press.tip1",
+      "referenceName": "Small tip",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": true,
+      "internalID": "7000000002",
+      "localizations": [
+        {
+          "description": "Kind tip",
+          "displayName": "Kind tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.feyidesigns.press.tip2",
+      "referenceName": "Kind tip",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": true,
+      "internalID": "7000000003",
+      "localizations": [
+        {
+          "description": "Generous tip",
+          "displayName": "Generous tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.feyidesigns.press.tip3",
+      "referenceName": "Generous tip",
+      "type": "Consumable"
     }
   ],
   "settings": {

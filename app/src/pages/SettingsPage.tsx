@@ -328,7 +328,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
                 <div className="ui-lbl">Unlock everything</div>
                 <p>
                   {unlocked
-                    ? 'Every style, collage, PDF and plate is yours. Thank you.'
+                    ? 'Every style, collage, PDF and plate is yours. Tips are welcome, never expected.'
                     : 'Twenty card styles, monthly and yearly collages, PDF and image plates. Restore a purchase here too.'}
                 </p>
               </div>
