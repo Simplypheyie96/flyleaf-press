@@ -325,7 +325,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           <div className="panel">
             <div className="set-row">
               <div className="set-row-txt">
-                <div className="ui-lbl">Unlock everything</div>
+                <div className="ui-lbl">{unlocked ? 'Unlocked' : 'Unlock everything'}</div>
                 <p>
                   {unlocked
                     ? 'Every style, collage, PDF and plate is yours. Tips are welcome, never expected.'
