@@ -332,9 +332,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
                     : 'Twenty card styles, monthly and yearly collages, PDF and image plates. Restore a purchase here too.'}
                 </p>
               </div>
-              {unlocked
-                ? <span className="set-row-note">Unlocked</span>
-                : <button className="btn btn--ghost btn--sm" onClick={() => setUnlocking(true)}>Unlock</button>}
+              <button className="btn btn--ghost btn--sm" onClick={() => setUnlocking(true)}>{unlocked ? 'Support' : 'Unlock'}</button>
             </div>
           </div>
         )}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { buy, cancelled, prices, restore, type Product } from '../unlock'
+import { buy, cancelled, prices, restore, useUnlocked, type Product } from '../unlock'
 import { STORE } from '../native'
 
 /* Remix lock-line */
@@ -14,6 +14,8 @@ export const LockIcon = () => (
    so nobody buys it thinking it opens something the other doesn't. The
    store's own sheet does the paying; this slip only says what is bought. */
 export function UnlockSheet({ onClose }: { onClose: () => void }) {
+  // After the unlock the sheet stays open to Supporter, as a tip.
+  const unlocked = useUnlocked()
   const [price, setPrice] = useState<Partial<Record<Product, string>>>({})
   const [busy, setBusy] = useState<Product | 'restore' | null>(null)
   const [note, setNote] = useState('')
@@ -62,28 +64,29 @@ export function UnlockSheet({ onClose }: { onClose: () => void }) {
     <div className="share-scrim" role="dialog" aria-modal="true" aria-labelledby="unlock-title"
       onClick={(e) => e.target === e.currentTarget && shut()}>
       <div className="confirm-sheet unlock-sheet">
-        <h2 className="ui-lbl" id="unlock-title">Unlock everything</h2>
+        <h2 className="ui-lbl" id="unlock-title">{unlocked ? 'Unlocked' : 'Unlock everything'}</h2>
         <p>
-          All twenty card styles, monthly and yearly collages, PDF, and image
-          plates. Pay once and keep it, on this device and your next one.
+          {unlocked
+            ? 'Every style, collage, PDF and plate is yours. Supporter is a tip on top, and opens nothing more.'
+            : 'All twenty card styles, monthly and yearly collages, PDF, and image plates. Pay once and keep it, on this device and your next one.'}
         </p>
         <div className="unlock-buys">
-          <button ref={first} className="btn" disabled={!!busy}
+          {!unlocked && <button ref={first} className="btn" disabled={!!busy}
             onClick={() => act('unlock', () => buy('unlock'), 'The purchase is waiting on approval.', 'Unlocked. Thank you.')}>
             {label('unlock', 'Unlock')}
-          </button>
-          <button className="btn btn--ghost" disabled={!!busy}
+          </button>}
+          <button ref={unlocked ? first : undefined} className={unlocked ? 'btn' : 'btn btn--ghost'} disabled={!!busy}
             onClick={() => act('supporter', () => buy('supporter'), 'The purchase is waiting on approval.', 'Unlocked. Thank you for the extra.')}>
             {label('supporter', 'Supporter')}
           </button>
         </div>
-        <p className="share-note">Both unlock the same things. Supporter pays a little more toward the app.</p>
+        {!unlocked && <p className="share-note">Both unlock the same things. Supporter pays a little more toward the app.</p>}
         <div className="confirm-actions unlock-minor">
-          <button className="btn btn--ghost" disabled={!!busy}
+          {!unlocked && <button className="btn btn--ghost" disabled={!!busy}
             onClick={() => act('restore', restore, `No purchase found on this ${STORE === 'Google Play' ? 'Google' : 'Apple'} account.`, 'Restored. Everything is open.')}>
             {busy === 'restore' ? 'Checking…' : 'Restore purchases'}
-          </button>
-          <button className="btn btn--ghost" disabled={!!busy} onClick={onClose}>Not now</button>
+          </button>}
+          <button className="btn btn--ghost" disabled={!!busy} onClick={onClose}>{unlocked ? 'Done' : 'Not now'}</button>
         </div>
         {/* Always in the page, so a screen reader hears each change to it. */}
         <p className="share-note" role="status" aria-live="polite">{note}</p>
