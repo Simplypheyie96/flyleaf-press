@@ -641,10 +641,13 @@ function moStats(m: MonthData, id: HeadId): string {
    six columns came out as fourteen rows of six and four of five, and every one
    of those short rows sat half a cover in: a block of rows marching out of
    step with the columns above them, which reads as a mistake rather than as a
-   centred row. Past three rows, every row is full and the books left over
-   stand together on the last, centred — 17 rows of six and then two. Never a
-   lone book under a full row, though: a column count that would strand one is
-   passed over.
+   centred row. Past three rows a grid is read as a shelf filled in order, so
+   every row is full and the books left over start the last one from the LEFT
+   — 17 rows of six and then two, under the first two columns. Centring a short
+   row only looks right when the grid is small enough to see whole; two books
+   floated mid-row under seventeen full ones look lost, not placed. A width
+   that would leave ONE book alone on that row is passed over when any other
+   avoids it.
 
    Among the counts that pass, the one whose finished card lands nearest 4:5
    (1.25), the tallest shape a feed shows uncropped. The card's height is
@@ -709,7 +712,7 @@ function fits(n: number, c: number): boolean {
   if (rows === 1) return c <= ONE_ROW_MAX
   /* short grids: the rows may differ by one book and no more */
   if (rows <= EVEN_ROWS_MAX) return empty < rows
-  /* long grids: the leftovers on the last row, but never one alone */
+  /* long grids: the leftovers start the last row, but not one book alone */
   return c - empty >= 2
 }
 
@@ -730,30 +733,34 @@ function gridCols(n: number, wide?: boolean, perRow: number = ASPECT_PER_ROW): n
     }
     return best
   }
-  /* A count every width would strand one book on (61 on the standard card is
-     1 more than a multiple of 2, 3, 4 and 5) takes the best-shaped width and
-     the lone book with it — still one centred row, which beats a run of
-     offset ones. */
-  return pick((c) => fits(n, c)) || pick((c) => Math.ceil(n / c) > 1 || c <= ONE_ROW_MAX) || 2
+  /* A count every width strands one book on (61 on the standard card is one
+     past a multiple of 2, 3, 4 and 5) takes the best-shaped width anyway. */
+  return pick((c) => fits(n, c)) || pick((c) => Math.ceil(n / c) > EVEN_ROWS_MAX) || Math.min(n, max)
 }
 
-/* A cover grid, with its short rows centred. Every grid runs on DOUBLED tracks
-   and a cover spans two, so a row k books short starts k tracks in — half a
-   cover per missing book — and sits dead centre. The first cover of each short
-   row is marked `data-sr` with the track it starts on; the CSS does the rest. */
-function seat(cells: string[], cols: number): string {
+/* A cover grid, with its short rows centred — on a SHORT grid only. Every
+   grid runs on DOUBLED tracks and a cover spans two, so a row one book short
+   starts on the second track, half a cover in, and sits dead centre. The first
+   cover of each such row is marked `data-sr`; the CSS does the rest. A long
+   grid's last row is left where it falls, flush left (see above). */
+function seat(cells: string[], cols: number, centre: boolean): string {
   const out: string[] = []
   let i = 0
   for (const size of rowSizes(cells.length, cols)) {
     for (let j = 0; j < size; j++, i++) {
-      out.push(j === 0 && size < cols ? cells[i].replace(/<([a-z][\w-]*)/i, `<$1 data-sr="${cols - size + 1}"`) : cells[i])
+      out.push(centre && j === 0 && size < cols ? cells[i].replace(/<([a-z][\w-]*)/i, '<$1 data-sr') : cells[i])
     }
   }
   return out.join('')
 }
 
+/* whether an n-book grid this wide is short enough to centre its short rows */
+function centred(n: number, cols: number): boolean {
+  return Math.ceil(n / cols) <= EVEN_ROWS_MAX
+}
+
 function grid(cls: string, cols: number, cells: string[]): string {
-  return `<div class="${cls}" style="--cols:${cols}">${seat(cells, cols)}</div>`
+  return `<div class="${cls}" style="--cols:${cols}">${seat(cells, cols, centred(cells.length, cols))}</div>`
 }
 
 /* The row-per-book styles have the OPPOSITE fault, and the old threshold made
@@ -914,6 +921,7 @@ function airmail(m: MonthData): string {
   const rows: Review[][] = []
   let at = 0
   for (const size of rowSizes(m.books.length, per)) rows.push(m.books.slice(at, (at += size)))
+  const mid = centred(m.books.length, per)
   return `<article class="card c2" style="--rot:.5deg; --cols:${per}">
     ${patchC(140)}
     ${moHead(m, 'c2')}
@@ -923,7 +931,7 @@ function airmail(m: MonthData): string {
         ${seat(row.map((b, i) => `
           <div class="c2-book" style="--lean:${leans[i % leans.length]}deg">
             ${cov(b)}
-          </div>`), per)}
+          </div>`), per, mid)}
       </div>
       <div class="c2-edge"></div>
       <div class="c2-rail" style="align-items:start; margin-bottom:26px">
@@ -932,12 +940,12 @@ function airmail(m: MonthData): string {
              card that is the verdict. A hopeful has none — so the rail carries
              the title, which is otherwise printed nowhere on this style and
              is not readable off a 100px jacket. */
-          ? seat(row.map((b) => `<div class="c2-meta"><span class="lbl">${escapeHtml(b.title)}</span></div>`), per)
+          ? seat(row.map((b) => `<div class="c2-meta"><span class="lbl">${escapeHtml(b.title)}</span></div>`), per, mid)
           : seat(row.map((b) => `
             <div class="c2-meta">
               <span class="r-num">${fmtRating(b.rating)}</span>
               <div class="c2-stars">${starsS(b.rating, 10, 'var(--ink)', 'rgba(27,25,23,.5)')}</div>
-            </div>`), per)}
+            </div>`), per, mid)}
       </div>`).join('')}
   </article>`
 }
