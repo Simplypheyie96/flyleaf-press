@@ -28,16 +28,6 @@ export const STYLE_IDS: StyleId[] = [
   'seedpacket', 'hoop', 'chintz',
 ]
 
-/* The styles a YEAR offers. Scrapbook, Archive and Broadside draw one row per
-   book as a collage, which holds a month and runs to a strip nobody can read
-   as an object at two hundred rows — a year gets only the styles that PACK:
-   the grids and the spine rail. All twenty still ship and still serve every
-   month, and every one of them is still a review style. */
-export const YEAR_COLLAGE_IDS: StyleId[] = [
-  'catalogue', 'airmail', 'fieldnotes', 'jacket', 'herbarium', 'passport', 'specimen',
-  'receipt', 'library', 'bingo', 'trading', 'seedpacket', 'hoop', 'chintz',
-]
-
 /* The twelve ids a collage or a story card used to be saved under, mapped onto
    the style each one now is. A stored pick is a pick the reader made and it
    survives the rename — `settings.defaultCollage` of 'ledger' reads back as
