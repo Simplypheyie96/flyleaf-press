@@ -640,14 +640,14 @@ function moStats(m: MonthData, id: HeadId): string {
    4:5 (1.25), the tallest shape a feed shows uncropped. The card's height is
    overwhelmingly rows / columns, because a cell is a cover at a fixed aspect
    and the head, the statistics and the colophon are a constant: `0.31 + 1.75 ·
-   rows/cols`, fitted against real exports. The Large card is WIDE_FACTOR
-   broader, so the same columns make a shorter card there. A light charge on
+   rows/cols`, fitted against real exports. Three or more covers fill the
+   card's width on either shape (`--cap` is a share of it), so the Large card
+   is the same picture drawn bigger and the shape is the same. A light charge on
    empty seats keeps a full split ahead of a short one when the shapes are close.
 
    Two caps keep a cover a cover rather than a thumbnail: never more than four
    in a single row (six books in one line is a strip, not a shelf), and no row
-   past five on the standard card or six on the Large one, one fewer when each
-   cell carries a caption. */
+   past five on the standard card or six on the Large one. */
 const TARGET_ASPECT = 1.25
 /* leafHeight / leafWidth ~ ASPECT_BASE + ASPECT_PER_ROW · rows/cols */
 const ASPECT_BASE = 0.31
@@ -683,7 +683,7 @@ function widen(base: number, n: number, wide: boolean | undefined, max: number):
 
 function gridCols(n: number, wide?: boolean, perRow: number = ASPECT_PER_ROW): number {
   if (n <= 1) return 1
-  const max = (perRow > ASPECT_PER_ROW ? 4 : 5) + (wide ? 1 : 0)
+  const max = wide ? 6 : 5
   let best = 2
   let bestScore = Infinity
   for (let c = 2; c <= Math.min(n, max); c++) {
@@ -691,7 +691,7 @@ function gridCols(n: number, wide?: boolean, perRow: number = ASPECT_PER_ROW): n
     const empty = rows * c - n
     /* one row may not run past four; more rows may not differ by more than one */
     if (rows === 1 ? c > ONE_ROW_MAX : empty >= rows) continue
-    const aspect = ASPECT_BASE + perRow * rows / (wide ? c / WIDE_FACTOR : c)
+    const aspect = ASPECT_BASE + perRow * rows / c
     const score = Math.abs(aspect - TARGET_ASPECT) / TARGET_ASPECT + EMPTY_WEIGHT * empty / (rows * c)
     /* strictly-less keeps the NARROWER count on a tie: bigger covers */
     if (score < bestScore) { bestScore = score; best = c }

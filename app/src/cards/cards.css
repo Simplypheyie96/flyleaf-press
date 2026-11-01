@@ -1060,20 +1060,18 @@
    OBJECT and should look like one.
 
    So the grid is capped at the width its own column count would occupy if
-   every cell were the size a cell is three-to-a-row on the standard card —
-   220px — and centred in whatever is left. Above that count the cap is wider
-   than the card and does nothing, which is why this is one rule rather than a
-   branch: it can only ever bite where the cells are larger than a cover has
-   any business being. Measured on the 688px card: n=2 goes 308 -> 220 with a
-   symmetric 88px mat; n>=3 is untouched. On the 988px card it also catches
-   n=3 (300 -> 220) and n=4 (222 -> 220).
+   every cell were a third of the card, and centred in whatever is left. At
+   three across or more the cap is the card's own width and does nothing, on
+   either shape: three covers FILL the Large card rather than sitting in a
+   220px column with a band of empty ground either side, which is what a fixed
+   cap drew there. Only two books are held in, to two thirds of the width.
 
    --gx is each grid's own column gap, written beside it so the arithmetic
    cannot drift from the gap it is describing. */
 .c1-grid, .c2-rail, .c4-board, .c6-sheet, .hg,
 .cb-grid, .vp-sheet, .cs-grid, .c15-binder, .c16-strips,
 .c17-board, .c18-rack, .c19-hoops, .c20-table{
-  --cap:220px;
+  --cap:32%;
   max-width:calc(var(--cols,3) * var(--cap) + (var(--cols,3) - 1) * var(--gx,16px));
   margin-inline:auto;
 }
@@ -2405,13 +2403,13 @@
 .mo-fr{ min-width:84px; padding:8px 12px; text-align:center; background:var(--cream); color:var(--ink); --tx:var(--ink); --num:var(--ink); --meta:rgba(27,25,23,.66); }
 .mo-fr b{ display:block; }
 .mo-fr .lbl{ display:block; margin-top:3px; color:rgba(27,25,23,.66); }
-.c16-strips{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:0 18px; --gx:18px;
+.c16-strips{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:18px; --gx:18px;
   background:none; }
 .c16-fr{ min-width:0; padding:9px 9px 12px; background:var(--cream);
   --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); --star:var(--ink); --star-line:rgba(27,25,23,.5);
   border-bottom:1px solid rgba(27,25,23,.12); }
 .c16-fr .cov{ border-radius:0; box-shadow:none; filter:none; }
-.card-compact .c16-strips{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:0 12px; --gx:12px; }
+.card-compact .c16-strips{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:12px; --gx:12px; }
 .card-compact .c16-fr{ padding:7px 7px 9px; }
 
 /* C17 · Bingo card (tangerine) — the letters across the top, a ruled board,
