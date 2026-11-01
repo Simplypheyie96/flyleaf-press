@@ -1077,11 +1077,17 @@
   max-width:calc(var(--cols,3) * var(--cap) + (var(--cols,3) - 1) * var(--gx,16px));
   margin-inline:auto;
 }
+/* Doubled tracks: a cover spans two, so the first cover of a short row
+   (`data-sr`, set by `seat`) starts half a cover in and the row sits centred.
+   The rows only ever differ by one book, so that is the only offset. */
+.c1-grid > *, .c2-rail > *, .c4-board > *, .c6-sheet > *, .hg > *, .cb-grid > *, .vp-sheet > *, .cs-grid > *, .c15-binder > *, .c16-strips > *, .c17-board > *, .c18-rack > *, .c19-hoops > *, .c20-table > *{ grid-column-end:span 2; }
+.c1-grid > [data-sr], .c2-rail > [data-sr], .c4-board > [data-sr], .c6-sheet > [data-sr], .hg > [data-sr], .cb-grid > [data-sr], .vp-sheet > [data-sr], .cs-grid > [data-sr], .c15-binder > [data-sr], .c16-strips > [data-sr], .c17-board > [data-sr], .c18-rack > [data-sr], .c19-hoops > [data-sr], .c20-table > [data-sr]{ grid-column-start:2; }
 .card-compact .c1-grid, .card-compact .c2-rail,
 .card-compact .c4-board, .card-compact .c6-sheet, .card-compact .hg,
 .card-compact .cb-grid, .card-compact .vp-sheet, .card-compact .cs-grid,
 .card-compact .c15-binder, .card-compact .c16-strips, .card-compact .c17-board,
 .card-compact .c18-rack, .card-compact .c19-hoops, .card-compact .c20-table{ --cap:130px; }
+.card-compact .c1-grid > *, .card-compact .c2-rail > *, .card-compact .c4-board > *, .card-compact .c6-sheet > *, .card-compact .hg > *, .card-compact .cb-grid > *, .card-compact .vp-sheet > *, .card-compact .cs-grid > *, .card-compact .c15-binder > *, .card-compact .c16-strips > *, .card-compact .c17-board > *, .card-compact .c18-rack > *, .card-compact .c19-hoops > *, .card-compact .c20-table > *{ grid-column:auto; }
 
 /* C1 · Catalogue (coal) */
 .c1{
@@ -1090,7 +1096,7 @@
   --hair:rgba(244,242,237,.22);
   --star:var(--mustard); --star-line:rgba(244,242,237,.55);
 }
-.c1-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
+.c1-grid{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:18px 16px; --gx:16px; }
 .c1-cell{ min-width:0; }
 .c1-no{ font-family:var(--mono); font-size:9px; letter-spacing:.16em; color:var(--meta); margin-bottom:6px; text-transform:uppercase; }
 .c1-meta{ display:flex; align-items:baseline; gap:7px; margin-top:8px; flex-wrap:wrap; }
@@ -1106,7 +1112,7 @@
 
 /* C2 · Airmail (butter) */
 .c2{ background:var(--butter); }
-.c2-rail{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:0 20px; --gx:20px;
+.c2-rail{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:0 20px; --gx:20px;
   align-items:end; padding:0 4px; }
 /* the rail keeps its JS-decided column count on a phone — the rows were
    sliced to that width, so overriding it here would wrap a book onto a rail
@@ -1132,7 +1138,7 @@
    the stub's plate and perforated foot, the register's rule, the board's
    feature number. Columns come from gridCols(), the same counted rule the
    cover styles use, so a seven-book list packs like a seven-book grid. */
-.hg{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:24px 16px; --gx:16px; }
+.hg{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:24px 16px; --gx:16px; }
 .hg-c{ min-width:0; }
 .hg-cap{ margin-top:9px; min-width:0; }
 .hg-name{
@@ -1212,7 +1218,7 @@
   background-image:
     repeating-linear-gradient(0deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px),
     repeating-linear-gradient(90deg, rgba(27,25,23,.05) 0 1px, transparent 1px 24px); }
-.c4-board{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:26px 18px; --gx:18px; }
+.c4-board{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:26px 18px; --gx:18px; }
 .c4-pin{ position:relative; min-width:0; transform:rotate(var(--pr,0deg)); }
 .c4-photo{ background:var(--card-w); padding:8px 8px 0; box-shadow:var(--sh-plate); border-radius:2px; }
 .c4-cap{ font-family:var(--hand); font-size:13px; line-height:1.3; color:var(--ink-soft);
@@ -1251,7 +1257,7 @@
    to be telling the truth about the card under it. Ink 12.0:1 on lilac, and
    --meta already steps to ink at 72% here as it does on every pale ground. */
 .c6{ background:var(--lilac); --meta:rgba(27,25,23,.72); --air-r:#B3312A; --air-b:#2B4C8C; }
-.c6-sheet{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:28px 18px; --gx:18px; }
+.c6-sheet{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:28px 18px; --gx:18px; }
 .c6-stamp{ transform:rotate(var(--sr,0deg)); min-width:0; }
 .c6-face{ position:relative; padding:8px; background:var(--card-w); box-shadow:var(--sh-plate); }
 .c6-face .cov{ border-radius:0; box-shadow:none; }
@@ -1997,7 +2003,7 @@
 /* C8 · Herbarium (mint) — every book mounted on its own sheet and filed */
 .c8{ padding:calc(var(--pad) + 12px); }
 .c8 .patch{ right:-46px; bottom:-52px; opacity:.06; }
-.cb-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
+.cb-grid{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:18px 16px; --gx:16px; }
 .cb-cell{ background:rgba(252,251,248,.62); border:1px solid rgba(27,25,23,.22); padding:12px 12px 13px; min-width:0; }
 .cb-mount{ position:relative; padding:6px; }
 .cb-acc{ display:block; margin-top:11px; }
@@ -2057,7 +2063,7 @@
 .c11{ padding:0; }
 .vp-in{ position:relative; padding:var(--pad); }
 .c11 .patch{ right:-42px; bottom:-48px; opacity:.07; }
-.vp-sheet{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
+.vp-sheet{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:18px 16px; --gx:16px; }
 .vp-cell{ min-width:0; }
 .vp-photo{ padding:5px; border:1px solid rgba(27,25,23,.535); }
 .vp-photo .cov{ border-radius:0; box-shadow:none; }
@@ -2077,12 +2083,12 @@
    because a negative z-index survives on screen and vanishes in the file. */
 .c12 .patch{ left:-56px; bottom:-66px; opacity:.06; }
 .cs-grid{
-  display:grid; grid-template-columns:repeat(var(--cols,3),1fr); --gx:0px;
-  border-top:1px solid var(--hair); border-left:1px solid var(--hair);
+  display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); --gx:0px;
+  padding:1px 0 0 1px;
 }
 .cs-cell{
   position:relative; overflow:hidden; min-width:0; padding:16px 12px 14px;
-  border-right:1px solid var(--hair); border-bottom:1px solid var(--hair);
+  border:1px solid var(--hair); margin:-1px 0 0 -1px;
 }
 .cs-back{
   position:absolute; left:50%; top:44%; transform:translate(-50%,-50%);
@@ -2382,7 +2388,7 @@
 .mo-bk{ min-width:0; padding:9px 10px; text-align:center; border:1px solid var(--hair); border-radius:6px; }
 .mo-bk b{ display:block; }
 .mo-bk .lbl{ display:block; margin-top:3px; }
-.c15-binder{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:16px; --gx:16px; }
+.c15-binder{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:16px; --gx:16px; }
 .c15-sleeve{ min-width:0; padding:5px; border:1px solid rgba(244,242,237,.3); border-radius:8px; }
 .c15-card{ padding:8px 8px 10px; background:var(--cream); color:var(--ink); border-radius:5px; --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); --star:var(--ink); --star-line:rgba(27,25,23,.5); }
 .c15-top{ display:flex; justify-content:space-between; margin-bottom:6px; color:var(--meta); }
@@ -2399,7 +2405,7 @@
 .mo-fr{ min-width:84px; padding:8px 12px; text-align:center; background:var(--cream); color:var(--ink); --tx:var(--ink); --num:var(--ink); --meta:rgba(27,25,23,.66); }
 .mo-fr b{ display:block; }
 .mo-fr .lbl{ display:block; margin-top:3px; color:rgba(27,25,23,.66); }
-.c16-strips{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:0 18px; --gx:18px;
+.c16-strips{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:0 18px; --gx:18px;
   background:none; }
 .c16-fr{ min-width:0; padding:9px 9px 12px; background:var(--cream);
   --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); --star:var(--ink); --star-line:rgba(27,25,23,.5);
@@ -2420,9 +2426,9 @@
 .mo-ball{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:88px; height:88px;
   border:1.5px solid rgba(27,25,23,.55); border-radius:50%; text-align:center; }
 .mo-ball .lbl{ margin-top:2px; max-width:70px; }
-.c17-board{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); --gx:0px;
-  border-top:1.5px solid rgba(27,25,23,.55); border-left:1.5px solid rgba(27,25,23,.55); }
-.c17-sq{ min-width:0; padding:10px 10px 12px; border-right:1.5px solid rgba(27,25,23,.55); border-bottom:1.5px solid rgba(27,25,23,.55); }
+.c17-board{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); --gx:0px;
+  padding:1.5px 0 0 1.5px; }
+.c17-sq{ min-width:0; padding:10px 10px 12px; border:1.5px solid rgba(27,25,23,.55); margin:-1.5px 0 0 -1.5px; }
 .c17-no{ display:block; margin-bottom:6px; }
 .c17-mount{ position:relative; }
 .c17-daub{ position:absolute; right:5px; top:5px; width:30px; height:30px; border-radius:50%;
@@ -2439,7 +2445,7 @@
   padding:10px 0; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); }
 .mo-gr{ min-width:0; text-align:center; }
 .mo-gr b{ display:block; margin-top:3px; }
-.c18-rack{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:18px 16px; --gx:16px; }
+.c18-rack{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:18px 16px; --gx:16px; }
 .c18-pk{ min-width:0; padding:0 9px 11px; background:var(--cream); border-radius:2px 2px 6px 6px;
   --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); }
 .c18-fold{ display:block; margin:0 -9px 9px; padding:6px 9px; text-align:center; border-bottom:1.5px dashed rgba(27,25,23,.35); }
@@ -2455,7 +2461,7 @@
 .mo-sti{ min-width:0; text-align:center; }
 .mo-sti b{ display:block; }
 .mo-sti .lbl{ display:block; margin-top:3px; }
-.c19-hoops{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:22px 16px; --gx:16px; }
+.c19-hoops{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:22px 16px; --gx:16px; }
 .c19-c{ min-width:0; text-align:center; }
 .c19-ring{ padding:6px; border-radius:50%; background:#C99A62; border:2px solid #9C6E3C; }
 .c19-ring .cov{ aspect-ratio:1; object-fit:cover; border-radius:50%; box-shadow:none; }
@@ -2473,7 +2479,7 @@
 .mo-pl{ min-width:0; text-align:center; }
 .mo-pl b{ display:block; }
 .mo-pl .lbl{ display:block; margin-top:3px; }
-.c20-table{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); gap:16px; --gx:16px; }
+.c20-table{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); gap:16px; --gx:16px; }
 .c20-c{ min-width:0; padding:9px 9px 11px; background:var(--cream); border:1px solid rgba(27,25,23,.2); border-radius:2px;
   --tx:var(--ink); --meta:rgba(27,25,23,.66); --num:var(--ink); }
 .card-compact .c20-label{ padding:16px 16px 14px; }
