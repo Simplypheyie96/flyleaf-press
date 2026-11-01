@@ -630,14 +630,24 @@ function moStats(m: MonthData, id: HeadId): string {
 
 /* HOW MANY TO A ROW, AND HOW THE ROWS SPLIT.
 
-   A grid of covers is posted, so it has to read as a picture: every row holds
-   the same number of books or one fewer, the fuller rows sit on top, and a
-   short row is centred under the full ones (see `grid`). Six books are 3 + 3,
-   never 4 + 2; seven are 4 + 3, never 6 + 1; ten are 5 + 5 or 4 + 3 + 3. A
-   column count that cannot split the books that evenly is never considered.
+   A grid of covers is posted, so it has to read as a picture.
 
-   Among those that can, the count is the one whose finished card lands nearest
-   4:5 (1.25), the tallest shape a feed shows uncropped. The card's height is
+   A SHORT grid splits evenly: every row holds the same number of books or one
+   fewer, the fuller rows on top, the short ones centred under them (see
+   `rowSizes`). Six books are 3 + 3, never 4 + 2; seven are 4 + 3, never 6 + 1;
+   ten are 5 + 5 or 4 + 3 + 3.
+
+   A LONG grid — a year — does not. Split evenly, a hundred and four books on
+   six columns came out as fourteen rows of six and four of five, and every one
+   of those short rows sat half a cover in: a block of rows marching out of
+   step with the columns above them, which reads as a mistake rather than as a
+   centred row. Past three rows, every row is full and the books left over
+   stand together on the last, centred — 17 rows of six and then two. Never a
+   lone book under a full row, though: a column count that would strand one is
+   passed over.
+
+   Among the counts that pass, the one whose finished card lands nearest 4:5
+   (1.25), the tallest shape a feed shows uncropped. The card's height is
    overwhelmingly rows / columns, because a cell is a cover at a fixed aspect
    and the head, the statistics and the colophon are a constant: `0.31 + 1.75 ·
    rows/cols`, fitted against real exports. Three or more covers fill the
@@ -654,6 +664,8 @@ const ASPECT_BASE = 0.31
 const ASPECT_PER_ROW = 1.75
 const EMPTY_WEIGHT = 0.25
 const ONE_ROW_MAX = 4
+/* past this many rows a grid stops splitting evenly and fills every row */
+const EVEN_ROWS_MAX = 3
 
 /* A HOPEFULS cell is not a bare cover. It carries a title, a byline and a
    status word under the jacket, which is about sixty device pixels of type per
@@ -681,35 +693,63 @@ function widen(base: number, n: number, wide: boolean | undefined, max: number):
   return Math.max(base, c)
 }
 
+/** How many books stand on each row of an n-book grid `cols` wide. */
+function rowSizes(n: number, cols: number): number[] {
+  const rows = Math.ceil(n / cols)
+  const empty = rows * cols - n
+  /* even where the rows can differ by one; otherwise full rows and the rest */
+  if (rows <= EVEN_ROWS_MAX && empty < rows) return Array.from({ length: rows }, (_, i) => (i < rows - empty ? cols : cols - 1))
+  return Array.from({ length: rows }, (_, i) => (i < rows - 1 ? cols : cols - empty))
+}
+
+/* whether a grid this wide lays n books out in a way worth posting */
+function fits(n: number, c: number): boolean {
+  const rows = Math.ceil(n / c)
+  const empty = rows * c - n
+  if (rows === 1) return c <= ONE_ROW_MAX
+  /* short grids: the rows may differ by one book and no more */
+  if (rows <= EVEN_ROWS_MAX) return empty < rows
+  /* long grids: the leftovers on the last row, but never one alone */
+  return c - empty >= 2
+}
+
 function gridCols(n: number, wide?: boolean, perRow: number = ASPECT_PER_ROW): number {
   if (n <= 1) return 1
   const max = wide ? 6 : 5
-  let best = 2
-  let bestScore = Infinity
-  for (let c = 2; c <= Math.min(n, max); c++) {
-    const rows = Math.ceil(n / c)
-    const empty = rows * c - n
-    /* one row may not run past four; more rows may not differ by more than one */
-    if (rows === 1 ? c > ONE_ROW_MAX : empty >= rows) continue
-    const aspect = ASPECT_BASE + perRow * rows / c
-    const score = Math.abs(aspect - TARGET_ASPECT) / TARGET_ASPECT + EMPTY_WEIGHT * empty / (rows * c)
-    /* strictly-less keeps the NARROWER count on a tie: bigger covers */
-    if (score < bestScore) { bestScore = score; best = c }
+  const pick = (ok: (c: number) => boolean) => {
+    let best = 0
+    let bestScore = Infinity
+    for (let c = 2; c <= Math.min(n, max); c++) {
+      if (!ok(c)) continue
+      const rows = Math.ceil(n / c)
+      const empty = rows * c - n
+      const aspect = ASPECT_BASE + perRow * rows / c
+      const score = Math.abs(aspect - TARGET_ASPECT) / TARGET_ASPECT + EMPTY_WEIGHT * empty / (rows * c)
+      /* strictly-less keeps the NARROWER count on a tie: bigger covers */
+      if (score < bestScore) { bestScore = score; best = c }
+    }
+    return best
   }
-  return best
+  /* A count every width would strand one book on (61 on the standard card is
+     1 more than a multiple of 2, 3, 4 and 5) takes the best-shaped width and
+     the lone book with it — still one centred row, which beats a run of
+     offset ones. */
+  return pick((c) => fits(n, c)) || pick((c) => Math.ceil(n / c) > 1 || c <= ONE_ROW_MAX) || 2
 }
 
 /* A cover grid, with its short rows centred. Every grid runs on DOUBLED tracks
-   and a cover spans two, so a row one book short starts on the second track,
-   half a cover in, and sits dead centre. The first cover of each short row is
-   marked `data-sr`; the CSS does the rest. Rows only ever differ by one, and
-   the short ones are always last, so that is the only offset there is. */
+   and a cover spans two, so a row k books short starts k tracks in — half a
+   cover per missing book — and sits dead centre. The first cover of each short
+   row is marked `data-sr` with the track it starts on; the CSS does the rest. */
 function seat(cells: string[], cols: number): string {
-  const rows = Math.ceil(cells.length / cols)
-  const from = (rows - (rows * cols - cells.length)) * cols
-  return cells
-    .map((c, i) => (i >= from && (i - from) % (cols - 1) === 0 ? c.replace(/<([a-z][\w-]*)/i, '<$1 data-sr') : c))
-    .join('')
+  const out: string[] = []
+  let i = 0
+  for (const size of rowSizes(cells.length, cols)) {
+    for (let j = 0; j < size; j++, i++) {
+      out.push(j === 0 && size < cols ? cells[i].replace(/<([a-z][\w-]*)/i, `<$1 data-sr="${cols - size + 1}"`) : cells[i])
+    }
+  }
+  return out.join('')
 }
 
 function grid(cls: string, cols: number, cells: string[]): string {
@@ -870,11 +910,10 @@ function catalogue(m: MonthData): string {
 /* C2 · Airmail (butter) — front-facing covers on drawn rails, three to a rail */
 function airmail(m: MonthData): string {
   const per = gridCols(m.books.length, m.wide)
-  /* the same even split as every other grid: the fuller rails first */
-  const n = m.books.length
-  const full = n - Math.ceil(n / per) * (per - 1)
+  /* the same rows as every other grid, one rail each */
   const rows: Review[][] = []
-  for (let i = 0; i < n; i += rows[rows.length - 1].length) rows.push(m.books.slice(i, i + (rows.length < full ? per : per - 1)))
+  let at = 0
+  for (const size of rowSizes(m.books.length, per)) rows.push(m.books.slice(at, (at += size)))
   return `<article class="card c2" style="--rot:.5deg; --cols:${per}">
     ${patchC(140)}
     ${moHead(m, 'c2')}

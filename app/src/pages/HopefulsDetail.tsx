@@ -479,6 +479,19 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
         <ExportSheet
           heading={`${monthName(key)} hopefuls`}
           baseName={collageBaseName(data)}
+          /* the same picker the month and year sheets carry, on the same
+             `style` state as the one on the page — so the clothes can be
+             changed with the card in front of you, without closing the sheet */
+          picker={
+            <StylePicker
+              ids={STYLE_IDS}
+              names={STYLE_NAMES}
+              grounds={STYLE_GROUNDS}
+              value={style}
+              onChange={setStyle}
+              label="Collage style"
+            />
+          }
           build={build}
           shape={settings.exportShape}
           onShape={(s) => db.settings.update(1, { exportShape: s })}

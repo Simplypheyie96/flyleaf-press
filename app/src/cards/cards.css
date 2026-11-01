@@ -1076,10 +1076,16 @@
   margin-inline:auto;
 }
 /* Doubled tracks: a cover spans two, so the first cover of a short row
-   (`data-sr`, set by `seat`) starts half a cover in and the row sits centred.
-   The rows only ever differ by one book, so that is the only offset. */
+   (`data-sr`, set by `seat`) starts half a cover in for every book the row is
+   short, and the row sits centred — one short is track 2, the two books left
+   on the last row of a six-wide year are track 5. Attribute-only selectors, so
+   the compact card's `grid-column:auto` below still wins. */
 .c1-grid > *, .c2-rail > *, .c4-board > *, .c6-sheet > *, .hg > *, .cb-grid > *, .vp-sheet > *, .cs-grid > *, .c15-binder > *, .c16-strips > *, .c17-board > *, .c18-rack > *, .c19-hoops > *, .c20-table > *{ grid-column-end:span 2; }
-.c1-grid > [data-sr], .c2-rail > [data-sr], .c4-board > [data-sr], .c6-sheet > [data-sr], .hg > [data-sr], .cb-grid > [data-sr], .vp-sheet > [data-sr], .cs-grid > [data-sr], .c15-binder > [data-sr], .c16-strips > [data-sr], .c17-board > [data-sr], .c18-rack > [data-sr], .c19-hoops > [data-sr], .c20-table > [data-sr]{ grid-column-start:2; }
+[data-sr="2"]{ grid-column-start:2; }
+[data-sr="3"]{ grid-column-start:3; }
+[data-sr="4"]{ grid-column-start:4; }
+[data-sr="5"]{ grid-column-start:5; }
+[data-sr="6"]{ grid-column-start:6; }
 .card-compact .c1-grid, .card-compact .c2-rail,
 .card-compact .c4-board, .card-compact .c6-sheet, .card-compact .hg,
 .card-compact .cb-grid, .card-compact .vp-sheet, .card-compact .cs-grid,

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import type { Settings, StyleId, ExportShape } from '../types'
-import { STYLE_IDS, YEAR_COLLAGE_IDS, STYLE_NAMES, STYLE_GROUNDS, liveStyle } from '../types'
+import { STYLE_IDS, STYLE_NAMES, STYLE_GROUNDS, liveStyle } from '../types'
 import { CollapsedCard } from '../components/CollapsedCard'
 import { ExportSheet } from '../components/ExportSheet'
 import { StylePicker } from '../components/StylePicker'
@@ -17,7 +17,7 @@ import {
 } from '../format'
 
 /* One span's collage — viewable and shareable at any point, open or closed.
-   A month offers all seven collage styles; a year offers the four that pack.
+   A month and a year offer every collage style.
 
    ONE PAGE SERVES THE MONTH AND THE YEAR. A year key is four digits and a
    month key is seven, so `/collage/2026` and `/collage/2026-07` are told apart
@@ -34,11 +34,8 @@ export function MonthDetail({ settings }: { settings: Settings }) {
   const keyOf = isYear ? yearKey : monthKey
   const nameOf = isYear ? yearName : monthName
   const [style, setStyle] = useState<StyleId>(liveStyle(settings.defaultCollage))
-  /* A year offers only the styles that PACK — the row-per-book ones run to a
-     strip at a hundred books. Derived rather than clamped in state, so walking
-     month → year → month in one mounted page never loses the picked style. */
-  const ids = isYear ? YEAR_COLLAGE_IDS : STYLE_IDS
-  const shown = ids.includes(style) ? style : ids[0]
+  /* A year offers every style a month does — the list styles split into
+     columns, and a reader who wants their year as a ledger should get one. */
   /* one way out — the sheet shows the collage, its shape, and both
      destinations */
   const [sharing, setSharing] = useState(false)
@@ -57,8 +54,8 @@ export function MonthDetail({ settings }: { settings: Settings }) {
      object itself would make the sheet re-lay-out the collage on every tick. */
   const build = useCallback(
     (host: HTMLDivElement, shape: ExportShape) =>
-      books && key ? buildCollagePage({ name: nameOf(key), books, span }, shown, host, shape) : [],
-    [books, key, shown, span]
+      books && key ? buildCollagePage({ name: nameOf(key), books, span }, style, host, shape) : [],
+    [books, key, style, span]
   )
 
   if (!month) return null
@@ -96,13 +93,13 @@ export function MonthDetail({ settings }: { settings: Settings }) {
         ) : (
           <>
             <div className="field">
-              <StylePicker ids={ids} names={STYLE_NAMES} grounds={STYLE_GROUNDS} value={shown} onChange={setStyle} label="Collage style" />
+              <StylePicker ids={STYLE_IDS} names={STYLE_NAMES} grounds={STYLE_GROUNDS} value={style} onChange={setStyle} label="Collage style" />
             </div>
 
             {/* a twenty-book month — let alone a hundred-book year — is taller
                 than any phone, so the same clamp the review card uses keeps the
                 actions within reach */}
-            <CollapsedCard html={renderCollage(month, shown)} />
+            <CollapsedCard html={renderCollage(month, style)} />
 
             <div className="detail-acts detail-acts--one">
               <button className="btn" onClick={() => setSharing(true)}>Share</button>
@@ -126,10 +123,10 @@ export function MonthDetail({ settings }: { settings: Settings }) {
              opening the sheet again to look. */
           picker={
             <StylePicker
-              ids={ids}
+              ids={STYLE_IDS}
               names={STYLE_NAMES}
               grounds={STYLE_GROUNDS}
-              value={shown}
+              value={style}
               onChange={setStyle}
               label="Collage style"
             />
@@ -138,7 +135,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
           shape={settings.exportShape}
           onShape={(s) => db.settings.update(1, { exportShape: s })}
           exportImages={(mode: ExportMode, shape: ExportShape) =>
-            shareCollageImage(month, shown, mode, shape)}
+            shareCollageImage(month, style, mode, shape)}
           locked={unlocked ? undefined : 'Collages come with the unlock. Reviews in Archive and Masthead share free.'}
           onClose={() => setSharing(false)}
         />
