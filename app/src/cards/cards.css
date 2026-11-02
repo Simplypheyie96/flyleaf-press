@@ -362,13 +362,16 @@
 .stars svg{ display:block; }
 
 /* Cover — real cover or nothing. No generated placeholder. */
+/* position:relative lifts every cover into the positioned layer, after the
+   card's rosette patch in tree order — so the patch passes under a cover, never over it */
 .cover{
+  position:relative;
   display:block; width:100%; height:auto;
   aspect-ratio:2/3; object-fit:cover;
   border-radius:2px; box-shadow:var(--sh-plate);
   background:var(--paper);
 }
-.cover-missing{
+.cover-missing{ position:relative;
   display:flex; align-items:center; justify-content:center; text-align:center;
   aspect-ratio:2/3; border:1px dashed var(--hair); border-radius:2px;
   padding:12px;
@@ -413,6 +416,10 @@
 .tape--r{ left:auto; right:-16px; top:8px; margin:0; transform:rotate(56deg); }
 
 .pclip{ position:absolute; z-index:3; pointer-events:none; }
+/* On a cover the clip holds it from behind: only its top loop shows above the
+   edge. Without a z-index it falls back to tree order, and the cover comes
+   after it — nothing is drawn over a cover. */
+:is(.s2-cover-wrap, .s3-cover-wrap, .s4-cover, .s5-cover) > .pclip{ z-index:auto; }
 
 /* Logo patch — the rosette, translucent, clipped to the card rectangle */
 .patch-wrap{ position:absolute; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; }
@@ -750,8 +757,9 @@
 .s7-stamp .cover{ box-shadow:none; border-radius:0; }
 /* the cancel strikes leftward, off the stamp and onto the letter: struck to
    the right it ran its wavy bars straight off the card's edge, and a postmark
-   that leaves the paper is a postmark drawn in the wrong place */
-.s7-stamp .cancel{ position:absolute; left:-54px; top:-6px; color:var(--air-b); }
+   that leaves the paper is a postmark drawn in the wrong place. Its bars stop
+   at the stamp's white margin — nothing is drawn over a cover. */
+.s7-stamp .cancel{ position:absolute; left:-94px; top:-6px; color:var(--air-b); }
 /* The rating lives in the address block, above the body — airmail was the one
    style that filed it after the review, and on a long letter that put the
    verdict pages below the book it belongs to. The sign-off rule stays as the
@@ -766,9 +774,10 @@
 .card-compact .s7-top{ flex-direction:column; gap:20px; }
 .card-compact .s7-title{ font-size:26px; }
 .card-compact .s7-stamp{ width:110px; align-self:flex-start; }
-/* compact stacks the stamp at the left margin, so the strike goes the other
-   way — leftward there would put the circle through the barred edge */
-.card-compact .s7-stamp .cancel{ left:auto; right:-46px; }
+/* compact stacks the stamp at the left margin, so the ring sits on the letter
+   just right of it — leftward there would put the circle through the barred
+   edge, and the old overlap put it on the cover */
+.card-compact .s7-stamp .cancel{ left:100px; }
 .card-compact .s7-rate .rate-num{ font-size:29px; }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1042,9 +1051,9 @@
 .stars-s svg{ display:block; }
 .r-num{ font-family:var(--serif); font-weight:600; font-variant-numeric:tabular-nums; }
 
-.cov{ display:block; width:100%; height:auto; aspect-ratio:2/3; object-fit:cover;
+.cov{ position:relative; display:block; width:100%; height:auto; aspect-ratio:2/3; object-fit:cover;
   border-radius:1.5px; box-shadow:var(--sh-plate); background:var(--paper); }
-.cov-miss{
+.cov-miss{ position:relative;
   display:flex; align-items:center; justify-content:center; text-align:center;
   aspect-ratio:2/3; border:1px dashed rgba(27,25,23,.3); border-radius:1.5px; padding:8px;
   font-family:var(--mono); font-size:8px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
@@ -1277,9 +1286,10 @@
     radial-gradient(circle at center, var(--lilac) 2.4px, transparent 2.9px) left top / 6px 9px repeat-y,
     radial-gradient(circle at center, var(--lilac) 2.4px, transparent 2.9px) right top / 6px 9px repeat-y;
 }
+/* the numeral sits beside the stars in the caption, never on the stamp's art */
+.c6-rate{ display:flex; align-items:center; gap:7px; }
 .c6-val{
-  position:absolute; right:11px; top:11px; z-index:2;
-  padding:2px 6px; background:var(--card-w); color:var(--ink);
+  color:var(--ink);
   font-family:var(--serif); font-weight:600; font-size:12.5px; line-height:1.2;
   font-variant-numeric:tabular-nums;
 }
@@ -1292,7 +1302,7 @@
 .c6 .patch{ right:-26px; bottom:-24px; opacity:.10; transform:rotate(-14deg); }
 .card-compact .c6-sheet{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); gap:22px 13px; --gx:13px; }
 .card-compact .c6-name{ font-size:12px; }
-.card-compact .c6-val{ right:9px; top:9px; font-size:11px; }
+.card-compact .c6-val{ font-size:11px; }
 
 /* C7 · Masthead (sage) — the month as a listings board, one line a feature.
    The card was dark twice and is now light. Moss was a second near-black
@@ -1723,8 +1733,10 @@
 .sp-top{ display:grid; grid-template-columns:180px 1fr; gap:0 28px; align-items:center; margin-top:20px; }
 .sp-data{ min-width:0; }
 .sp-win .cover, .sp-win .cover-missing{ width:100%; border-radius:0; box-shadow:none; }
+/* the price seal sits beside the stars, off the window — nothing covers the cover */
+.sp-rate{ display:flex; align-items:center; gap:16px; margin-top:12px; }
 .sp-price{
-  position:absolute; top:14px; right:-18px; width:62px; height:62px;
+  flex:none; width:62px; height:62px;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
   border-radius:50%; border:2px solid var(--tx); background:var(--cream);
   transform:rotate(10deg);
@@ -1732,7 +1744,7 @@
 .sp-price .r-num{ font-size:20px; line-height:1; color:var(--num); }
 .sp-title{ margin:0; }
 .sp-by{ margin-top:6px; }
-.sp-data .stars{ margin-top:12px; }
+
 .sp-table{ margin-top:20px; border-top:1.5px solid rgba(27,25,23,.6); }
 .sp-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; padding:9px 0; border-bottom:1px solid var(--hair); }
 .sp-line .lbl{ flex:none; width:70px; }
@@ -1898,7 +1910,7 @@
 .card-compact .rc-cov .cover, .card-compact .rc-cov .cover-missing{ width:112px; }
 .card-compact .sp-top{ grid-template-columns:118px 1fr; gap:0 18px; }
 .card-compact .sp-win{ padding:20px 12px 12px; border-radius:60px 60px 4px 4px; }
-.card-compact .sp-price{ width:48px; height:48px; right:-14px; top:8px; }
+.card-compact .sp-price{ width:48px; height:48px; }
 .card-compact .sp-price .r-num{ font-size:16px; }
 .card-compact .eh-top{ grid-template-columns:130px 1fr; gap:0 18px; }
 .card-compact .eh-hoop{ border-width:7px; }
@@ -2434,10 +2446,15 @@
 .c17-board{ display:grid; grid-template-columns:repeat(calc(var(--cols,3) * 2),1fr); --gx:0px;
   padding:1.5px 0 0 1.5px; }
 .c17-sq{ min-width:0; padding:10px 10px 12px; border:1.5px solid rgba(27,25,23,.55); margin:-1.5px 0 0 -1.5px; }
-.c17-no{ display:block; margin-bottom:6px; }
-.c17-mount{ position:relative; }
-.c17-daub{ position:absolute; right:5px; top:5px; width:30px; height:30px; border-radius:50%;
-  background:rgba(194,65,12,.55); border:2px solid rgba(140,40,8,.6); }
+.c17-no{ display:block; margin-bottom:9px; }
+/* A read book's number is daubed, as a called number is on a real card. The
+   daub used to sit on the cover's corner; nothing is drawn over a cover. */
+.c17-no--daub > span{ position:relative; display:inline-block; }
+.c17-no--daub > span::after{
+  content:''; position:absolute; left:50%; top:50%; width:26px; height:26px; margin:-13px 0 0 -13px;
+  box-sizing:border-box; border-radius:50%;
+  background:rgba(194,65,12,.55); border:2px solid rgba(140,40,8,.6);
+}
 .card-compact .c17-board{ grid-template-columns:repeat(auto-fit, minmax(94px, 1fr)); }
 .card-compact .c17-sq{ padding:8px 7px 9px; }
 .card-compact .mo-ball{ width:76px; height:76px; }

@@ -863,12 +863,14 @@ function seedpacket(rec: Review): string {
     <div class="sp-top">
       <div class="sp-win">
         ${cover(rec)}
-        <span class="sp-price"><span class="r-num">${fmtRating(rec.rating)}</span><span class="lbl">/ 5</span></span>
       </div>
       <div class="sp-data">
         <h2 class="title sp-title">${escapeHtml(rec.title)}</h2>
         <div class="by sp-by">${escapeHtml(rec.author)}</div>
-        ${starRow(rec.rating, 18)}
+        <div class="sp-rate">
+          ${starRow(rec.rating, 18)}
+          <span class="sp-price"><span class="r-num">${fmtRating(rec.rating)}</span><span class="lbl">/ 5</span></span>
+        </div>
       </div>
     </div>
     <div class="sp-table">${facts(rec, 'sp-line', { author: false })}</div>

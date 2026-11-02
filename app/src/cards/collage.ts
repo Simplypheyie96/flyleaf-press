@@ -1092,12 +1092,11 @@ function jacket(m: MonthData): string {
           <div class="c6-face">
             ${cov(b)}
             <span class="c6-perf" aria-hidden="true"></span>
-            ${tbr(m) ? '' : `<span class="c6-val">${fmtRating(b.rating)}</span>`}
           </div>
           <div class="c6-cap">
             <div class="c6-name">${escapeHtml(b.title)}</div>
             <div class="c6-by">${escapeHtml(b.author)}</div>
-            ${tbr(m) ? '' : starsS(b.rating, 10, 'var(--ink)', 'rgba(27,25,23,.5)')}
+            ${tbr(m) ? '' : `<div class="c6-rate">${starsS(b.rating, 10, 'var(--ink)', 'rgba(27,25,23,.5)')}<span class="c6-val">${fmtRating(b.rating)}</span></div>`}
           </div>
         </div>`))}
   </article>`
@@ -1494,8 +1493,8 @@ function bingo(m: MonthData): string {
     ${moStats(m, 'c17')}
     ${grid('c17-board', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="c17-sq">
-          <span class="lbl c17-no">${String(i + 1 + skip(m)).padStart(2, '0')}</span>
-          <div class="c17-mount">${cov(b)}${tbr(m) ? '' : '<i class="c17-daub" aria-hidden="true"></i>'}</div>
+          <span class="lbl c17-no${tbr(m) ? '' : ' c17-no--daub'}"><span>${String(i + 1 + skip(m)).padStart(2, '0')}</span></span>
+          <div class="c17-mount">${cov(b)}</div>
           <div class="c17-t">${escapeHtml(b.title)}</div>
           <div class="c17-r">${verdict(m, b, 'c17')}</div>
         </div>`))}
