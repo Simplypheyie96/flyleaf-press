@@ -95,7 +95,8 @@ export function ExportSheet({
       measured[shape] = pixelSize(built)
       setPages(built.length)
       setPx(measured)
-      const k = Math.min(1, wrap.clientWidth / SHAPE_W[shape])
+      /* by the leaf actually built: a Large review composes on the standard column */
+      const k = Math.min(1, wrap.clientWidth / (built[0]?.offsetWidth || SHAPE_W[shape]))
       host.style.transform = `scale(${k})`
       let h = 0
       for (const p of built) h += p.offsetHeight + 20

@@ -1075,6 +1075,13 @@
   max-width:calc(var(--cols,3) * var(--cap) + (var(--cols,3) - 1) * var(--gx,16px));
   margin-inline:auto;
 }
+/* A grid fitted to its frame with covers too small to caption keeps the
+   covers and the stats, and nothing else in the cell. */
+.card--bare [data-grid] > * > :not(:has(img, .cov-miss)):not(img, .cov-miss),
+.card--bare .c15-card > :not(:has(img, .cov-miss)):not(img, .cov-miss){ display:none; }
+/* and closes up: a 26px gutter between 40px covers is most of the picture */
+.card--bare [data-grid]:not(.cs-grid, .c17-board){ gap:8px; --gx:8px; }
+
 /* Doubled tracks: a cover spans two, so the first cover of a short row
    (`data-sr`, set by `seat`) starts half a cover in and the row sits centred.
    The rows only ever differ by one book, so that is the only offset. */

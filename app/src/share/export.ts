@@ -11,7 +11,7 @@
 import type { Review, StyleId, ExportShape } from '../types'
 import { SHAPE_FILE_W, SHAPE_W } from '../types'
 import { renderReviewCard } from '../cards/review'
-import { renderCollage, renderStory, type MonthData } from '../cards/collage'
+import { fitCols, renderCollage, renderStory, type MonthData } from '../cards/collage'
 import { paragraphs } from '../format'
 import { fontEmbedCss } from '../fonts'
 import { isIOS } from '../pwa'
@@ -57,10 +57,10 @@ function prepHost(host: HTMLDivElement, shape: ExportShape): void {
    derived from later (file ÷ leaf), so the choice travels with the page itself
    and the rasterizer never has to guess which option built it. This has to
    happen the moment a page exists, BEFORE anything on it is measured. */
-function ground(pages: HTMLElement[], shape: ExportShape): HTMLElement[] {
+function ground(pages: HTMLElement[], shape: ExportShape, file: ExportShape = shape): HTMLElement[] {
   for (const p of pages) {
     p.style.width = `${SHAPE_W[shape]}px`
-    p.dataset.fileW = String(SHAPE_FILE_W[shape])
+    p.dataset.fileW = String(SHAPE_FILE_W[file])
     p.classList.add('share-page--tight')
   }
   return pages
@@ -76,19 +76,25 @@ export function paginateReview(
   rec: Review,
   style: StyleId,
   host: HTMLDivElement,
-  shape: ExportShape
+  file: ExportShape
 ): HTMLElement[] {
+  /* A review is one book, so the Large card is the same card at a higher
+     resolution rather than a wider one: composed on the broad column it was a
+     letterbox (a short review at 0.5 tall to wide) with a 130px cover in a
+     corner. It keeps the standard column's proportions and takes the Large
+     file's pixels. */
+  const shape: ExportShape = 'phone'
   prepHost(host, shape)
   host.innerHTML = `<div class="share-page"><div>${renderReviewCard(rec, style)}</div>
     <div class="share-page-no"></div></div>`
   const page1 = host.querySelector('.share-page') as HTMLElement
-  ground([page1], shape)
+  ground([page1], shape, file)
   const card1 = page1.querySelector('.card') as HTMLElement
   /* an unwritten review has no .body element at all — nothing to split, and
      a card that short can never outgrow one page */
   const body1 = card1.querySelector('.body') as HTMLElement | null
 
-  if (!body1) return ground([page1], shape)
+  if (!body1) return ground([page1], shape, file)
 
   const grounds = card1.className.split(' ').filter((c) => c.startsWith('card--')).join(' ')
   const title = card1.querySelector('.title')?.textContent || ''
@@ -116,7 +122,7 @@ export function paginateReview(
         ;(p.querySelector('.share-page-no') as HTMLElement).textContent =
           `${BRAND} · Nº ${rec.no} · ${i + 1}`
       })
-    return ground(all, shape)
+    return ground(all, shape, file)
   }
   let lastCard = card1
   if (!plates && card1.offsetHeight <= PAGE_LIMIT) return finish()
@@ -132,7 +138,7 @@ export function paginateReview(
       </div>
       <div class="share-page-no"></div>`
     host.appendChild(page)
-    ground([page], shape)
+    ground([page], shape, file)
     return {
       card: page.querySelector('.card') as HTMLElement,
       body: page.querySelector('.body') as HTMLElement,
@@ -184,9 +190,53 @@ export function buildCollagePage(
      a property of the export, so it is stamped on here rather than threaded
      through every page that builds one. */
   const laid: MonthData = { ...m, wide: shape === 'wide' }
-  host.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage(laid, style)}</div></div>`
-  return ground([host.querySelector('.share-page') as HTMLElement], shape)
+  const draw = (fit: Partial<MonthData> = {}): HTMLElement => {
+    host.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage({ ...laid, ...fit }, style)}</div></div>`
+    return ground([host.querySelector('.share-page') as HTMLElement], shape)[0]
+  }
+  let page = draw()
+  /* FIT THE FRAME. A collage is posted, so it is one image that never runs
+     past a postable shape — 9:16 on the Small card (a Story), 4:5 on the Large
+     one (a feed post) — however long the month or year. The grid takes the
+     fewest covers to a row, which is the biggest covers, that keep the card
+     inside that shape. Cells keep their captions while a cover is wide enough
+     to carry them; past a dozen books they drop them rather than run long,
+     so a year of 150 still comes out as one picture with its stats. Measured, not modelled: the head, the
+     stats and every style's cell differ too much for one formula. A style
+     with no cover grid (the lists) is left as it drew. */
+  const cell = (p: HTMLElement) => (p.querySelector('[data-grid] > *') as HTMLElement | null)?.offsetWidth ?? 0
+  if (cell(page) && m.books.length > 1) {
+    const frame = shape === 'wide' ? 5 / 4 : 16 / 9
+    const widths = fitCols(m.books.length)
+    /* the first width, narrowest first, that keeps its cells at least `min`
+       wide and lands inside the frame; failing that, the last one tried */
+    const search = (bare: boolean, min: number): { fit: Partial<MonthData>; inside: boolean } | null => {
+      let last: Partial<MonthData> | null = null
+      for (const cols of widths) {
+        page = draw({ cols, bare })
+        if (last && cell(page) < min) break
+        last = { cols, bare }
+        if (page.offsetHeight / page.offsetWidth <= frame) return { fit: last, inside: true }
+      }
+      return last && { fit: last, inside: false }
+    }
+    /* Captions first, at any width that still carries them. Only a long list
+       (past a dozen) trades them away, and then for the biggest covers that
+       fit, which is the narrowest bare width rather than the next one along. */
+    let found = search(false, CAPTION_MIN)
+    if (!found?.inside && m.books.length > BARE_FROM) found = search(true, COVER_MIN) ?? found
+    if (found) page = draw(found.fit)
+  }
+  return [page]
 }
+
+/* the narrowest cell (CSS px on the leaf; the file doubles it) that still
+   carries a title, an author and a status legibly, and the narrowest cover
+   that is still a cover rather than a swatch */
+const CAPTION_MIN = 100
+const COVER_MIN = 40
+/* how many books a collage holds before its covers may lose their captions */
+const BARE_FROM = 12
 
 /* Story: one book, on a leaf of a FIXED height. Every other page here grows
    to whatever it is holding; this one cannot, because the shape is the point —

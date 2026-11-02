@@ -42,6 +42,11 @@ export interface MonthData {
      column the same column count and simply inflates every cover. That was the
      complaint. `wide` is the one fact that lets the count move. */
   wide?: boolean
+  /* Set by the export only, which fits the grid to its frame: how many covers
+     to a row, and whether the cells drop their captions because the covers
+     have grown too small to carry them legibly. */
+  cols?: number
+  bare?: boolean
   /* Who is reading it. Only the story card prints this, and only because a
      card somebody posts to their own feed is the one card in the app that is
      ABOUT its reader as much as about the book — every other card is a record
@@ -716,9 +721,12 @@ function fits(n: number, c: number): boolean {
   return c - empty >= 2
 }
 
-function gridCols(n: number, wide?: boolean, perRow: number = ASPECT_PER_ROW): number {
+function gridCols(m: MonthData, perRow: number = ASPECT_PER_ROW): number {
+  /* the export fits the grid to its frame and says how wide (see fitCols) */
+  if (m.cols) return m.cols
+  const n = m.books.length
   if (n <= 1) return 1
-  const max = wide ? 6 : 5
+  const max = m.wide ? 6 : 5
   const pick = (ok: (c: number) => boolean) => {
     let best = 0
     let bestScore = Infinity
@@ -736,6 +744,16 @@ function gridCols(n: number, wide?: boolean, perRow: number = ASPECT_PER_ROW): n
   /* A count every width strands one book on (61 on the standard card is one
      past a multiple of 2, 3, 4 and 5) takes the best-shaped width anyway. */
   return pick((c) => fits(n, c)) || pick((c) => Math.ceil(n / c) > EVEN_ROWS_MAX) || Math.min(n, max)
+}
+
+/* The widths an export may try, narrowest (biggest covers) first. Three is
+   the floor because two across draws the same size of cover as three (the
+   grid's cap is a third of the card) in a taller, narrower card. Sixteen is
+   the ceiling: a year of 150 books on the Small card lands at eleven. */
+export function fitCols(n: number): number[] {
+  const out: number[] = []
+  for (let c = Math.min(n, 3); c <= Math.min(n, 16); c++) if (fits(n, c)) out.push(c)
+  return out
 }
 
 /* A cover grid, with its short rows centred — on a SHORT grid only. Every
@@ -760,7 +778,7 @@ function centred(n: number, cols: number): boolean {
 }
 
 function grid(cls: string, cols: number, cells: string[]): string {
-  return `<div class="${cls}" style="--cols:${cols}">${seat(cells, cols, centred(cells.length, cols))}</div>`
+  return `<div class="${cls}" data-grid style="--cols:${cols}">${seat(cells, cols, centred(cells.length, cols))}</div>`
 }
 
 /* The row-per-book styles have the OPPOSITE fault, and the old threshold made
@@ -845,7 +863,7 @@ const leans = [-1.6, 0.8, -0.6, 1.4, -1, 0.6]
    on the cell: the stub is still a plate with a perforated foot, the register
    is still ruled, the board still numbers its features. */
 function hopeGrid(m: MonthData, cls: string, cell: (b: Review, i: number) => string): string {
-  return grid(`hg ${cls}`, gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map(cell))
+  return grid(`hg ${cls}`, gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map(cell))
 }
 
 /* The hopefuls word, one per style, in one place — the grid cell prints it and
@@ -902,7 +920,7 @@ function catalogue(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c1')}
     ${moStats(m, 'c1')}
-    ${grid('c1-grid', gridCols(m.books.length, m.wide), m.books.map((b, i) => `
+    ${grid('c1-grid', gridCols(m), m.books.map((b, i) => `
         <div class="c1-cell">
           <div class="c1-no">FR ${String(i + 1).padStart(2, '0')}A</div>
           ${cov(b)}
@@ -916,7 +934,7 @@ function catalogue(m: MonthData): string {
 
 /* C2 · Airmail (butter) — front-facing covers on drawn rails, three to a rail */
 function airmail(m: MonthData): string {
-  const per = gridCols(m.books.length, m.wide)
+  const per = gridCols(m)
   /* the same rows as every other grid, one rail each */
   const rows: Review[][] = []
   let at = 0
@@ -927,14 +945,14 @@ function airmail(m: MonthData): string {
     ${moHead(m, 'c2')}
     ${moStats(m, 'c2')}
     ${rows.map((row) => `
-      <div class="c2-rail">
+      <div class="c2-rail" data-grid>
         ${seat(row.map((b, i) => `
           <div class="c2-book" style="--lean:${leans[i % leans.length]}deg">
             ${cov(b)}
           </div>`), per, mid)}
       </div>
       <div class="c2-edge"></div>
-      <div class="c2-rail" style="align-items:start; margin-bottom:26px">
+      <div class="c2-rail" data-grid style="align-items:start; margin-bottom:26px">
         ${tbr(m)
           /* the rail under a shelf says one thing per spine, and on a month
              card that is the verdict. A hopeful has none — so the rail carries
@@ -988,7 +1006,7 @@ function fieldnotes(m: MonthData): string {
     ${patchC(130)}
     ${moHead(m, 'c4')}
     ${moStats(m, 'c4')}
-    ${grid('c4-board', gridCols(m.books.length, m.wide), m.books.map((b, i) => `
+    ${grid('c4-board', gridCols(m), m.books.map((b, i) => `
         <div class="c4-pin" style="--pr:${leans[i % leans.length] * 1.6}deg">
           <svg class="c4-tack" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
             <circle cx="7" cy="7" r="5.4" fill="var(--accent)"/>
@@ -1054,7 +1072,7 @@ function jacket(m: MonthData): string {
     ${patchC(140)}
     ${moHead(m, 'c6')}
     ${moStats(m, 'c6')}
-    ${grid('c6-sheet', gridCols(m.books.length, m.wide), m.books.map((b, i) => `
+    ${grid('c6-sheet', gridCols(m), m.books.map((b, i) => `
         <div class="c6-stamp" style="--sr:${leans[i % leans.length]}deg">
           <div class="c6-face">
             ${cov(b)}
@@ -1072,7 +1090,9 @@ function jacket(m: MonthData): string {
 
 /* C7 · Masthead (sage) — the month as a listings board, one line a film */
 function masthead(m: MonthData): string {
-  const cols = listCols(m.books.length, m.wide)
+  /* a listings line carries a numeral, a title, a byline and a rating, and in
+     a third of the standard card it ran ~100px past the edge */
+  const cols = Math.min(listCols(m.books.length, m.wide), m.wide ? 3 : 2)
   const ink = 'var(--star)', line = 'var(--star-line)'
   return `<article class="card c7" style="--rot:-.4deg">
     ${patchC(150)}
@@ -1123,7 +1143,7 @@ function herbarium(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c8')}
     ${moStats(m, 'c8')}
-    ${grid('cb-grid', gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
+    ${grid('cb-grid', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="cb-cell">
           <div class="cb-mount">${cov(b)}${corners}</div>
           <div class="cb-acc lbl">Nº ${String(i + 1).padStart(3, '0')}</div>
@@ -1282,7 +1302,7 @@ function passport(m: MonthData): string {
       ${patchC(150)}
       ${moHead(m, 'c11')}
       ${moStats(m, 'c11')}
-      ${grid('vp-sheet', gridCols(n, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
+      ${grid('vp-sheet', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
           <div class="vp-cell">
             <div class="vp-photo">${cov(b)}</div>
             <div class="vp-code lbl">FP·${String(i + 1).padStart(3, '0')} · ${initial(b.title)}${initial(b.author)}</div>
@@ -1314,7 +1334,7 @@ function specimen(m: MonthData): string {
     ${patchC(180)}
     ${moHead(m, 'c12')}
     ${moStats(m, 'c12')}
-    ${grid('cs-grid', gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
+    ${grid('cs-grid', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="cs-cell">
           <span class="cs-back" aria-hidden="true">${escapeHtml(initial(b.title))}</span>
           <div class="cs-mount">${cov(b)}</div>
@@ -1421,7 +1441,7 @@ function trading(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c15')}
     ${moStats(m, 'c15')}
-    ${grid('c15-binder', gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
+    ${grid('c15-binder', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="c15-sleeve"><div class="c15-card">
           <div class="c15-top"><span class="lbl">Nº ${String(i + 1).padStart(3, '0')}</span></div>
           ${cov(b)}
@@ -1439,7 +1459,7 @@ function booth(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c16')}
     ${moStats(m, 'c16')}
-    ${grid('c16-strips', gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b) => `
+    ${grid('c16-strips', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b) => `
         <div class="c16-fr">
           ${cov(b)}
           <div class="c16-t">${escapeHtml(b.title)}</div>
@@ -1457,7 +1477,7 @@ function bingo(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c17')}
     ${moStats(m, 'c17')}
-    ${grid('c17-board', gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
+    ${grid('c17-board', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="c17-sq">
           <span class="lbl c17-no">${String(i + 1).padStart(2, '0')}</span>
           <div class="c17-mount">${cov(b)}${tbr(m) ? '' : '<i class="c17-daub" aria-hidden="true"></i>'}</div>
@@ -1474,7 +1494,7 @@ function seedpacket(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c18')}
     ${moStats(m, 'c18')}
-    ${grid('c18-rack', gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
+    ${grid('c18-rack', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="c18-pk">
           <div class="c18-fold"><span class="lbl">Nº ${String(i + 1).padStart(2, '0')}</span></div>
           ${cov(b)}
@@ -1492,7 +1512,7 @@ function hoop(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c19')}
     ${moStats(m, 'c19')}
-    ${grid('c19-hoops', gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b) => `
+    ${grid('c19-hoops', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b) => `
         <div class="c19-c">
           <div class="c19-ring">${cov(b)}</div>
           <div class="c19-t">${escapeHtml(b.title)}</div>
@@ -1511,7 +1531,7 @@ function chintz(m: MonthData): string {
       ${moHead(m, 'c20')}
       ${moStats(m, 'c20')}
     </div>
-    ${grid('c20-table', gridCols(m.books.length, m.wide, ASPECT_PER_ROW_CAPTIONED), m.books.map((b) => `
+    ${grid('c20-table', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b) => `
         <div class="c20-c">
           ${cov(b)}
           <div class="c20-t">${escapeHtml(b.title)}</div>
@@ -1717,5 +1737,6 @@ export const COLLAGE_RENDERERS: Record<StyleId, (m: MonthData) => string> = {
 }
 
 export function renderCollage(m: MonthData, style: StyleId): string {
-  return COLLAGE_RENDERERS[style](m)
+  const html = COLLAGE_RENDERERS[style](m)
+  return m.bare ? html.replace('class="card ', 'class="card card--bare ') : html
 }
