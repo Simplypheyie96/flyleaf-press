@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
@@ -57,6 +57,13 @@ export function MonthDetail({ settings }: { settings: Settings }) {
       books && key ? buildCollagePage({ name: nameOf(key), books, span }, style, host, shape, parts) : [],
     [books, key, style, span]
   )
+  /* A year is megabytes of cover art; the card on the page redraws after a
+     style tap has painted (and after the share sheet's note), never before. */
+  const shown = useDeferredValue(style)
+  const html = useMemo(
+    () => (books && key ? renderCollage({ name: nameOf(key), books, span }, shown) : ''),
+    [books, key, span, shown]
+  )
 
   if (!month) return null
   const open = key === (isYear ? currentYearKey() : currentMonthKey())
@@ -99,7 +106,7 @@ export function MonthDetail({ settings }: { settings: Settings }) {
             {/* a twenty-book month — let alone a hundred-book year — is taller
                 than any phone, so the same clamp the review card uses keeps the
                 actions within reach */}
-            <CollapsedCard html={renderCollage(month, style)} />
+            <CollapsedCard html={html} />
 
             <div className="detail-acts detail-acts--one">
               <button className="btn" onClick={() => setSharing(true)}>Share</button>

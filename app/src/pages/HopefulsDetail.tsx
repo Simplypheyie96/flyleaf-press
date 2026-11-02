@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
@@ -281,6 +281,13 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [key, style, rows, doneKey]
   )
+  /* the card on the page redraws after a style tap has painted, never before */
+  const shown = useDeferredValue(style)
+  const html = useMemo(
+    () => renderCollage(data, shown),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key, shown, rows, doneKey]
+  )
 
   const told = (rows ?? []).find((r) => r.id === storyFor)
 
@@ -451,7 +458,7 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
               />
             </div>
 
-            <CollapsedCard html={renderCollage(data, style)} />
+            <CollapsedCard html={html} />
 
             <div className="detail-acts detail-acts--one">
               <button className="btn" onClick={() => setSharing(true)}>Share</button>

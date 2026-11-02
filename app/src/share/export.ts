@@ -213,8 +213,14 @@ function fitCollage(m: MonthData, style: StyleId, host: HTMLDivElement, shape: E
      a property of the export, so it is stamped on here rather than threaded
      through every page that builds one. */
   let laid: MonthData = { ...m, wide: shape === 'wide' }
-  const draw = (fit: Partial<MonthData> = {}): HTMLElement => {
-    box.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage({ ...laid, ...fit }, style)}</div></div>`
+  /* Covers are data URLs, a year of them several megabytes of markup, and the
+     search below draws the card a dozen times or more. A cover's box is set by
+     its CSS (2:3), never by its pixels, so every trial draw carries a one-pixel
+     stand-in and only the final one parses the real art. */
+  const stubs = m.books.map((b) => (b.cover ? { ...b, cover: STUB } : b))
+  let fit: Partial<MonthData> = {}
+  const draw = (f: Partial<MonthData> = fit, books = stubs): HTMLElement => {
+    box.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage({ ...laid, ...f, books }, style)}</div></div>`
     return ground([box.firstElementChild as HTMLElement], shape)[0]
   }
   let page = draw()
@@ -236,27 +242,46 @@ function fitCollage(m: MonthData, style: StyleId, host: HTMLDivElement, shape: E
     laid = { ...laid, packed: true }
     page = draw()
   }
-  if (cell(page) && m.books.length > 1) {
-    const widths = fitCols(m.books.length)
-    /* the first width, narrowest first, that keeps its cells at least `min`
-       wide and lands inside the frame; failing that, the last one tried */
-    const search = (bare: boolean, min: number): { fit: Partial<MonthData>; inside: boolean } | null => {
-      let last: Partial<MonthData> | null = null
-      for (const cols of widths) {
-        page = draw({ cols, bare })
-        if (last && cell(page) < min) break
-        last = { cols, bare }
-        if (page.offsetHeight / page.offsetWidth <= frame) return { fit: last, inside: true }
+  const widths = fitCols(m.books.length)
+  if (cell(page) && m.books.length > 1 && widths.length) {
+    /* The first width, narrowest first, that keeps its cells at least `min`
+       wide and lands inside the frame; failing that, the widest one whose
+       cells still clear `min` (the narrowest, if none do). More columns only
+       ever make cells narrower and the card shorter, so both are bisected
+       rather than walked: a year draws the card a handful of times, not
+       every width there is. */
+    const search = (bare: boolean, min: number): { fit: Partial<MonthData>; inside: boolean } => {
+      const seen = new Map<number, { inside: boolean; big: boolean }>()
+      const at = (i: number) => {
+        let r = seen.get(i)
+        if (!r) {
+          page = draw({ cols: widths[i], bare })
+          r = { inside: page.offsetHeight / page.offsetWidth <= frame, big: cell(page) >= min }
+          seen.set(i, r)
+        }
+        return r
       }
-      return last && { fit: last, inside: false }
+      const first = (ok: (i: number) => boolean) => {
+        let lo = 0, hi = widths.length
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1
+          if (ok(mid)) hi = mid
+          else lo = mid + 1
+        }
+        return lo
+      }
+      const big = Math.max(0, first((i) => !at(i).big) - 1)
+      if (!at(big).inside) return { fit: { cols: widths[big], bare }, inside: false }
+      return { fit: { cols: widths[first((i) => at(i).inside)], bare }, inside: true }
     }
     /* Captions first, at any width that still carries them. Only a long list
        (past a dozen) trades them away, and then for the biggest covers that
        fit, which is the narrowest bare width rather than the next one along. */
     let found = search(false, CAPTION_MIN)
-    if (!found?.inside && m.books.length > BARE_FROM) found = search(true, COVER_MIN) ?? found
-    if (found) page = draw(found.fit)
+    if (!found.inside && m.books.length > BARE_FROM) found = search(true, COVER_MIN)
+    fit = found.fit
   }
+  page = draw(fit, m.books)
   /* the page stands in the host on its own, like every other leaf */
   box.replaceWith(page)
   return page
@@ -265,6 +290,7 @@ function fitCollage(m: MonthData, style: StyleId, host: HTMLDivElement, shape: E
 /* the narrowest cell (CSS px on the leaf; the file doubles it) that still
    carries a title, an author and a status legibly, and the narrowest cover
    whose title and art still read (120px in the file on either card) */
+const STUB = 'data:image/gif;base64,R0lGODlhAQABAAAAACw='
 const CAPTION_MIN = 100
 const COVER_MIN = 60
 /* how many books a collage holds before its covers may lose their captions */

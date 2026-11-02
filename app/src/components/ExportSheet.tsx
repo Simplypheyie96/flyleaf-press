@@ -67,6 +67,7 @@ export function ExportSheet({
   const [parts, setParts] = useState(1)
   const split = splits ? parts : 1
   const [busy, setBusy] = useState(false)
+  const [building, setBuilding] = useState(true)
   const [done, setDone] = useState('')
   /* both shapes, not just the selected one — two figures side by side are what
      make this a like-for-like choice rather than a leap of faith */
@@ -83,38 +84,56 @@ export function ExportSheet({
 
   /* The preview is the real export pipeline at a smaller scale — same
      composition width, same pagination, same card — so what is measured here
-     is what gets sent. The two options are two COLUMN widths, so the
-     unselected figure has to come off its own layout: build it first, measure
-     it, then build the chosen one last so the preview shows the layout that
-     will actually go out. */
+     is what gets sent. A year of covers takes a moment to lay out, so the sheet
+     paints first with a "Laying out" note, the chosen size is built and shown,
+     and only then is the other size measured (off screen) for its figure.
+     Resizing the sheet only rescales; nothing about the card depends on it. */
   useEffect(() => {
     const wrap = wrapRef.current
     const host = hostRef.current
     if (!wrap || !host) return
-    const rebuild = () => {
-      const measured: Partial<Record<ExportShape, { w: number; h: number; n: number }>> = {}
-      for (const s of shapes.filter((s) => s !== shape)) {
-        measured[s] = pixelSize(build(host, s, split))
-      }
-      const built = build(host, shape, split)
-      measured[shape] = pixelSize(built)
-      setPages(built.length)
-      setPx(measured)
+    let live = true
+    let built: HTMLElement[] = []
+    const fit = () => {
+      if (!built.length) return
       /* by the leaf actually built: a Large review composes on the standard column */
-      const k = Math.min(1, wrap.clientWidth / (built[0]?.offsetWidth || SHAPE_W[shape]))
+      const k = Math.min(1, wrap.clientWidth / (built[0].offsetWidth || SHAPE_W[shape]))
       host.style.transform = `scale(${k})`
       let h = 0
       for (const p of built) h += p.offsetHeight + 20
       wrap.style.height = `${Math.ceil(h * k)}px`
     }
-    rebuild()
-    /* web fonts landing late change page heights — rebuild once they're in */
-    document.fonts.ready.then(() => {
-      if (hostRef.current) rebuild()
+    const rebuild = () => {
+      built = build(host, shape, split)
+      setPages(built.length)
+      setPx((px) => ({ ...px, [shape]: pixelSize(built) }))
+      fit()
+      setBuilding(false)
+      const others = shapes.filter((s) => s !== shape)
+      if (others.length) later(() => {
+        const probe = wrap.appendChild(document.createElement('div'))
+        probe.className = 'card-wrap share-probe'
+        for (const s of others) {
+          const m = pixelSize(build(probe, s, split))
+          setPx((px) => ({ ...px, [s]: m }))
+        }
+        probe.remove()
+      })
+    }
+    /* after the next paint, so the note is on screen before the work starts */
+    const later = (f: () => void) => requestAnimationFrame(() => setTimeout(() => live && f(), 0))
+    setBuilding(true)
+    later(() => {
+      rebuild()
+      /* web fonts landing late change page heights — rebuild once they're in */
+      if (document.fonts.status !== 'loaded') document.fonts.ready.then(() => live && rebuild())
     })
-    const ro = new ResizeObserver(rebuild)
+    const ro = new ResizeObserver(fit)
     ro.observe(wrap)
-    return () => ro.disconnect()
+    return () => {
+      live = false
+      ro.disconnect()
+    }
   }, [build, shape, shapes, split])
 
   useEffect(() => {
@@ -156,8 +175,9 @@ export function ExportSheet({
 
         {picker}
 
-        <div className="share-preview-wrap" ref={wrapRef}>
+        <div className={`share-preview-wrap${building ? ' is-building' : ''}`} ref={wrapRef} aria-busy={building}>
           <div className="card-wrap share-preview-scale" ref={hostRef} />
+          {building && <p className="share-building" role="status">Laying out the card…</p>}
         </div>
 
         <div className="field" style={{ marginTop: 18 }}>
@@ -209,11 +229,11 @@ export function ExportSheet({
           </div>
         ) : <>
         <div className="share-acts">
-          <button className="btn" onClick={() => run('share')} disabled={busy || !shareable}
+          <button className="btn" onClick={() => run('share')} disabled={busy || building || !shareable}
             title={shareable ? undefined : 'This browser can’t pass files to other apps'}>
             Share
           </button>
-          <button className="btn btn--ghost" onClick={() => run('download')} disabled={busy}>
+          <button className="btn btn--ghost" onClick={() => run('download')} disabled={busy || building}>
             {pages > 1 ? `Save ${pages} images` : 'Save image'}
           </button>
           {printPdf && (
