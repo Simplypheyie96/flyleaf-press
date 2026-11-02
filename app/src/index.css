@@ -991,7 +991,7 @@ body::before{
 /* size choice in the download sheet — two cards, not a select. The pixel
    figure is the point of the control, so it gets its own line rather than
    being tucked into a label. */
-.size-pick{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+.size-pick{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); gap:10px; margin-top:8px; }
 .size-pick button{
   display:flex; flex-direction:column; gap:5px; align-items:flex-start;
   padding:12px 14px; background:var(--card-w); color:var(--ink);

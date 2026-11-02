@@ -10,7 +10,7 @@ import { StylePicker } from '../components/StylePicker'
 import { useUnlocked } from '../unlock'
 import { renderCollage, type MonthData } from '../cards/collage'
 import {
-  shareCollageImage, buildCollagePage, collageBaseName, type ExportMode,
+  shareCollageImage, buildCollagePage, collageBaseName, SPLIT_FROM, type ExportMode,
 } from '../share/export'
 import {
   monthKey, monthName, currentMonthKey, yearKey, yearName, currentYearKey, isYearKey,
@@ -53,8 +53,8 @@ export function MonthDetail({ settings }: { settings: Settings }) {
      changes its contents — the books and the chosen style. Depending on the
      object itself would make the sheet re-lay-out the collage on every tick. */
   const build = useCallback(
-    (host: HTMLDivElement, shape: ExportShape) =>
-      books && key ? buildCollagePage({ name: nameOf(key), books, span }, style, host, shape) : [],
+    (host: HTMLDivElement, shape: ExportShape, parts: number) =>
+      books && key ? buildCollagePage({ name: nameOf(key), books, span }, style, host, shape, parts) : [],
     [books, key, style, span]
   )
 
@@ -132,10 +132,11 @@ export function MonthDetail({ settings }: { settings: Settings }) {
             />
           }
           build={build}
+          splits={month.books.length > SPLIT_FROM}
           shape={settings.exportShape}
           onShape={(s) => db.settings.update(1, { exportShape: s })}
-          exportImages={(mode: ExportMode, shape: ExportShape) =>
-            shareCollageImage(month, style, mode, shape)}
+          exportImages={(mode: ExportMode, shape: ExportShape, parts: number) =>
+            shareCollageImage(month, style, mode, shape, parts)}
           locked={unlocked ? undefined : 'Collages come with the unlock. Reviews in Archive and Masthead share free.'}
           onClose={() => setSharing(false)}
         />

@@ -14,7 +14,7 @@ import { styleFree, useUnlocked } from '../unlock'
 import { faceUri } from '../components/Face'
 import { renderCollage, type MonthData } from '../cards/collage'
 import {
-  shareCollageImage, buildCollagePage, collageBaseName,
+  shareCollageImage, buildCollagePage, collageBaseName, SPLIT_FROM,
   shareStoryImage, buildStoryPage, storyBaseName, type ExportMode,
 } from '../share/export'
 import { monthName, currentMonthKey } from '../format'
@@ -276,8 +276,8 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
   const data: MonthData = { name: monthName(key), books, span: 'hopefuls' }
 
   const build = useCallback(
-    (host: HTMLDivElement, shape: ExportShape) =>
-      buildCollagePage({ name: monthName(key), books, span: 'hopefuls' }, style, host, shape),
+    (host: HTMLDivElement, shape: ExportShape, parts: number) =>
+      buildCollagePage({ name: monthName(key), books, span: 'hopefuls' }, style, host, shape, parts),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [key, style, rows, doneKey]
   )
@@ -493,10 +493,11 @@ export function HopefulsDetail({ settings }: { settings: Settings }) {
             />
           }
           build={build}
+          splits={books.length > SPLIT_FROM}
           shape={settings.exportShape}
           onShape={(s) => db.settings.update(1, { exportShape: s })}
-          exportImages={(mode: ExportMode, shape: ExportShape) =>
-            shareCollageImage(data, style, mode, shape)}
+          exportImages={(mode: ExportMode, shape: ExportShape, parts: number) =>
+            shareCollageImage(data, style, mode, shape, parts)}
           locked={unlocked ? undefined : 'Collages come with the unlock. Reviews in Archive and Masthead share free.'}
           onClose={() => setSharing(false)}
         />

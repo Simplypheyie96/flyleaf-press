@@ -24,6 +24,7 @@ export function ExportSheet({
   shape,
   onShape,
   shapes = EXPORT_SHAPES,
+  splits,
   build,
   exportImages,
   printPdf,
@@ -44,9 +45,11 @@ export function ExportSheet({
      control with a single option is a control that decides nothing, and a
      pressed button nobody can unpress reads as broken. */
   shapes?: readonly ExportShape[]
-  /** lays the paper pages out into the host, in the given shape */
-  build: (host: HTMLDivElement, shape: ExportShape) => HTMLElement[]
-  exportImages: (mode: ExportMode, shape: ExportShape) => Promise<ExportResult>
+  /** a long collage: offer it as one, two or three images */
+  splits?: boolean
+  /** lays the paper pages out into the host, in the given shape and split */
+  build: (host: HTMLDivElement, shape: ExportShape, parts: number) => HTMLElement[]
+  exportImages: (mode: ExportMode, shape: ExportShape, parts: number) => Promise<ExportResult>
   /** present only when the Settings PDF toggle is on */
   printPdf?: () => void
   /** store apps, before the unlock: why this card waits for it */
@@ -61,6 +64,8 @@ export function ExportSheet({
      does there is worth saying before it is pressed */
   const viaSheet = savesViaSystemSheet()
   const [pages, setPages] = useState(1)
+  const [parts, setParts] = useState(1)
+  const split = splits ? parts : 1
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState('')
   /* both shapes, not just the selected one — two figures side by side are what
@@ -89,9 +94,9 @@ export function ExportSheet({
     const rebuild = () => {
       const measured: Partial<Record<ExportShape, { w: number; h: number; n: number }>> = {}
       for (const s of shapes.filter((s) => s !== shape)) {
-        measured[s] = pixelSize(build(host, s))
+        measured[s] = pixelSize(build(host, s, split))
       }
-      const built = build(host, shape)
+      const built = build(host, shape, split)
       measured[shape] = pixelSize(built)
       setPages(built.length)
       setPx(measured)
@@ -110,7 +115,7 @@ export function ExportSheet({
     const ro = new ResizeObserver(rebuild)
     ro.observe(wrap)
     return () => ro.disconnect()
-  }, [build, shape, shapes])
+  }, [build, shape, shapes, split])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -122,7 +127,7 @@ export function ExportSheet({
     setBusy(true)
     setDone('')
     try {
-      const res = await exportImages(mode, shape)
+      const res = await exportImages(mode, shape, split)
       if (res.ok) {
         const n = `${res.pages} image${res.pages > 1 ? 's' : ''}`
         setDone(
@@ -173,6 +178,20 @@ export function ExportSheet({
             <p className="share-note size-one">{figure(px[shape])}</p>
           )}
         </div>
+
+        {splits && (
+          <div className="field" style={{ marginTop: 18 }}>
+            <span className="ui-lbl">Images</span>
+            <div className="size-pick">
+              {[1, 2, 3].map((k) => (
+                <button key={k} type="button" aria-pressed={parts === k} onClick={() => setParts(k)}>
+                  <span className="size-pick-n">{k === 1 ? 'One image' : `${k} images`}</span>
+                  <span className="size-pick-px">{k === 1 ? 'Everything on one' : 'Bigger covers'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* On iOS a saved file goes through the system sheet, which is the only
             route to the camera roll — and it renames what it takes, so a

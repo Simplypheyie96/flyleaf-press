@@ -47,6 +47,13 @@ export interface MonthData {
      have grown too small to carry them legibly. */
   cols?: number
   bare?: boolean
+  /* a list style whose rows would run past the frame: drawn as the cover grid
+     its hopefuls card already uses, each cell keeping its rating */
+  packed?: boolean
+  /* one image of a collage split across several: which, of how many, where
+     its books start in the whole list, and the whole list, which the head and
+     the stats still describe */
+  part?: { no: number; of: number; start: number; all: Review[] }
   /* Who is reading it. Only the story card prints this, and only because a
      card somebody posts to their own feed is the one card in the app that is
      ABOUT its reader as much as about the book — every other card is a record
@@ -111,7 +118,7 @@ type HeadId =
   | 'c13' | 'c14' | 'c15' | 'c16' | 'c17' | 'c18' | 'c19' | 'c20'
 
 function moHead(m: MonthData, id: HeadId): string {
-  const n = m.books.length
+  const n = (m.part?.all ?? m.books).length
   /* A story card is headed by what it IS, not by when it is. The month is the
      subject of a collage — twelve covers under "September 2026" is a period of
      reading — and it is beside the point on a card carrying one book somebody
@@ -123,7 +130,7 @@ function moHead(m: MonthData, id: HeadId): string {
      reading word of its own, which would be a second phrase saying the same
      thing in language the reader has to translate back. */
   const one = solo(m)
-  const t = one ? 'Currently reading' : escapeHtml(m.name)
+  const t = one ? 'Currently reading' : escapeHtml(m.part ? `${m.name} · ${m.part.no} of ${m.part.of}` : m.name)
   /* A hopefuls card counts hopefuls. The per-style nouns below describe the
      OBJECT the count is printed on — frames on a contact sheet, spines on a
      shelf — and a frame is still a frame whether the book behind it has been
@@ -363,7 +370,7 @@ type Stat = { label: string; value: string }
    shared band called identically from all five renderers, which made the
    busiest part of every collage byte-identical whichever style you picked. */
 function monthStats(m: MonthData): Stat[] {
-  const books = m.books
+  const books = m.part?.all ?? m.books
   if (!books.length) return []
 
   /* A story card carries no strip. Every figure in here is a figure ABOUT a
@@ -455,6 +462,8 @@ function monthStats(m: MonthData): Stat[] {
    pinned chit, a register head. None hardcodes a count; they all take however
    many figures survived the test above. */
 function moStats(m: MonthData, id: HeadId): string {
+  /* a split collage prints the whole list's figures once, on its first image */
+  if (m.part && m.part.no > 1) return ''
   const st = monthStats(m)
   if (!st.length) return ''
 
@@ -850,6 +859,12 @@ function meta(...parts: (string | false | undefined)[]): string {
 
 const leans = [-1.6, 0.8, -0.6, 1.4, -1, 0.6]
 
+/* a cell's running number, counted across every image of a split collage */
+const skip = (m: MonthData): number => m.part?.start ?? 0
+
+/* whether a list style draws its books as a cover grid rather than rows */
+const packs = (m: MonthData): boolean => tbr(m) || !!m.packed
+
 /* THE THREE LIST STYLES, PACKED AS GRIDS — for hopefuls only.
 
    A month card gives each book a row because the row has something to say: a
@@ -922,7 +937,7 @@ function catalogue(m: MonthData): string {
     ${moStats(m, 'c1')}
     ${grid('c1-grid', gridCols(m), m.books.map((b, i) => `
         <div class="c1-cell">
-          <div class="c1-no">FR ${String(i + 1).padStart(2, '0')}A</div>
+          <div class="c1-no">FR ${String(i + 1 + skip(m)).padStart(2, '0')}A</div>
           ${cov(b)}
           ${tbr(m) ? '' : `<div class="c1-meta">
             <span class="r-num">${fmtRating(b.rating)}</span>
@@ -975,12 +990,12 @@ function scrapbook(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c3')}
     ${moStats(m, 'c3')}
-    ${tbr(m)
+    ${packs(m)
       ? hopeGrid(m, 'hg--c3', (b, i) => `
         <div class="hg-c" style="--tr:${leans[i % leans.length] * 0.7}deg">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end">${hopeSay('c3')}</div>
+          <div class="hg-end">${verdict(m, b, 'c3')}</div>
         </div>`)
       : `
     <div class="c3-stack ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
@@ -1029,12 +1044,12 @@ function archive(m: MonthData): string {
     ${patchC(140)}
     ${moHead(m, 'c5')}
     ${moStats(m, 'c5')}
-    ${tbr(m)
+    ${packs(m)
       ? hopeGrid(m, 'hg--c5', (b) => `
         <div class="hg-c">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end">${hopeSay('c5')}</div>
+          <div class="hg-end">${verdict(m, b, 'c5')}</div>
         </div>`)
       : `
     <div class="c5-tbl ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
@@ -1098,19 +1113,19 @@ function masthead(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c7')}
     ${moStats(m, 'c7')}
-    ${tbr(m)
+    ${packs(m)
       ? hopeGrid(m, 'hg--c7', (b, i) => `
         <div class="hg-c">
-          <div class="hg-no">${String(i + 1).padStart(2, '0')}</div>
+          <div class="hg-no">${String(i + 1 + skip(m)).padStart(2, '0')}</div>
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end">${hopeSay('c7')}</div>
+          <div class="hg-end">${verdict(m, b, 'c7')}</div>
         </div>`)
       : `
     <div class="c7-board ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
       ${m.books.map((b, i) => `
         <div class="c7-line">
-          <span class="c7-no">${String(i + 1).padStart(2, '0')}</span>
+          <span class="c7-no">${String(i + 1 + skip(m)).padStart(2, '0')}</span>
           ${cov(b, 'c7-cov')}
           <div class="c7-mid">
             <div class="c7-name">${escapeHtml(b.title)}</div>
@@ -1146,7 +1161,7 @@ function herbarium(m: MonthData): string {
     ${grid('cb-grid', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="cb-cell">
           <div class="cb-mount">${cov(b)}${corners}</div>
-          <div class="cb-acc lbl">Nº ${String(i + 1).padStart(3, '0')}</div>
+          <div class="cb-acc lbl">Nº ${String(i + 1 + skip(m)).padStart(3, '0')}</div>
           <div class="cb-t">${escapeHtml(b.title)}</div>
           <div class="cb-a">${escapeHtml(b.author)}</div>
           ${tbr(m)
@@ -1164,7 +1179,7 @@ function herbarium(m: MonthData): string {
    the month is legible from across a room; the cut beside it is what stops the
    bill being a list of words. */
 function broadside(m: MonthData): string {
-  if (tbr(m))
+  if (packs(m))
     return `<article class="card card--salmon c9" style="--rot:.5deg">
       ${patchC(170)}
       ${moHead(m, 'c9')}
@@ -1173,7 +1188,7 @@ function broadside(m: MonthData): string {
         <div class="hg-c">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end">${hopeSay('c9')}</div>
+          <div class="hg-end">${verdict(m, b, 'c9')}</div>
         </div>`)}
     </article>`
 
@@ -1247,7 +1262,7 @@ function broadside(m: MonthData): string {
    run of leader dots to the rating, and the sleeve art of each one at the head
    of its own line: a tracklist without the record is just handwriting. */
 function jcard(m: MonthData): string {
-  if (tbr(m))
+  if (packs(m))
     return `<article class="card card--apricot c10" style="--rot:-.6deg">
       ${patchC(140)}
       ${moHead(m, 'c10')}
@@ -1256,7 +1271,7 @@ function jcard(m: MonthData): string {
         <div class="hg-c">
           ${cov(b)}
           <div class="hg-cap">${hopeCap(b)}</div>
-          <div class="hg-end">${hopeSay('c10')}</div>
+          <div class="hg-end">${verdict(m, b, 'c10')}</div>
         </div>`)}
     </article>`
 
@@ -1267,7 +1282,7 @@ function jcard(m: MonthData): string {
     <div class="mx-list" style="--cols:${listCols(m.books.length, m.wide)}">
       ${m.books.map((b, i) => `
         <div class="mx-row">
-          <span class="mx-no">${String(i + 1).padStart(2, '0')}</span>
+          <span class="mx-no">${String(i + 1 + skip(m)).padStart(2, '0')}</span>
           <div class="mx-cov">${cov(b)}</div>
           <div class="mx-txt">
             <div class="mx-t">${escapeHtml(b.title)}</div>
@@ -1305,7 +1320,7 @@ function passport(m: MonthData): string {
       ${grid('vp-sheet', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
           <div class="vp-cell">
             <div class="vp-photo">${cov(b)}</div>
-            <div class="vp-code lbl">FP·${String(i + 1).padStart(3, '0')} · ${initial(b.title)}${initial(b.author)}</div>
+            <div class="vp-code lbl">FP·${String(i + 1 + skip(m)).padStart(3, '0')} · ${initial(b.title)}${initial(b.author)}</div>
             <div class="vp-t">${escapeHtml(b.title)}</div>
             <div class="vp-a">${escapeHtml(b.author)}</div>
             ${tbr(m)
@@ -1339,7 +1354,7 @@ function specimen(m: MonthData): string {
           <span class="cs-back" aria-hidden="true">${escapeHtml(initial(b.title))}</span>
           <div class="cs-mount">${cov(b)}</div>
           <div class="cs-line">
-            <span class="lbl">${String(i + 1).padStart(2, '0')}</span>
+            <span class="lbl">${String(i + 1 + skip(m)).padStart(2, '0')}</span>
             ${tbr(m) ? hopeSay('c12') : `<span class="r-num">${fmtRating(b.rating)}</span>`}
           </div>
           <div class="cs-t">${escapeHtml(b.title)}</div>
@@ -1377,13 +1392,13 @@ function receipt(m: MonthData): string {
     ${patchC(150)}
     ${moHead(m, 'c13')}
     ${moStats(m, 'c13')}
-    ${tbr(m)
+    ${packs(m)
       ? hopeGrid(m, 'hg--c13', (b) => `
-        <div class="hg-c">${cov(b)}<div class="hg-cap">${hopeCap(b)}</div><div class="hg-end">${hopeSay('c13')}</div></div>`)
+        <div class="hg-c">${cov(b)}<div class="hg-cap">${hopeCap(b)}</div><div class="hg-end">${verdict(m, b, 'c13')}</div></div>`)
       : `<div class="c13-items ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
       ${m.books.map((b, i) => `
         <div class="c13-r">
-          <span class="lbl c13-q">${String(i + 1).padStart(2, '0')}</span>
+          <span class="lbl c13-q">${String(i + 1 + skip(m)).padStart(2, '0')}</span>
           ${cov(b)}
           <div style="min-width:0">
             <div class="c13-name">${escapeHtml(b.title)}</div>
@@ -1416,9 +1431,9 @@ function library(m: MonthData): string {
     ${patchC(140)}
     ${moHead(m, 'c14')}
     ${moStats(m, 'c14')}
-    ${tbr(m)
+    ${packs(m)
       ? hopeGrid(m, 'hg--c14', (b) => `
-        <div class="hg-c">${cov(b)}<div class="hg-cap">${hopeCap(b)}</div><div class="hg-end">${hopeSay('c14')}</div></div>`)
+        <div class="hg-c">${cov(b)}<div class="hg-cap">${hopeCap(b)}</div><div class="hg-end">${verdict(m, b, 'c14')}</div></div>`)
       : `<div class="c14-loans ${cols > 1 ? 'is-split' : ''}" style="--cols:${cols}">
       ${m.books.map((b) => `
         <div class="c14-r">
@@ -1443,7 +1458,7 @@ function trading(m: MonthData): string {
     ${moStats(m, 'c15')}
     ${grid('c15-binder', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="c15-sleeve"><div class="c15-card">
-          <div class="c15-top"><span class="lbl">Nº ${String(i + 1).padStart(3, '0')}</span></div>
+          <div class="c15-top"><span class="lbl">Nº ${String(i + 1 + skip(m)).padStart(3, '0')}</span></div>
           ${cov(b)}
           <div class="c15-t">${escapeHtml(b.title)}</div>
           <div class="c15-a">${escapeHtml(b.author)}</div>
@@ -1479,7 +1494,7 @@ function bingo(m: MonthData): string {
     ${moStats(m, 'c17')}
     ${grid('c17-board', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="c17-sq">
-          <span class="lbl c17-no">${String(i + 1).padStart(2, '0')}</span>
+          <span class="lbl c17-no">${String(i + 1 + skip(m)).padStart(2, '0')}</span>
           <div class="c17-mount">${cov(b)}${tbr(m) ? '' : '<i class="c17-daub" aria-hidden="true"></i>'}</div>
           <div class="c17-t">${escapeHtml(b.title)}</div>
           <div class="c17-r">${verdict(m, b, 'c17')}</div>
@@ -1496,7 +1511,7 @@ function seedpacket(m: MonthData): string {
     ${moStats(m, 'c18')}
     ${grid('c18-rack', gridCols(m, ASPECT_PER_ROW_CAPTIONED), m.books.map((b, i) => `
         <div class="c18-pk">
-          <div class="c18-fold"><span class="lbl">Nº ${String(i + 1).padStart(2, '0')}</span></div>
+          <div class="c18-fold"><span class="lbl">Nº ${String(i + 1 + skip(m)).padStart(2, '0')}</span></div>
           ${cov(b)}
           <div class="c18-t">${escapeHtml(b.title)}</div>
           <div class="c18-a">${escapeHtml(b.author)}</div>

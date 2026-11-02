@@ -181,18 +181,41 @@ export function buildCollagePage(
   m: MonthData,
   style: StyleId,
   host: HTMLDivElement,
-  shape: ExportShape
+  shape: ExportShape,
+  parts = 1
 ): HTMLElement[] {
   prepHost(host, shape)
+  host.innerHTML = ''
+  /* A long list can go out as two or three images instead of one: the books
+     split as evenly as they go, the fuller images first, each fitted to the
+     frame on its own and so with bigger covers than one image could give. */
+  const n = m.books.length
+  const k = Math.max(1, Math.min(parts, n))
+  if (k === 1) return [fitCollage(m, style, host, shape)]
+  const out: HTMLElement[] = []
+  for (let no = 1, start = 0; no <= k; no++) {
+    const size = Math.floor(n / k) + (no <= n % k ? 1 : 0)
+    out.push(fitCollage({ ...m, books: m.books.slice(start, start + size), part: { no, of: k, start, all: m.books } }, style, host, shape))
+    start += size
+  }
+  return out
+}
+
+/* how many books a collage holds before it is offered as two or three images */
+export const SPLIT_FROM = 24
+
+/* One collage image, fitted to its frame and appended to the host. */
+function fitCollage(m: MonthData, style: StyleId, host: HTMLDivElement, shape: ExportShape): HTMLElement {
+  const box = host.appendChild(document.createElement('div'))
   /* The broad column holds MORE cells, not bigger ones — the column chooser
      needs to know which card it is composing for, and this is the only place
      that knows. Callers pass a MonthData describing the reading; the shape is
      a property of the export, so it is stamped on here rather than threaded
      through every page that builds one. */
-  const laid: MonthData = { ...m, wide: shape === 'wide' }
+  let laid: MonthData = { ...m, wide: shape === 'wide' }
   const draw = (fit: Partial<MonthData> = {}): HTMLElement => {
-    host.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage({ ...laid, ...fit }, style)}</div></div>`
-    return ground([host.querySelector('.share-page') as HTMLElement], shape)[0]
+    box.innerHTML = `<div class="share-page share-page--free"><div>${renderCollage({ ...laid, ...fit }, style)}</div></div>`
+    return ground([box.firstElementChild as HTMLElement], shape)[0]
   }
   let page = draw()
   /* FIT THE FRAME. A collage is posted, so it is one image that never runs
@@ -201,12 +224,19 @@ export function buildCollagePage(
      fewest covers to a row, which is the biggest covers, that keep the card
      inside that shape. Cells keep their captions while a cover is wide enough
      to carry them; past a dozen books they drop them rather than run long,
-     so a year of 150 still comes out as one picture with its stats. Measured, not modelled: the head, the
-     stats and every style's cell differ too much for one formula. A style
-     with no cover grid (the lists) is left as it drew. */
+     so a year of 150 still comes out as one picture with its stats. A cover
+     never shrinks past COVER_MIN to fit, though: past that the card runs
+     taller rather than turn its books into swatches. Measured, not modelled:
+     the head, the stats and every style's cell differ too much for one
+     formula. A list style whose rows run past the frame is packed into the
+     cover grid its hopefuls card already uses, and then fitted the same way. */
+  const frame = shape === 'wide' ? 5 / 4 : 16 / 9
   const cell = (p: HTMLElement) => (p.querySelector('[data-grid] > *') as HTMLElement | null)?.offsetWidth ?? 0
+  if (!cell(page) && page.offsetHeight / page.offsetWidth > frame) {
+    laid = { ...laid, packed: true }
+    page = draw()
+  }
   if (cell(page) && m.books.length > 1) {
-    const frame = shape === 'wide' ? 5 / 4 : 16 / 9
     const widths = fitCols(m.books.length)
     /* the first width, narrowest first, that keeps its cells at least `min`
        wide and lands inside the frame; failing that, the last one tried */
@@ -227,14 +257,16 @@ export function buildCollagePage(
     if (!found?.inside && m.books.length > BARE_FROM) found = search(true, COVER_MIN) ?? found
     if (found) page = draw(found.fit)
   }
-  return [page]
+  /* the page stands in the host on its own, like every other leaf */
+  box.replaceWith(page)
+  return page
 }
 
 /* the narrowest cell (CSS px on the leaf; the file doubles it) that still
    carries a title, an author and a status legibly, and the narrowest cover
-   that is still a cover rather than a swatch */
+   whose title and art still read (120px in the file on either card) */
 const CAPTION_MIN = 100
-const COVER_MIN = 40
+const COVER_MIN = 60
 /* how many books a collage holds before its covers may lose their captions */
 const BARE_FROM = 12
 
@@ -1118,11 +1150,12 @@ export async function shareCollageImage(
   m: MonthData,
   style: StyleId,
   mode: ExportMode,
-  shape: ExportShape
+  shape: ExportShape,
+  parts = 1
 ): Promise<ExportResult> {
   const host = makeHost()
   try {
-    const pages = buildCollagePage(m, style, host, shape)
+    const pages = buildCollagePage(m, style, host, shape, parts)
     return await exportPages(pages, collageBaseName(m), mode)
   } finally {
     host.remove()
