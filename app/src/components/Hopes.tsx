@@ -101,7 +101,7 @@ export function ReadingList({ books, onShare }: { books: Hopeful[]; onShare: (h:
           <div className="hero-read-t">{h.title}</div>
           <div className="hero-read-a">{h.author}</div>
           <button type="button" className="hero-read-back" onClick={() => db.hopefuls.update(h.id!, { startedAt: undefined, editedAt: Date.now() })}>
-            Put back on {monthName(h.month)}
+            Stop reading
           </button>
           <div className="hero-read-go">
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => nav('/write', { state: writeState(h) })}>Review it</button>
