@@ -16,7 +16,7 @@ import { paragraphs } from '../format'
 import { fontEmbedCss } from '../fonts'
 import { isIOS } from '../pwa'
 import { encodePng, CAN_STREAM_PNG } from './png'
-import { BRAND, shareFiles, storeApp } from '../native'
+import { BRAND, savePhotos, shareFiles, storeApp } from '../native'
 
 /* Neither layout splits. The wide one stopped first, on the argument that a
    leaf which can grow is the whole point of a printed card and a page break
@@ -1054,7 +1054,7 @@ export function pixelSize(pages: HTMLElement[]): { w: number; h: number; n: numb
 export interface ExportResult {
   ok: boolean
   /** 'save' is a download that went through the system sheet — see below */
-  method: 'share' | 'download' | 'save' | 'none'
+  method: 'share' | 'download' | 'save' | 'photos' | 'none'
   pages: number
 }
 
@@ -1062,7 +1062,7 @@ export interface ExportResult {
     library. iOS only: it is the single platform with no file download a
     person can find afterwards. */
 export function savesViaSystemSheet(): boolean {
-  return storeApp || (isIOS() && canShareFiles())
+  return !storeApp && isIOS() && canShareFiles()
 }
 
 export type ExportMode = 'share' | 'download'
@@ -1091,8 +1091,10 @@ async function exportPages(
   mode: ExportMode
 ): Promise<ExportResult> {
   const files = await pagesToFiles(pages, baseName)
-  /* the store apps: both ways out are the native sheet (see native.ts) */
+  /* the store apps: Save goes straight to Photos / the gallery, Share (and
+     Save on Android 9 and older) is the native sheet (see native.ts) */
   if (storeApp) {
+    if (mode === 'download' && (await savePhotos(files)) === 'saved') return { ok: true, method: 'photos', pages: files.length }
     const ok = await shareFiles(files, baseName)
     return { ok, method: ok ? (mode === 'share' ? 'share' : 'save') : 'none', pages: files.length }
   }

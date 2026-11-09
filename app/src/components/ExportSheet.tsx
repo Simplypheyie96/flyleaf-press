@@ -4,7 +4,7 @@ import {
   canShareFiles, fileName, pixelSize, savesViaSystemSheet,
   type ExportMode, type ExportResult,
 } from '../share/export'
-import { androidApp } from '../native'
+import { androidApp, storeApp } from '../native'
 import { UnlockSheet, LockIcon } from './UnlockSheet'
 
 /* One sheet for both ways out. Share and Save used to be two buttons on the
@@ -152,6 +152,8 @@ export function ExportSheet({
         setDone(
           res.method === 'share'
             ? 'Shared.'
+            : res.method === 'photos'
+              ? `Saved ${n} to ${androidApp ? 'your gallery, in Bookprint' : 'Photos'}.`
             : res.method === 'save'
               /* the system sheet did the saving, and where it put them is
                  whatever the user chose in it — so don't name a place */
@@ -159,10 +161,17 @@ export function ExportSheet({
               : `Saved ${n} — check your downloads.`
         )
       }
+    } catch (e) {
+      setDone((e as Error).message || 'That did not save. Try again.')
     } finally {
       setBusy(false)
     }
   }
+
+  /* The store apps save straight to the photo library, so the button says where. */
+  const saveLabel = storeApp
+    ? `Save to ${androidApp ? 'gallery' : 'Photos'}`
+    : pages > 1 ? `Save ${pages} images` : 'Save image'
 
   return (
     <div className="share-scrim" role="dialog" aria-modal="true" aria-label={`Share ${heading}`}
@@ -216,7 +225,7 @@ export function ExportSheet({
         {/* On iOS a saved file goes through the system sheet, which is the only
             route to the camera roll — and it renames what it takes, so a
             filename here would be a promise this device does not keep. */}
-        {!viaSheet && (
+        {!viaSheet && !storeApp && (
           <p className="share-note dl-name">
             Saves as <code>{fileName(baseName, 0, pages)}</code>
             {pages > 1 ? ` and ${pages - 1} more` : ''}
@@ -234,7 +243,7 @@ export function ExportSheet({
             Share
           </button>
           <button className="btn btn--ghost" onClick={() => run('download')} disabled={busy || building}>
-            {pages > 1 ? `Save ${pages} images` : 'Save image'}
+            {saveLabel}
           </button>
           {printPdf && (
             <button className="btn btn--ghost" onClick={printPdf} disabled={busy}>
@@ -248,15 +257,11 @@ export function ExportSheet({
             {pages > 1 ? ` the ${pages} images` : ' the image'} to this device instead.
           </p>
         )}
-        {viaSheet && (androidApp ? (
-          <p className="share-note">
-            Saving opens the share sheet — choose Photos or Files to keep {pages > 1 ? 'them' : 'it'}.
-          </p>
-        ) : (
+        {viaSheet && (
           <p className="share-note">
             Saving opens the iOS sheet — choose <b>Save {pages > 1 ? 'Images' : 'Image'}</b> in it.
           </p>
-        ))}
+        )}
         </>}
         {locked && (
           <p className="share-note">{locked}</p>
