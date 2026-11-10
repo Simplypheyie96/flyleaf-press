@@ -293,8 +293,7 @@ export function SettingsPage({ settings }: { settings: Settings }) {
           </div>
         </div>
 
-        {/* Drive sign-in runs on Google's web script, which a webview refuses */}
-        {!storeApp && <SyncPanel />}
+        <SyncPanel />
 
         {/* The app itself — putting it on the home screen, and asking whether
             there is a newer one. Both are about this device rather than about

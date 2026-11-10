@@ -1629,3 +1629,13 @@ button.cover-tile{ padding:0; border:0; background:none; font:inherit; text-alig
 .unlock-fine a{ display:inline-flex; align-items:center; min-height:44px; padding:0 6px; color:var(--ink); }
 .lock-ico{ flex:none; vertical-align:-0.125em; }
 .style-pick .lock-ico{ font-size:12px; color:var(--ink-soft); }
+
+/* Store-app sign-in (NativeSignIn.tsx): one full-width pill per provider.
+   Apple asks for its own black button whatever the theme. */
+.native-signin{ display:flex; flex-direction:column; gap:10px; width:100%; max-width:400px; margin-top:12px; }
+.empty-alt .native-signin{ margin:0 auto; max-width:340px; }
+.native-signin .btn{ height:44px; }
+/* outranks the glossy ink pill in both themes: Apple asks for plain black */
+:root .native-signin .btn.btn.native-signin--apple{ background:#000; color:#fff; box-shadow:none; }
+/* white on dark backgrounds, as Apple asks */
+:root[data-theme="dark"] .native-signin .btn.btn.native-signin--apple{ background:#fff; color:#000; }

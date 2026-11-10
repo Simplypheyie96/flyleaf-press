@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Confirm } from './Confirm'
-import { storeApp } from '../native'
-import { GoogleButton } from './GoogleButton'
+import { SERVICE, storeApp } from '../native'
+import { SignIn } from './NativeSignIn'
 import { SYNC_AVAILABLE, SYNC_EVENT, account, optedIn, signOut } from '../sync/cloud'
 import {
   bringTogether,
@@ -148,7 +148,7 @@ export function SyncPanel() {
     try {
       await forgetCopy()
       await signOut()
-      say('Removed from Flyleaf. This device is signed out, and everything written on it remains here.')
+      say(`Removed from ${SERVICE}. This device is signed out, and everything written on it remains here.`)
     } catch (e) {
       fail(e, 'That could not be removed.')
     } finally {
@@ -161,7 +161,7 @@ export function SyncPanel() {
     setBusy('account')
     try {
       await forgetAccount()
-      say('Your Flyleaf account is deleted. This device is signed out, and everything written on it remains here.')
+      say(`Your ${SERVICE} account is deleted. This device is signed out, and everything written on it remains here.`)
     } catch (e) {
       fail(e, 'That could not be deleted.')
     } finally {
@@ -208,13 +208,13 @@ export function SyncPanel() {
           <p>
             {on ? (
               <>
-                Signed in as {who || 'your Google account'}. This device syncs on its own and stays
+                Signed in as {who || 'your account'}. This device syncs on its own and stays
                 signed in. There is nothing to press.
               </>
             ) : (
               <>
                 Sign in once and this library appears on your other devices and keeps up with them by
-                itself. It is kept on Flyleaf’s servers, private to your account, and you can remove
+                itself. It is kept on {SERVICE}’s servers, private to your account, and you can remove
                 it from here at any time.
               </>
             )}
@@ -224,7 +224,7 @@ export function SyncPanel() {
           (busy === 'in' ? (
             <p className="field-hint" role="status" style={{ marginTop: 12 }}>Signing in…</p>
           ) : (
-            <GoogleButton onDone={() => void connected()} onError={(text) => fail(new Error(text), text)} />
+            <SignIn onDone={() => void connected()} onError={(text) => fail(new Error(text), text)} />
           ))}
       </div>
 
@@ -241,11 +241,11 @@ export function SyncPanel() {
           </div>
           <div className="set-row set-row--stack">
             <div className="set-row-txt">
-              <div className="ui-lbl">Remove from Flyleaf</div>
+              <div className="ui-lbl">Remove from {SERVICE}</div>
               <p>Deletes the copy in your account, covers included, and signs this device out. Your library here is untouched.</p>
             </div>
             <button className="btn btn--danger btn--sm" onClick={() => setSure('copy')} disabled={!!busy}>
-              {busy === 'drop' ? 'Removing…' : 'Remove my library from Flyleaf'}
+              {busy === 'drop' ? 'Removing…' : `Remove my library from ${SERVICE}`}
             </button>
           </div>
           {/* The store apps must let a reader close the account they made there. */}
@@ -253,10 +253,10 @@ export function SyncPanel() {
             <div className="set-row set-row--stack">
               <div className="set-row-txt">
                 <div className="ui-lbl">Delete account</div>
-                <p>Closes your Flyleaf account for Press, Journal and eReader. Your library here is untouched.</p>
+                <p>Closes your account and deletes everything it holds. Your library here is untouched.</p>
               </div>
               <button className="btn btn--danger btn--sm" onClick={() => setSure('account')} disabled={!!busy}>
-                {busy === 'account' ? 'Deleting…' : 'Delete my Flyleaf account'}
+                {busy === 'account' ? 'Deleting…' : 'Delete my account'}
               </button>
             </div>
           )}
@@ -265,7 +265,7 @@ export function SyncPanel() {
 
       {/* Only on a device that synced through Google Drive before the account
           existed, and only until that copy is removed. */}
-      {drive && (
+      {drive && !storeApp && (
         <div className="set-row set-row--stack">
           <div className="set-row-txt">
             <div className="ui-lbl">The old Google Drive copy</div>
@@ -308,8 +308,8 @@ export function SyncPanel() {
       )}
       {sure === 'copy' && (
         <Confirm
-          title="Remove your library from Flyleaf?"
-          body="This deletes your library and covers from Flyleaf and signs this device out. Everything stays on this device, but your other devices will have nothing to sync with."
+          title={`Remove your library from ${SERVICE}?`}
+          body={`This deletes your library and covers from ${SERVICE} and signs this device out. Everything stays on this device, but your other devices will have nothing to sync with.`}
           action="Yes, remove it"
           onConfirm={dropCopy}
           onCancel={() => setSure(null)}
@@ -317,8 +317,8 @@ export function SyncPanel() {
       )}
       {sure === 'account' && (
         <Confirm
-          title="Delete your Flyleaf account?"
-          body="This deletes your account and everything it holds for Press, Journal and eReader, and signs this device out. Everything stays on this device. A purchase comes back with Restore."
+          title="Delete your account?"
+          body="This deletes your account and everything it holds, and signs this device out. Everything stays on this device. A purchase comes back with Restore."
           action="Yes, delete my account"
           onConfirm={dropAccount}
           onCancel={() => setSure(null)}

@@ -11,6 +11,8 @@ interface ImportMetaEnv {
       credential, and there is no client secret anywhere in this app. Unset in
       a build means sync across devices hides itself entirely. */
   readonly VITE_GOOGLE_CLIENT_ID?: string
+  /** The iOS OAuth client for native Google sign-in in the store app. */
+  readonly VITE_GOOGLE_IOS?: string
   /** The Flyleaf account Worker. Unset means https://api.flyleaf.cc; a local
       test points it at the preview Worker, which allows localhost. */
   readonly VITE_FLYLEAF_API?: string

@@ -17,6 +17,7 @@
    document per reader, merged on the devices, never read on the server. */
 
 import { loadScript } from './google'
+import { SERVICE, appleCode } from '../native'
 
 const API = import.meta.env.VITE_FLYLEAF_API || 'https://api.flyleaf.cc'
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
@@ -78,13 +79,13 @@ async function call(path: string, init: RequestInit = {}): Promise<Response> {
       headers: { ...init.headers, authorization: `Bearer ${s.token}` },
     })
   } catch {
-    throw new Error('Could not reach Flyleaf. Check your connection and it will catch up by itself.')
+    throw new Error(`Could not reach ${SERVICE}. Check your connection and it will catch up by itself.`)
   }
   if (res.status === 401) {
     keep(null)
     throw new Error(SIGNED_OUT)
   }
-  if (res.status >= 500) throw new Error('Flyleaf could not sync just now. It will try again by itself.')
+  if (res.status >= 500) throw new Error(`${SERVICE} could not sync just now. It will try again by itself.`)
   return res
 }
 
@@ -119,18 +120,20 @@ export async function googleButton(el: HTMLElement, done: (email: string) => voi
   })
 }
 
-async function exchange(credential: string): Promise<string> {
+/* `apple` only from the store apps (src/native.ts): same session, the server
+   checks Apple's ID token instead of Google's. */
+export async function exchange(credential: string, provider: 'google' | 'apple' = 'google'): Promise<string> {
   let res: Response
   try {
-    res = await fetch(`${API}/auth/google`, {
+    res = await fetch(`${API}/auth/${provider}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ credential, app: APP }),
     })
   } catch {
-    throw new Error('Could not reach Flyleaf. Check your connection and try again.')
+    throw new Error(`Could not reach ${SERVICE}. Check your connection and try again.`)
   }
-  if (!res.ok) throw new Error('Google signed you in, but Flyleaf could not. Try again.')
+  if (!res.ok) throw new Error(`${provider === 'apple' ? 'Apple' : 'Google'} signed you in, but ${SERVICE} could not. Try again.`)
   const { token, user } = (await res.json()) as { token: string; user: { email: string; name: string } }
   keep({ token, email: user.email, name: user.name })
   return user.email
@@ -188,7 +191,7 @@ export async function push(body: Blob, base: number, device: string): Promise<{ 
   })
   if (res.status === 409) return null
   if (res.status === 413) throw new Error('This library has grown past what one sync can carry.')
-  if (!res.ok) throw new Error('Flyleaf could not sync just now. It will try again by itself.')
+  if (!res.ok) throw new Error(`${SERVICE} could not sync just now. It will try again by itself.`)
   return (await res.json()) as { rev: number; at: number }
 }
 
@@ -209,22 +212,27 @@ export async function sendMedia(media: Map<string, Blob>) {
         body: blob,
         headers: { 'content-type': blob.type || 'application/octet-stream' },
       })
-      if (up.status === 413) throw new Error('Your covers have filled the 1 GB Flyleaf keeps for each reader.')
-      if (!up.ok) throw new Error('A cover did not upload. Flyleaf will try again by itself.')
+      if (up.status === 413) throw new Error(`Your covers have filled the 1 GB ${SERVICE} keeps for each reader.`)
+      if (!up.ok) throw new Error(`A cover did not upload. ${SERVICE} will try again by itself.`)
     }
   }
 }
 
 export async function fetchMedia(hash: string): Promise<Blob> {
   const res = await call(`/media/${hash}`)
-  if (!res.ok) throw new Error('A cover did not come down. Flyleaf will try again by itself.')
+  if (!res.ok) throw new Error(`A cover did not come down. ${SERVICE} will try again by itself.`)
   return res.blob()
 }
 
 /** Close the Flyleaf account: every app's copy, its media, the purchase records
     (the store keeps the purchase, so Restore brings it back), every session. */
 export async function deleteAccount() {
-  const res = await call('/me', { method: 'DELETE' })
+  const del = (more?: { apple?: string; force: true }) =>
+    call('/me', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ app: APP, ...more }) })
+  let res = await del()
+  // An Apple account confirms with Apple, so the server can revoke its sign-in too.
+  // No code (a cancelled or failed Apple sheet) still deletes: the reader already said yes.
+  if (res.status === 409) res = await del({ apple: await appleCode().catch(() => undefined), force: true })
   if (!res.ok) throw new Error('That could not be deleted. Try again.')
   window.google?.accounts?.id?.disableAutoSelect()
   keep(null)

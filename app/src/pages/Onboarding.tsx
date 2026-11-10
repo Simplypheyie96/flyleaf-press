@@ -64,12 +64,10 @@ export function Onboarding({ settings, onDone }: { settings: Settings; onDone: (
             re-invent what the app is holding. An empty account leaves the screen
             exactly as it was: there is nothing to take the name from, so the
             fields still have a job. */}
-        {!storeApp && (
-          <RestoreNotice
-            prompt="Already have a shelf on another device?"
-            onRestored={start}
-          />
-        )}
+        <RestoreNotice
+          prompt="Already have a shelf on another device?"
+          onRestored={start}
+        />
       </div>
     </div>
   )

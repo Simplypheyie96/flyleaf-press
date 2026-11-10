@@ -7,6 +7,9 @@ const config: CapacitorConfig = {
   appName: 'Bookprint',
   webDir: 'dist',
   ios: { contentInset: 'never' },
+  // Google and Apple sign-in only. Facebook and Twitter off, or the Facebook SDK
+  // adds the advertising ID permission (Play's ad ID answer is No).
+  plugins: { SocialLogin: { providers: { google: true, apple: true, facebook: false, twitter: false } } },
 };
 
 export default config;

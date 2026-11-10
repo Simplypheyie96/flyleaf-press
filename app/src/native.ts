@@ -14,6 +14,8 @@ export const storeApp = iosApp || androidApp
 export const STORE = androidApp ? 'Google Play' : 'the App Store'
 /* The store apps are Bookprint; the web keeps the Flyleaf Press name and rosette. */
 export const BRAND = storeApp ? 'Bookprint' : 'Flyleaf Press'
+/** What the account and its messages are called: the store apps never name Flyleaf. */
+export const SERVICE = storeApp ? 'Bookprint' : 'Flyleaf'
 
 if (storeApp) document.documentElement.classList.add('store-app')
 
@@ -63,4 +65,51 @@ export async function statusBar(theme: 'light' | 'dark') {
   if (!storeApp) return
   const { SystemBars, SystemBarsStyle } = await import('@capacitor/core')
   await SystemBars.setStyle({ style: theme === 'dark' ? SystemBarsStyle.Dark : SystemBarsStyle.Light }).catch(() => {})
+}
+
+/* ── Sign-in ───────────────────────────────────────────────────────────── */
+
+/* Google's web button cannot run in a webview, so the apps sign in natively
+   (ported from Octavo). On iOS guideline 4.8 asks for Sign in with Apple beside
+   it. The web client is the server client, so Google's ID token is addressed to
+   the id the API already accepts. Google on iOS also needs its own iOS client
+   (VITE_GOOGLE_IOS, reversed in Info.plist); without one iOS offers Apple only. */
+export type Provider = 'google' | 'apple'
+const GOOGLE_WEB = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
+const GOOGLE_IOS = import.meta.env.VITE_GOOGLE_IOS ?? ''
+export const providers: Provider[] = iosApp ? (GOOGLE_IOS ? ['apple', 'google'] : ['apple']) : ['google']
+
+let social: Promise<typeof import('@capgo/capacitor-social-login').SocialLogin> | null = null
+function login() {
+  return social ??= import('@capgo/capacitor-social-login').then(async ({ SocialLogin }) => {
+    await SocialLogin.initialize(iosApp
+      ? { apple: {}, ...(GOOGLE_IOS && { google: { iOSClientId: GOOGLE_IOS, iOSServerClientId: GOOGLE_WEB } }) }
+      : { google: { webClientId: GOOGLE_WEB } })
+    return SocialLogin
+  }, (e) => { social = null; throw e })
+}
+
+/** The provider's ID token, or null when the reader closed the sheet. */
+export async function signIn(p: Provider): Promise<string | null> {
+  const s = await login()
+  try {
+    const r = await s.login(p === 'google' ? { provider: 'google', options: {} } : { provider: 'apple', options: { scopes: ['email', 'name'] } })
+    const token = (r.result as { idToken?: string | null }).idToken
+    if (!token) throw new Error('Sign-in did not finish. Try again.')
+    return token
+  } catch (e) {
+    if ((e as { code?: string }).code === 'USER_CANCELLED') return null
+    throw e instanceof Error ? e : new Error('Sign-in did not finish. Try again.')
+  }
+}
+
+/** A fresh Apple authorization code, so deleting an Apple account can revoke its sign-in. */
+export async function appleCode(): Promise<string> {
+  const s = await login()
+  const r = await s.login({ provider: 'apple', options: { scopes: [] } }).catch(() => null)
+  // The plugin's default (legacy) mode hands the code back as accessToken.token.
+  const res = r?.result as { authorizationCode?: string; accessToken?: { token?: string } } | undefined
+  const code = res?.authorizationCode || res?.accessToken?.token
+  if (!code) throw new Error('Confirm with Apple to delete the account.')
+  return code
 }

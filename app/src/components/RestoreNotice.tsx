@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { GoogleButton } from './GoogleButton'
+import { SignIn } from './NativeSignIn'
 import { SYNC_AVAILABLE, optedIn } from '../sync/cloud'
 import { syncNow } from '../sync/sync'
+import { SERVICE } from '../native'
 
 /* The one thing a brand-new device cannot work out for itself.
 
@@ -59,7 +60,7 @@ export function RestoreNotice({
          account now syncs, starting with whatever gets written here. */
       else setNote('Signed in. There’s no library in this account yet — what you write here will sync to your other devices.')
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Something went wrong talking to Flyleaf.')
+      setErr(e instanceof Error ? e.message : `Something went wrong talking to ${SERVICE}.`)
     } finally {
       setBusy(false)
     }
@@ -78,7 +79,7 @@ export function RestoreNotice({
           {busy ? (
             <p className="empty-alt-note" role="status">Signing in…</p>
           ) : (
-            <GoogleButton onDone={() => void connected()} onError={setErr} />
+            <SignIn onDone={() => void connected()} onError={setErr} />
           )}
         </>
       )}

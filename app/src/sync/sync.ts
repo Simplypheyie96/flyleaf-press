@@ -22,6 +22,7 @@ import { db } from '../db'
 import { SYNCED, exportForCloud, mergeLibrary } from './backup'
 import { deleteAccount, drop, fetchMedia, optedIn, peek, pull, push, sendMedia, SYNC_EVENT } from './cloud'
 import { deviceName } from './device'
+import { SERVICE } from '../native'
 import { dropLibraries, findLibrary, readLibrary } from './drive'
 import { optedIn as usedDriveFlag, signIn as driveSignIn, signOut as driveSignOut, silentToken } from './google'
 
@@ -181,7 +182,7 @@ async function run(): Promise<SyncResult> {
        try again on top of it: nothing is overwritten, ever. */
     remote = await pull(0)
   }
-  throw new Error('Another device kept writing at the same moment. Flyleaf will try again by itself.')
+  throw new Error(`Another device kept writing at the same moment. ${SERVICE} will try again by itself.`)
 }
 
 async function settle(remote: { rev: number; at: number } | null, result: SyncResult): Promise<SyncResult> {
