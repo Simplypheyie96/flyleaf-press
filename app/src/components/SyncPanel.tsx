@@ -11,10 +11,12 @@ import {
   forgetDrive,
   fromDrive,
   hasUnsharedWork,
+  lastSync,
   otherLibrary,
   pauseAutoSync,
   resumeAutoSync,
   syncNow,
+  syncing,
   usedDrive,
 } from '../sync/sync'
 
@@ -51,6 +53,8 @@ export function SyncPanel() {
   const [who, setWho] = useState(account())
   const [drive, setDrive] = useState(usedDrive())
   const [driveIn, setDriveIn] = useState(broughtInDrive())
+  const [live, setLive] = useState(syncing())
+  const [at, setAt] = useState(lastSync())
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
@@ -62,6 +66,8 @@ export function SyncPanel() {
     setWho(account())
     setDrive(usedDrive())
     setDriveIn(broughtInDrive())
+    setLive(syncing())
+    setAt(lastSync())
   }, [])
 
   useEffect(() => {
@@ -226,6 +232,12 @@ export function SyncPanel() {
           ) : (
             <SignIn onDone={() => void connected()} onError={(text) => fail(new Error(text), text)} />
           ))}
+        {/* Sync runs by itself, so this line is the only sign that it is running or has run. */}
+        {on && (
+          <p className={`field-hint sync-state${live || busy === 'in' ? ' sync-state--live' : ''}`} role="status">
+            {live || busy === 'in' ? 'Syncing…' : at ? `Last synced ${ago(at)}` : 'Not synced yet'}
+          </p>
+        )}
       </div>
 
       {on && (

@@ -203,9 +203,14 @@ export function syncNow(): Promise<SyncResult> {
   if (running) return running
   running = run().finally(() => {
     running = null
+    window.dispatchEvent(new Event(SYNC_EVENT))
   })
+  window.dispatchEvent(new Event(SYNC_EVENT))
   return running
 }
+
+/** True while a sync is in flight, so Settings can say so. */
+export const syncing = () => running !== null
 
 /** "Bring them together" — the answer to the one question. It is simply what
     every sync does, so saying yes is saying carry on. */
