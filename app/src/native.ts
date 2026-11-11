@@ -75,8 +75,8 @@ export async function statusBar(theme: 'light' | 'dark') {
    the id the API already accepts. Google on iOS also needs its own iOS client
    (VITE_GOOGLE_IOS, reversed in Info.plist); without one iOS offers Apple only. */
 export type Provider = 'google' | 'apple'
-const GOOGLE_WEB = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
-const GOOGLE_IOS = import.meta.env.VITE_GOOGLE_IOS ?? ''
+const GOOGLE_WEB = import.meta.env?.VITE_GOOGLE_CLIENT_ID ?? ''
+const GOOGLE_IOS = import.meta.env?.VITE_GOOGLE_IOS ?? ''
 export const providers: Provider[] = iosApp ? (GOOGLE_IOS ? ['apple', 'google'] : ['apple']) : ['google']
 
 let social: Promise<typeof import('@capgo/capacitor-social-login').SocialLogin> | null = null
@@ -89,18 +89,22 @@ function login() {
   }, (e) => { social = null; throw e })
 }
 
-/** The provider's ID token, or null when the reader closed the sheet. */
+/** The provider's ID token, or null when the reader closed the sheet. Whatever
+    else goes wrong reads as one plain line: the system's own error text (codes,
+    domains) goes to the console, never to the reader. */
 export async function signIn(p: Provider): Promise<string | null> {
-  const s = await login()
   try {
+    const s = await login()
     const r = await s.login(p === 'google' ? { provider: 'google', options: {} } : { provider: 'apple', options: { scopes: ['email', 'name'] } })
     const token = (r.result as { idToken?: string | null }).idToken
-    if (!token) throw new Error('Sign-in did not finish. Try again.')
-    return token
+    if (token) return token
   } catch (e) {
     if ((e as { code?: string }).code === 'USER_CANCELLED') return null
-    throw e instanceof Error ? e : new Error('Sign-in did not finish. Try again.')
+    console.error('sign-in', p, e)
+    // Android with no Google account on the phone: trying again cannot help, adding one does.
+    if (/no credentials/i.test((e as Error)?.message ?? '')) throw new Error('Add a Google account in this phone’s Settings, then try again.')
   }
+  throw new Error(`${p === 'apple' ? 'Apple' : 'Google'} sign-in did not finish. Try again.`)
 }
 
 /** A fresh Apple authorization code, so deleting an Apple account can revoke its sign-in. */

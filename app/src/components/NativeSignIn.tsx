@@ -17,6 +17,7 @@ export function NativeSignIn({ onDone, onError }: { onDone: (email: string) => v
   const [busy, setBusy] = useState(false)
   const go = async (p: Provider) => {
     setBusy(true)
+    onError('') // a new try starts clean: the last attempt's message no longer applies
     try {
       const token = await signIn(p)
       if (token) onDone(await exchange(token, p))

@@ -253,7 +253,7 @@ export function SyncPanel() {
             <div className="set-row set-row--stack">
               <div className="set-row-txt">
                 <div className="ui-lbl">Delete account</div>
-                <p>Closes your account and deletes everything it holds. Your library here is untouched.</p>
+                <p>Closes your account and deletes everything it holds, including anything Flyleaf Journal or Octavo synced with the same sign-in. Your library here is untouched.</p>
               </div>
               <button className="btn btn--danger btn--sm" onClick={() => setSure('account')} disabled={!!busy}>
                 {busy === 'account' ? 'Deleting…' : 'Delete my account'}
@@ -318,7 +318,7 @@ export function SyncPanel() {
       {sure === 'account' && (
         <Confirm
           title="Delete your account?"
-          body="This deletes your account and everything it holds, and signs this device out. Everything stays on this device. A purchase comes back with Restore."
+          body="This deletes your account and everything it holds, including anything Flyleaf Journal or Octavo synced with the same sign-in, and signs this device out. Everything stays on this device. A purchase comes back with Restore."
           action="Yes, delete my account"
           onConfirm={dropAccount}
           onCancel={() => setSure(null)}
