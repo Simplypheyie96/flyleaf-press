@@ -96,7 +96,7 @@ export function ExportSheet({
     let built: HTMLElement[] = []
     const fit = () => {
       if (!built.length) return
-      /* by the leaf actually built: a Large review composes on the standard column */
+      /* by the leaf actually built */
       const k = Math.min(1, wrap.clientWidth / (built[0].offsetWidth || SHAPE_W[shape]))
       host.style.transform = `scale(${k})`
       let h = 0

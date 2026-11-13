@@ -76,14 +76,13 @@ export function paginateReview(
   rec: Review,
   style: StyleId,
   host: HTMLDivElement,
-  file: ExportShape
+  shape: ExportShape
 ): HTMLElement[] {
-  /* A review is one book, so the Large card is the same card at a higher
-     resolution rather than a wider one: composed on the broad column it was a
-     letterbox (a short review at 0.5 tall to wide) with a 130px cover in a
-     corner. It keeps the standard column's proportions and takes the Large
-     file's pixels. */
-  const shape: ExportShape = 'phone'
+  /* Large lays the review on the broad column: each line holds more words,
+     so a long review runs shorter and reads easier. That is the whole point
+     of the option. (A 2 Nov change kept reviews on the Small column at Large
+     pixels, which made the two look identical; reverted on report.) */
+  const file = shape
   prepHost(host, shape)
   host.innerHTML = `<div class="share-page"><div>${renderReviewCard(rec, style)}</div>
     <div class="share-page-no"></div></div>`
