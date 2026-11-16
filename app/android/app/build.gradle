@@ -12,7 +12,7 @@ android {
         applicationId "com.feyidesigns.press"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
+        versionCode 8
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -34,8 +34,8 @@ android {
     buildTypes {
         release {
             if (keystoreFile.exists()) signingConfig signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -44,6 +44,12 @@ repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
+}
+
+// Sign in with Apple on Android goes through androidbrowserhelper (via the social-login plugin).
+// 2.7.x stops calling the window colour APIs Android 15 deprecated.
+configurations.all {
+    resolutionStrategy.force 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
 }
 
 dependencies {
