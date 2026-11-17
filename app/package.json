@@ -16,6 +16,7 @@
     "check:unlock": "tsx scripts/unlock-check.ts"
   },
   "dependencies": {
+    "@capacitor-community/in-app-review": "8.0.0",
     "@capacitor/core": "8.5.3",
     "@capacitor/filesystem": "8.1.5",
     "@capacitor/share": "8.0.3",

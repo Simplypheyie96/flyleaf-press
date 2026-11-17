@@ -37,6 +37,7 @@ export async function shareFiles(files: File[], title: string): Promise<boolean>
     (await Filesystem.writeFile({ path: f.name, data: await base64(f), directory: Directory.Cache })).uri))
   try {
     await Share.share({ title, files: uris })
+    void import('./review').then((r) => r.noteUse())
     return true
   } catch {
     /* closing the sheet rejects; it is not an error */
@@ -54,6 +55,7 @@ export async function savePhotos(files: File[]): Promise<'saved' | 'unavailable'
   const Gallery = registerPlugin<{ save(o: { data: string; name: string }): Promise<void> }>('Gallery')
   try {
     for (const f of files) await Gallery.save({ data: await base64(f), name: f.name.replace(/\.png$/, '') })
+    void import('./review').then((r) => r.noteUse())
     return 'saved'
   } catch (e) {
     if ((e as { code?: string }).code === 'UNIMPLEMENTED' || (e as { code?: string }).code === 'UNAVAILABLE') return 'unavailable'
