@@ -8,6 +8,8 @@ import { STYLE_GROUNDS } from '../types'
 import { fmtRating, monthKey, monthName } from '../format'
 import { Select } from '../components/Select'
 import { HopeRow, hopeMonths, useHopes } from '../components/Hopes'
+import { PrototypeSwitcher } from '../components/PrototypeSwitcher'
+import { FoldedYears, MonthCalendar, YearSwitch, SHELF_VARIANTS, type MonthGroup } from './ShelfYears'
 
 /* The Shelf — the whole library in the reader's choice of display (rows or a
    wall of covers; the choice persists), searchable and sortable. Date sorts keep the month groupings; rating and title sorts are
@@ -133,7 +135,7 @@ export function Shelf({ settings }: { settings: Settings }) {
         {list.map((r) => (
           <Link key={r.id} className="lib-row" to={`/review/${r.id}`}>
             {r.cover ? (
-              <img className="lib-cover" src={r.cover} alt="" />
+              <img className="lib-cover" src={r.cover} alt="" loading="lazy" decoding="async" />
             ) : (
               <span className="lib-cover-miss">No cover</span>
             )}
@@ -275,7 +277,17 @@ export function Shelf({ settings }: { settings: Settings }) {
           </div>
         )}
 
-        {groups.map((g, i) => (
+        {/* PROTOTYPE: the unsearched chronological list goes to a year variant */}
+        {grouped && !needle && (() => {
+          const ms = groups as MonthGroup[]
+          const v = params.get('variant') ?? 'A'
+          return v === 'B' ? <YearSwitch groups={ms} rowsView={rowsView} />
+            : v === 'C' ? <MonthCalendar groups={ms} rowsView={rowsView} />
+            : <FoldedYears groups={ms} rowsView={rowsView} />
+        })()}
+        <PrototypeSwitcher variants={SHELF_VARIANTS} />
+
+        {!(grouped && !needle) && groups.map((g, i) => (
           <section key={g.key ?? `flat-${i}`}>
             {g.key && (
               <div className="sec-h">
