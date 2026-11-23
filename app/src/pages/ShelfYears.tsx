@@ -3,25 +3,50 @@ import { Link } from 'react-router-dom'
 import type { Review } from '../types'
 import { monthName } from '../format'
 
-/* PROTOTYPE — three ways for the Shelf to hold more than one year of reviews.
-   Only the chronological, unsearched list goes through here; a search or a
-   rating/title sort still shows every match across every year. */
+/* A library that outlives its first year: the newest year reads as the list
+   it always was, and every year before it folds to one line, as on the
+   Collage page. Open a past year and it becomes twelve month tiles — a year
+   of reviews is a scroll nobody makes; a month is the thing remembered.
+   A search or a rating/title sort never comes through here: it crosses every
+   year. */
 
 export type MonthGroup = { key: string; rows: Review[] }
-type Props = { groups: MonthGroup[]; rowsView: (list: Review[]) => ReactNode }
 
-export const SHELF_VARIANTS = [
-  { key: 'A', name: 'Folded years' },
-  { key: 'B', name: 'Year switch' },
-  { key: 'C', name: 'Month calendar' },
-]
-
-const years = (groups: MonthGroup[]) => [...new Set(groups.map((g) => g.key.slice(0, 4)))]
-const inYear = (groups: MonthGroup[], y: string) => groups.filter((g) => g.key.startsWith(y))
-const books = (gs: MonthGroup[]) => gs.reduce((n, g) => n + g.rows.length, 0)
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
 
-function Month({ g, rowsView, bare }: { g: MonthGroup; rowsView: Props['rowsView']; bare?: boolean }) {
+/* One line per year, the newest open. With a single year there is nothing to
+   fold, so the year's content shows bare. */
+export function YearFold({ years, summary, children }: {
+  /** in the list's own order; the first is open */
+  years: string[]
+  summary: (y: string) => string
+  children: (y: string, newest: boolean) => ReactNode
+}) {
+  const [flipped, setFlipped] = useState<Record<string, boolean>>({})
+  if (years.length < 2) return <>{years[0] && children(years[0], true)}</>
+  return (
+    <>
+      {years.map((y, i) => {
+        const open = flipped[y] ?? i === 0
+        return (
+          <div className="shelf-year" key={y}>
+            <button type="button" className="disclose shelf-year-h" aria-expanded={open}
+              onClick={() => setFlipped((f) => ({ ...f, [y]: !open }))}>
+              <span className="ui-lbl">{y}</span>
+              <span className="disclose-right">
+                <span className="disclose-val">{summary(y)}</span>
+                <span className="disclose-chev" aria-hidden="true">{open ? '▲' : '▼'}</span>
+              </span>
+            </button>
+            {open && children(y, i === 0)}
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
+function Month({ g, rowsView, bare }: { g: MonthGroup; rowsView: (list: Review[]) => ReactNode; bare?: boolean }) {
   const name = monthName(g.key)
   return (
     <section>
@@ -34,98 +59,40 @@ function Month({ g, rowsView, bare }: { g: MonthGroup; rowsView: Props['rowsView
   )
 }
 
-const Plain = ({ groups, rowsView }: Props) => <>{groups.map((g) => <Month key={g.key} g={g} rowsView={rowsView} />)}</>
-
-/* A — every year but the newest folds into one line, as on the Collage page */
-export function FoldedYears({ groups, rowsView }: Props) {
-  const ys = years(groups)
-  const newest = [...ys].sort().reverse()[0]
-  const [flipped, setFlipped] = useState<Record<string, boolean>>({})
-  if (ys.length < 2) return <Plain groups={groups} rowsView={rowsView} />
-  const isOpen = (y: string) => flipped[y] ?? y === newest
-  return (
-    <>
-      {ys.map((y) => {
-        const mine = inYear(groups, y)
-        const open = isOpen(y)
-        return (
-          <div className="shelf-year" key={y}>
-            <button type="button" className="disclose shelf-year-h" aria-expanded={open}
-              onClick={() => setFlipped((f) => ({ ...f, [y]: !open }))}>
-              <span className="ui-lbl">{y}</span>
-              <span className="disclose-right">
-                <span className="disclose-val">{plural(mine.length, 'month')} · {plural(books(mine), 'book')}</span>
-                <span className="disclose-chev" aria-hidden="true">{open ? '▲' : '▼'}</span>
-              </span>
-            </button>
-            {open && mine.map((g) => <Month key={g.key} g={g} rowsView={rowsView} bare />)}
-          </div>
-        )
-      })}
-    </>
-  )
-}
-
-/* B — one year at a time, picked from a row of years under the tools */
-export function YearSwitch({ groups, rowsView }: Props) {
-  const ys = years(groups)
+function MonthTiles({ y, mine, rowsView }: { y: string; mine: MonthGroup[]; rowsView: (list: Review[]) => ReactNode }) {
   const [pick, setPick] = useState<string | null>(null)
-  if (ys.length < 2) return <Plain groups={groups} rowsView={rowsView} />
-  const y = pick && ys.includes(pick) ? pick : [...ys].sort().reverse()[0]
+  const byKey = new Map(mine.map((g) => [g.key, g]))
+  const sel = pick ? byKey.get(pick) : undefined
   return (
     <>
-      <div className="seg shelf-years" role="tablist" aria-label="Year">
-        {ys.map((k) => (
-          <button key={k} role="tab" aria-selected={k === y} onClick={() => setPick(k)}>
-            {k}<span>{books(inYear(groups, k))}</span>
-          </button>
-        ))}
+      <div className="shelf-cal">
+        {Array.from({ length: 12 }, (_, m) => {
+          const key = `${y}-${String(m + 1).padStart(2, '0')}`
+          const g = byKey.get(key)
+          return (
+            <button key={key} type="button" className="shelf-cal-m" disabled={!g}
+              aria-pressed={sel?.key === key} aria-label={`${monthName(key)}, ${plural(g?.rows.length ?? 0, 'book')}`}
+              onClick={() => setPick((p) => (p === key ? null : key))}>
+              <span className="shelf-cal-n">{monthName(key).slice(0, 3)}</span>
+              <span className="shelf-cal-c">{g ? g.rows.length : '–'}</span>
+            </button>
+          )
+        })}
       </div>
-      {inYear(groups, y).map((g) => <Month key={g.key} g={g} rowsView={rowsView} bare />)}
+      {sel && <Month g={sel} rowsView={rowsView} />}
     </>
   )
 }
 
-/* C — the newest year as a list; each older year as twelve month tiles,
-   a tile opening that month's reviews under the grid */
-export function MonthCalendar({ groups, rowsView }: Props) {
-  const ys = years(groups)
-  const newest = [...ys].sort().reverse()[0]
-  const [open, setOpen] = useState<Record<string, string | null>>({})
-  if (ys.length < 2) return <Plain groups={groups} rowsView={rowsView} />
+export function ShelfYears({ groups, rowsView }: { groups: MonthGroup[]; rowsView: (list: Review[]) => ReactNode }) {
+  const years = [...new Set(groups.map((g) => g.key.slice(0, 4)))]
+  const inYear = (y: string) => groups.filter((g) => g.key.startsWith(y))
   return (
-    <>
-      {ys.map((y) => {
-        const mine = inYear(groups, y)
-        if (y === newest) return (
-          <div className="shelf-year" key={y}>
-            <div className="sec-h shelf-cal-h"><span className="ui-lbl">{y} · {plural(books(mine), 'book')}</span></div>
-            {mine.map((g) => <Month key={g.key} g={g} rowsView={rowsView} bare />)}
-          </div>
-        )
-        const byKey = new Map(mine.map((g) => [g.key, g]))
-        const sel = open[y] ? byKey.get(open[y]!) : undefined
-        return (
-          <div className="shelf-year" key={y}>
-            <div className="sec-h shelf-cal-h"><span className="ui-lbl">{y} · {plural(books(mine), 'book')}</span></div>
-            <div className="shelf-cal">
-              {Array.from({ length: 12 }, (_, m) => {
-                const key = `${y}-${String(m + 1).padStart(2, '0')}`
-                const g = byKey.get(key)
-                return (
-                  <button key={key} type="button" className="shelf-cal-m" disabled={!g}
-                    aria-pressed={sel?.key === key}
-                    onClick={() => setOpen((o) => ({ ...o, [y]: o[y] === key ? null : key }))}>
-                    <span className="shelf-cal-n">{monthName(key).slice(0, 3)}</span>
-                    <span className="shelf-cal-c">{g ? g.rows.length : '–'}</span>
-                  </button>
-                )
-              })}
-            </div>
-            {sel && <Month g={sel} rowsView={rowsView} />}
-          </div>
-        )
-      })}
-    </>
+    <YearFold years={years}
+      summary={(y) => plural(inYear(y).reduce((n, g) => n + g.rows.length, 0), 'book')}>
+      {(y, newest) => newest
+        ? inYear(y).map((g) => <Month key={g.key} g={g} rowsView={rowsView} bare={years.length > 1} />)
+        : <MonthTiles key={y} y={y} mine={inYear(y)} rowsView={rowsView} />}
+    </YearFold>
   )
 }

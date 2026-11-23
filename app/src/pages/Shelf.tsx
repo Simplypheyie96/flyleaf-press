@@ -8,8 +8,7 @@ import { STYLE_GROUNDS } from '../types'
 import { fmtRating, monthKey, monthName } from '../format'
 import { Select } from '../components/Select'
 import { HopeRow, hopeMonths, useHopes } from '../components/Hopes'
-import { PrototypeSwitcher } from '../components/PrototypeSwitcher'
-import { FoldedYears, MonthCalendar, YearSwitch, SHELF_VARIANTS, type MonthGroup } from './ShelfYears'
+import { ShelfYears, YearFold, type MonthGroup } from './ShelfYears'
 
 /* The Shelf — the whole library in the reader's choice of display (rows or a
    wall of covers; the choice persists), searchable and sortable. Date sorts keep the month groupings; rating and title sorts are
@@ -189,9 +188,7 @@ export function Shelf({ settings }: { settings: Settings }) {
           <>
             <p className="mo-note">Books you mean to read, listed by the month you mean to read them.</p>
             <div className="field">
-              <div className="mo-list">
-                {hopeMonths(hopes).map((k) => <HopeRow key={k} k={k} hopes={hopes} />)}
-              </div>
+              <HopeYears hopes={hopes} />
             </div>
           </>
         )}
@@ -277,15 +274,8 @@ export function Shelf({ settings }: { settings: Settings }) {
           </div>
         )}
 
-        {/* PROTOTYPE: the unsearched chronological list goes to a year variant */}
-        {grouped && !needle && (() => {
-          const ms = groups as MonthGroup[]
-          const v = params.get('variant') ?? 'A'
-          return v === 'B' ? <YearSwitch groups={ms} rowsView={rowsView} />
-            : v === 'C' ? <MonthCalendar groups={ms} rowsView={rowsView} />
-            : <FoldedYears groups={ms} rowsView={rowsView} />
-        })()}
-        <PrototypeSwitcher variants={SHELF_VARIANTS} />
+        {/* past years fold; a search or a rating/title sort crosses them all */}
+        {grouped && !needle && <ShelfYears groups={groups as MonthGroup[]} rowsView={rowsView} />}
 
         {!(grouped && !needle) && groups.map((g, i) => (
           <section key={g.key ?? `flat-${i}`}>
@@ -303,5 +293,23 @@ export function Shelf({ settings }: { settings: Settings }) {
         </>}
       </div>
     </div>
+  )
+}
+
+/* Hopefuls fold by year the same way; a month here is already one row, so an
+   open year is just its rows. */
+function HopeYears({ hopes }: { hopes: NonNullable<ReturnType<typeof useHopes>> }) {
+  const months = hopeMonths(hopes)
+  const years = [...new Set(months.map((k) => k.slice(0, 4)))]
+  const inYear = (y: string) => months.filter((k) => k.startsWith(y))
+  const count = (y: string) => inYear(y).reduce((n, k) => n + hopes.ofMonth(k).length, 0)
+  return (
+    <YearFold years={years} summary={(y) => `${count(y)} hopeful${count(y) === 1 ? '' : 's'}`}>
+      {(y) => (
+        <div className={`mo-list${years.length > 1 ? ' mo-list-fold' : ''}`} key={y}>
+          {inYear(y).map((k) => <HopeRow key={k} k={k} hopes={hopes} />)}
+        </div>
+      )}
+    </YearFold>
   )
 }
